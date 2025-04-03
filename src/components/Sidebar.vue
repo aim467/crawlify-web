@@ -6,6 +6,7 @@ const router = useRouter()
 const route = useRoute()
 
 const activeMenu = ref(route.path)
+const logoUrl = 'https://ai-public.mastergo.com/ai/img_res/de1e878e5cb64a628cbf9769892cac4b.jpg';
 
 const handleSelect = (path: string) => {
   router.push(path)
@@ -18,6 +19,10 @@ const handleSelect = (path: string) => {
     class="sidebar-menu"
     @select="handleSelect"
   >
+    <el-menu-item index="/" class="logo-item">
+      <img :src="logoUrl" alt="Logo" class="h-8">
+    </el-menu-item>
+
     <el-menu-item index="/">
       <el-icon><Monitor /></el-icon>
       <span>网站配置</span>
@@ -35,7 +40,6 @@ const handleSelect = (path: string) => {
 
 <style scoped>
 .sidebar-menu {
-  /* height: 100%; */
   border-right: none;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
   background-color: #fff;
@@ -64,5 +68,17 @@ const handleSelect = (path: string) => {
 .el-menu-item .el-icon {
   margin-right: 12px;
   font-size: 18px;
+}
+
+.logo-item {
+  justify-content: center;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 8px;
+  pointer-events: none;
+}
+
+.logo-item:hover {
+  transform: none;
+  background-color: transparent !important;
 }
 </style>

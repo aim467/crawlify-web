@@ -87,12 +87,20 @@ onMounted(() => {
       </template>
       <el-table v-loading="loading" :data="links" style="width: 100%" class="data-table">
         <el-table-column prop="id" label="ID" width="100" />
-        <el-table-column prop="url" label="链接地址">
+        <el-table-column prop="url" label="链接地址" min-width="50">
           <template #default="{ row }">
-            <a :href="row.url" target="_blank" rel="noopener noreferrer">{{ row.url }}</a>
+            <el-tooltip :content="row.url" placement="top" :show-after="100">
+              <a :href="row.url" target="_blank" rel="noopener noreferrer" class="table-link">{{ row.url }}</a>
+            </el-tooltip>
           </template>   
         </el-table-column>
-        <el-table-column prop="type" label="类型" width="80" />
+        <el-table-column prop="extLink" label="外链" width="80">
+          <template #default="{ row }">
+            <span :class="['link-type', row.extLink ? 'external-link' : 'internal-link']">
+              {{ row.extLink ? '外链' : '内链' }}
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column prop="createdAt" label="创建时间" width="180" />
         <el-table-column prop="updatedAt" label="更新时间" width="180" />
       </el-table>
@@ -270,4 +278,37 @@ onMounted(() => {
   background-color: #409eff;
   box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
 }
+
+.link-type {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.external-link {
+  background-color: #fef2f2;
+  color: #ef4444;
+}
+
+.internal-link {
+  background-color: #f0fdf4;
+  color: #22c55e;
+}
 </style>
+
+.table-link {
+  color: #3b82f6;
+  text-decoration: none;
+  transition: color 0.2s ease;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table-link:hover {
+  color: #2563eb;
+}

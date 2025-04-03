@@ -13,7 +13,7 @@ export interface WebsiteLink {
   createdAt: string
   updatedAt: string
   websiteId: number
-  type: number
+  extLink: boolean
 }
 
 export interface WebsiteLinkQuery {

@@ -142,7 +142,7 @@ onMounted(() => {
             <el-button type="primary" link @click="handleEdit(row)" class="edit-btn">编辑</el-button>
             <el-button type="danger" link @click="handleDelete(row)" class="delete-btn">删除</el-button>
             <el-button type="success" link @click="handleStartTask(row)" class="start-task-btn">启动任务</el-button>
-            <el-button type="info" link @click="$router.push(`/website-links/${row.id}`)" class="view-links-btn">查看链接</el-button>
+            <el-button type="info" link @click="$router.push(`/website-links`)" class="view-links-btn">查看链接</el-button>
           </template>
         </el-table-column>
       </el-table>
