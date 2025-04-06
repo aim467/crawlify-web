@@ -28,10 +28,12 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { ref} from 'vue';
 import { User, Lock } from '@element-plus/icons-vue';
+import { useRouter } from 'vue-router';
 
 const emit = defineEmits(['login']);
+const router = useRouter();
 
 const logoUrl = 'https://ai-public.mastergo.com/ai/img_res/de1e878e5cb64a628cbf9769892cac4b.jpg';
 const loginForm = ref({
@@ -40,7 +42,7 @@ const loginForm = ref({
 });
 
 const handleLogin = () => {
-  emit('login');
+  router.push('/');
 };
 </script>
 

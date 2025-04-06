@@ -11,6 +11,9 @@ const api = axios.create({
 export interface WebsiteQuery {
   page: number
   size: number
+  name?: string
+  baseUrl?: string
+  domain?: string
 }
 
 export interface WebsiteResponse {
@@ -24,7 +27,22 @@ export const websiteApi = {
   },
 
   getById(id: number) {
-    return api.get<Website>(`/websiteInfo/${id}`)
+    /**
+     * {
+    "code": 200,
+    "msg": "操作成功",
+    "data": {
+        "id": 9,
+        "name": "dedsec2z",
+        "baseUrl": "https://dedsec2z.top/",
+        "domain": "dedsec2z.top",
+        "createdAt": "2025-03-31T13:42:28",
+        "updatedAt": null
+    }
+}
+     */
+    // 获取data里面的数据
+    return api.get<Website>(`/websiteInfo/${id}`).then(res => res.data.data);
   },
 
   create(website: Omit<Website, 'id'>) {
