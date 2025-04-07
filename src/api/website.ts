@@ -27,33 +27,19 @@ export const websiteApi = {
   },
 
   getById(id: number) {
-    /**
-     * {
-    "code": 200,
-    "msg": "操作成功",
-    "data": {
-        "id": 9,
-        "name": "dedsec2z",
-        "baseUrl": "https://dedsec2z.top/",
-        "domain": "dedsec2z.top",
-        "createdAt": "2025-03-31T13:42:28",
-        "updatedAt": null
-    }
-}
-     */
-    // 获取data里面的数据
-    return api.get<Website>(`/websiteInfo/${id}`).then(res => res.data.data);
+    // 只能用 res.data.data 拿到数据
+    return api.get<{ data: Website }>(`/websiteInfo/${id}`).then(res => res.data.data);
   },
 
   create(website: Omit<Website, 'id'>) {
-    return api.post<Website>('/websiteInfo', website)
+    return api.post<Website>('/websiteInfo', website).then(res => res.data);
   },
 
   update(website: Website) {
-    return api.put<Website>('/websiteInfo', website)
+    return api.put<Website>('/websiteInfo', website).then(res => res.data);
   },
 
   delete(id: number) {
-    return api.delete(`/websiteInfo/${id}`)
+    return api.delete(`/websiteInfo/${id}`).then(res => res.data);
   }
 }

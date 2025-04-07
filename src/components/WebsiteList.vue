@@ -29,8 +29,6 @@
         <div class="table-actions">
           <el-button type="primary" :icon="Plus" @click="handleAddWebsite">新增网站</el-button>
           <el-button :icon="Refresh" circle @click="handleTableRefresh" />
-          <!-- Placeholder for potential column settings -->
-          <!-- <el-button :icon="Operation" circle /> -->
           <el-button :icon="Setting" circle @click="handleTableSettings" />
         </div>
       </div>
@@ -111,11 +109,8 @@ import {
   Refresh,
   Plus,
   Setting,
-  InfoFilled,
   Edit,
   Delete,
-  RefreshLeft, // Assuming the first icon in actions is reset password
-  // Operation // Icon for potential column settings
 } from '@element-plus/icons-vue';
 import type { FormInstance } from 'element-plus';
 import { ElMessage, ElMessageBox } from 'element-plus'; // For delete confirmation
@@ -131,7 +126,7 @@ onMounted(() => {
       if (newUrl && !isDomainAutoFilled.value) {
         try {
           const urlObj = new URL(newUrl);
-          websiteForm.domain = urlObj.hostname.replace(/^www\./, '');
+          websiteForm.domain = urlObj.hostname;
           isDomainAutoFilled.value = true;
         } catch {
           websiteForm.domain = '';
@@ -222,7 +217,6 @@ const fetchData = async () => {
     tableData.value = data.records;
     pagination.total = data.total;
   } catch (error) {
-    console.error('Failed to fetch websites:', error);
     ElMessage.error('获取网站列表失败');
   } finally {
     loading.value = false;
@@ -230,7 +224,6 @@ const fetchData = async () => {
 };
 
 const handleSearch = () => {
-  console.log('Search clicked', searchForm);
   pagination.currentPage = 1; // Reset to first page on search
   fetchData(); // Call API or filter local data
 };
@@ -267,9 +260,7 @@ const handleEdit = async (row: Website) => {
     isEditMode.value = true;
     currentWebsiteId.value = row.id;
     loading.value = true;
-    
-    const { data } = await websiteApi.getById(row.id);
-    console.log(data);
+    const data = await websiteApi.getById(row.id);
     websiteForm.name = data.name;
     websiteForm.baseUrl = data.baseUrl;
     websiteForm.domain = data.domain;
