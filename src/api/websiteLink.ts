@@ -14,6 +14,7 @@ export interface WebsiteLink {
   updatedAt: string
   websiteId: number
   extLink: boolean
+  urlType: number
 }
 
 export interface WebsiteLinkQuery {
@@ -21,6 +22,7 @@ export interface WebsiteLinkQuery {
   size: number
   websiteId: number
   url?: string
+  urlType?: number
 }
 
 export interface WebsiteLinkResponse {

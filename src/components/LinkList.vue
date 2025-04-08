@@ -51,10 +51,37 @@
             <el-form-item label="链接URL:">
               <el-input v-model="searchForm.url" placeholder="请输入链接URL" clearable />
             </el-form-item>
-            <el-form-item label="链接类型:">
-              <el-select v-model="searchForm.extLink" placeholder="请选择链接类型" clearable>
+            <el-form-item label="内外链:">
+              <el-select
+                v-model="searchForm.extLink"
+                placeholder="请选择内外链"
+                clearable
+                :filterable="false"
+                :remote="false"
+                :remote-method="null"
+                style="width: 200px"
+              >
                 <el-option label="内链" :value="false" />
                 <el-option label="外链" :value="true" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="链接类型:">
+              <el-select
+                v-model="searchForm.urlType"
+                placeholder="请选择链接类型"
+                clearable
+                style="width: 200px"
+              >
+                <el-option label="未知" :value="0" />
+                <el-option label="网页" :value="1" />
+                <el-option label="CSS" :value="2" />
+                <el-option label="JavaScript" :value="3" />
+                <el-option label="图片" :value="4" />
+                <el-option label="文档" :value="5" />
+                <el-option label="字体" :value="6" />
+                <el-option label="视频" :value="7" />
+                <el-option label="压缩包" :value="8" />
+                <el-option label="数据" :value="9" />
               </el-select>
             </el-form-item>
             <el-form-item>
@@ -71,7 +98,13 @@
               </el-tooltip>
             </template>
           </el-table-column>
-          <el-table-column label="所属网站" prop="website" width="180" />
+          <el-table-column prop="linkTypeName" label="链接类型" width="120">
+            <template #default="{ row }">
+              <span :class="['link-type', `url-type-${row.urlType}`]">
+                {{ row.linkTypeName }}
+              </span>
+            </template>
+          </el-table-column>
           <el-table-column label="采集时间" prop="crawlTime" width="180" />
           <el-table-column label="更新时间" prop="updatedAt" width="180" />
           <el-table-column prop="extLink" label="外链" width="100">
@@ -82,6 +115,7 @@
               </span>
             </template>
           </el-table-column>
+          <el-table-column label="所属网站" prop="website" width="180" />
         </el-table>
 
         <div class="pagination-container">
@@ -116,7 +150,8 @@ interface WebsiteLink {
   website: string;
   crawlTime: string;
   extLink: boolean;
-  urlType: '内链' | '外链';
+  urlType: number;
+  linkTypeName: string;
 }
 
 const emit = defineEmits(['export', 'viewDetail', 'sizeChange', 'currentChange']);
@@ -160,14 +195,16 @@ onMounted(async () => {
 const searchForm = ref({
   timeRange: [],
   url: '',
-  extLink: null as boolean | null
+  extLink: undefined as boolean | undefined,
+  urlType: undefined as number | undefined
 });
 
 const handleReset = () => {
   searchForm.value = {
     timeRange: [],
     url: '',
-    extLink: null
+    extLink: undefined,
+    urlType: undefined
   };
   loadLinks();
 };
@@ -185,18 +222,22 @@ const loadLinks = async () => {
       websiteId: selectedWebsite.value.id,
       url: searchForm.value.url,
       extLink: searchForm.value.extLink,
+      urlType: searchForm.value.urlType,
       startTime: searchForm.value.timeRange[0],
       endTime: searchForm.value.timeRange[1]
     };
     const response = await websiteLinkApi.list(params);
-    linkList.value = response.data.records.map(link => ({
-      url: link.url,
-      website: selectedWebsite.value!.name,
-      crawlTime: link.createdAt,
-      extLink: link.extLink,
-      updatedAt: link.updatedAt,
-      urlType: link.extLink ? '外链' : '内链'
-    }));
+    linkList.value = response.data.records.map(link => {
+      return {
+        url: link.url,
+        website: selectedWebsite.value!.name,
+        crawlTime: link.createdAt,
+        extLink: link.extLink,
+        updatedAt: link.updatedAt,
+        urlType: link.urlType,
+        linkTypeName: getLinkTypeName(link.urlType)
+      };
+    });
     total.value = response.data.total;
   } catch (error) {
     console.error('Failed to load links:', error);
@@ -228,6 +269,22 @@ const handleCurrentChange = async (val: number) => {
   currentPage.value = val;
   await loadLinks();
   emit('currentChange', val);
+};
+
+const getLinkTypeName = (type: number): string => {
+  const typeMap: Record<number, string> = {
+    0: '未知',
+    1: '网页',
+    2: 'CSS',
+    3: 'JavaScript',
+    4: '图片',
+    5: '文档',
+    6: '字体',
+    7: '视频',
+    8: '压缩包',
+    9: '数据'
+  };
+  return typeMap[type] || '未知';
 };
 </script>
 
@@ -362,5 +419,54 @@ const handleCurrentChange = async (val: number) => {
 .internal-link {
   color: #22c55e;
   background-color: #dcfce7;
+}
+.url-type-0 {
+  color: #64748b;
+  background-color: #f1f5f9;
+}
+
+.url-type-1 {
+  color: #3b82f6;
+  background-color: #dbeafe;
+}
+
+.url-type-2 {
+  color: #8b5cf6;
+  background-color: #ede9fe;
+}
+
+.url-type-3 {
+  color: #ec4899;
+  background-color: #fce7f3;
+}
+
+.url-type-4 {
+  color: #f59e0b;
+  background-color: #fef3c7;
+}
+
+.url-type-5 {
+  color: #10b981;
+  background-color: #d1fae5;
+}
+
+.url-type-6 {
+  color: #14b8a6;
+  background-color: #ccfbf1;
+}
+
+.url-type-7 {
+  color: #f97316;
+  background-color: #ffedd5;
+}
+
+.url-type-8 {
+  color: #6366f1;
+  background-color: #e0e7ff;
+}
+
+.url-type-9 {
+  color: #06b6d4;
+  background-color: #cffafe;
 }
 </style>
