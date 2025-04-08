@@ -75,7 +75,7 @@ const handleLogout = () => {
 
 .main-content {
   flex: 1;
-  margin: 20px;
+  /* margin: 20px; */
   background-color: #ffffff;
   overflow-y: auto;
 }

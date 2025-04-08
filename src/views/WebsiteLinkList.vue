@@ -62,29 +62,38 @@ onMounted(() => {
 
 <template>
   <div class="website-link-list">
-    <el-card class="box-card">
-      <template #header>
-        <div class="card-header">
-          <h2>链接列表</h2>
-          <div class="header-buttons">
-            <!-- 刷新按钮 -->
-            <el-button type="primary" icon="el-icon-refresh" @click="fetchData" class="refresh-btn">搜索</el-button>
-            <el-input
-              v-model="searchKeyword"
-              placeholder="搜索链接"
-              clearable
-              @input="handleSearch"
-              @clear="handleSearch"
-              class="search-input"
-            >
-              <template #prefix>
-                <el-icon><Search /></el-icon>
-              </template>
-            </el-input>
-            <el-button type="primary" @click="$router.push('/')" class="website-btn">返回网站列表</el-button>
-          </div>
+    <!-- 搜索卡片 -->
+    <el-card shadow="never" class="search-card">
+      <el-form inline label-position="left" label-width="auto">
+        <el-form-item label="链接地址:">
+          <el-input
+            v-model="searchKeyword"
+            placeholder="请输入链接地址"
+            clearable
+            @input="handleSearch"
+            @clear="handleSearch"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="handleSearch">查询</el-button>
+          <el-button @click="searchKeyword = ''; handleSearch()">重置</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
+
+    <!-- 表格卡片 -->
+    <el-card shadow="never" class="table-card">
+      <div class="table-header">
+        <div class="table-title">链接列表</div>
+        <div class="table-actions">
+          <el-button :icon="Refresh" circle @click="fetchData" />
+          <el-button type="primary" @click="$router.push('/')" class="website-btn">返回网站列表</el-button>
         </div>
-      </template>
+      </div>
       <el-table v-loading="loading" :data="links" style="width: 100%" class="data-table">
         <el-table-column prop="id" label="ID" width="100" />
         <el-table-column prop="url" label="链接地址" min-width="50">
@@ -120,6 +129,20 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.table-link {
+  color: #3b82f6;
+  text-decoration: none;
+  transition: color 0.2s ease;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table-link:hover {
+  color: #2563eb;
+}
+
 .website-link-list {
   max-width: 1400px;
   margin: 0 auto;
@@ -299,16 +322,3 @@ onMounted(() => {
 }
 </style>
 
-.table-link {
-  color: #3b82f6;
-  text-decoration: none;
-  transition: color 0.2s ease;
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.table-link:hover {
-  color: #2563eb;
-}
