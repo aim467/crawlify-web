@@ -14,15 +14,15 @@ const handleSelect = (path: string) => {
 </script>
 
 <template>
-  <el-menu
-    :default-active="activeMenu"
-    class="sidebar-menu"
-    @select="handleSelect"
-  >
-    <el-menu-item index="/" class="logo-item">
-      <img :src="logoUrl" alt="Logo" class="h-8">
-    </el-menu-item>
-
+  <div class="sidebar-container">
+    <div class="logo-container">
+      <img :src="logoUrl" alt="Logo" class="logo-image">
+    </div>
+    <el-menu
+      :default-active="activeMenu"
+      class="sidebar-menu"
+      @select="handleSelect"
+    >
     <el-menu-item index="/">
       <el-icon><Monitor /></el-icon>
       <span>网站配置</span>
@@ -36,13 +36,35 @@ const handleSelect = (path: string) => {
       <span>链接管理</span>
     </el-menu-item>
   </el-menu>
+  </div>
 </template>
 
 <style scoped>
+.sidebar-container {
+  height: 100%;
+  background-color: #1e293b;
+  border-right: 1px solid #2d3748;
+}
+
+.logo-container {
+  padding: 16px;
+  background-color: #111827;
+  border-bottom: 1px solid #2d3748;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.logo-image {
+  height: 32px;
+  width: auto;
+}
+
 .sidebar-menu {
   border-right: none;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-  background-color: #fff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  background-color: #1e293b;
+  height: calc(100% - 65px);
 }
 
 .el-menu-item {
@@ -52,33 +74,24 @@ const handleSelect = (path: string) => {
   margin: 4px 8px;
   border-radius: 6px;
   transition: all 0.3s ease;
+  color: #e2e8f0;
 }
 
 .el-menu-item:hover {
-  background-color: #f0f7ff !important;
+  background-color: #2d3748 !important;
   transform: translateX(4px);
+  color: #60a5fa;
 }
 
 .el-menu-item.is-active {
-  background: linear-gradient(45deg, #409eff1a, #67c23a1a);
-  color: #409eff;
+  background: linear-gradient(45deg, #1976d2, #2196f3);
+  color: #ffffff;
   font-weight: 500;
+  box-shadow: 0 4px 8px rgba(25, 118, 210, 0.25);
 }
 
 .el-menu-item .el-icon {
   margin-right: 12px;
   font-size: 18px;
-}
-
-.logo-item {
-  justify-content: center;
-  border-bottom: 1px solid #e5e7eb;
-  margin-bottom: 8px;
-  pointer-events: none;
-}
-
-.logo-item:hover {
-  transform: none;
-  background-color: transparent !important;
 }
 </style>

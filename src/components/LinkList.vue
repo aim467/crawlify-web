@@ -14,7 +14,6 @@
         </el-table>
         <div class="pagination-container">
           <el-pagination
-            small
             layout="prev, pager, next"
             :total="websiteTotal"
             :page-size="websitePageSize"
@@ -90,7 +89,7 @@
             </el-form-item>
           </el-form>
         </el-card>
-        <el-table :data="linkList" border style="width: 100%">
+        <el-table :data="linkList" border style="width: 100%; flex: 0.9; overflow: auto">
           <el-table-column label="链接URL" prop="url">
             <template #default="{ row }">
               <el-tooltip :content="row.url" placement="top" :show-after="100">
@@ -292,16 +291,40 @@ const getLinkTypeName = (type: number): string => {
 .link-list-container {
   padding: 12px;
   background: #f0f2f5;
-  height: 100%;
+  height: 100vh;
   display: flex;
 }
 
 .content-area {
   flex: 1;
-  overflow: auto;
   margin-left: 12px;
+  height: 100%;
+  overflow: hidden;
 }
 
+.content-card {
+  background: #ffffff;
+  border: 1px solid #dcdfe6;
+  border-radius: 6px;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.04);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.content-card > :deep(.el-card__body) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px;
+}
+
+.content-card .el-table {
+  flex: 1;
+  overflow: auto;
+}
 .website-sidebar {
   width: 280px;
 }
