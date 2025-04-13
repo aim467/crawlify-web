@@ -48,7 +48,7 @@ const handleSelect = (path: string) => {
 
 .logo-container {
   padding: 16px;
-  background-color: #111827;
+  background-color: #1e293b;
   border-bottom: 1px solid #2d3748;
   display: flex;
   justify-content: center;
