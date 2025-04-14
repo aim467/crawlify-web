@@ -93,7 +93,40 @@
           <el-table-column label="链接URL" prop="url">
             <template #default="{ row }">
               <el-tooltip :content="row.url" placement="top" :show-after="100">
-                <a :href="row.url" target="_blank" rel="noopener noreferrer" class="table-link">{{ row.url }}</a>
+                <div class="url-actions">
+                  <span class="table-link">{{ row.url }}</span>
+                  <div class="url-action-buttons">
+                    <el-dropdown v-if="row.urlType === 1" trigger="click">
+                      <el-button type="primary" size="small" :icon="View" circle></el-button>
+                      <template #dropdown>
+                        <el-dropdown-menu>
+                          <el-dropdown-item @click="openInNewTab(row.url)">
+                            <el-icon><Link /></el-icon> 在新标签页打开
+                          </el-dropdown-item>
+                          <el-dropdown-item @click="previewInCurrentPage(row.url)">
+                            <el-icon><View /></el-icon> 在当前页面预览
+                          </el-dropdown-item>
+                        </el-dropdown-menu>
+                      </template>
+                    </el-dropdown>
+                    <el-button 
+                      v-else-if="row.urlType === 4" 
+                      type="primary" 
+                      size="small" 
+                      :icon="View" 
+                      circle
+                      @click="previewImage(row.url)"
+                    ></el-button>
+                    <el-button 
+                      v-else 
+                      type="primary" 
+                      size="small" 
+                      :icon="Link" 
+                      circle
+                      @click="openInNewTab(row.url)"
+                    ></el-button>
+                  </div>
+                </div>
               </el-tooltip>
             </template>
           </el-table-column>
@@ -131,13 +164,36 @@
       </el-card>
     </div>
   </div>
+  
+  <!-- 网页预览对话框 -->
+  <el-dialog
+    v-model="visiblePreview"
+    title="网页预览"
+    width="80%"
+    :destroy-on-close="true"
+    @close="closePreview"
+  >
+    <iframe 
+      v-if="previewUrl" 
+      :src="previewUrl" 
+      style="width: 100%; height: 70vh; border: none;"
+    ></iframe>
+  </el-dialog>
+  
+  <!-- 图片预览 -->
+  <vue-easy-lightbox
+    :visible="visibleLightbox"
+    :imgs="previewImages"
+    @hide="visibleLightbox = false"
+  ></vue-easy-lightbox>
 </template>
 
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue';
-import { Refresh } from '@element-plus/icons-vue';
+import { Refresh, View, Link } from '@element-plus/icons-vue';
 import { websiteApi } from '../api/website';
 import { websiteLinkApi } from '../api/websiteLink';
+import VueEasyLightbox from 'vue-easy-lightbox';
 
 interface WebsiteBasic {
   id: number;
@@ -151,6 +207,7 @@ interface WebsiteLink {
   extLink: boolean;
   urlType: number;
   linkTypeName: string;
+  updatedAt: string;
 }
 
 const emit = defineEmits(['export', 'viewDetail', 'sizeChange', 'currentChange']);
@@ -284,6 +341,35 @@ const getLinkTypeName = (type: number): string => {
     9: '数据'
   };
   return typeMap[type] || '未知';
+};
+
+// 预览相关功能
+const visiblePreview = ref(false);
+const previewUrl = ref('');
+const previewImages = ref<string[]>([]);
+const visibleLightbox = ref(false);
+
+// 在新标签页打开链接
+const openInNewTab = (url: string) => {
+  window.open(url, '_blank', 'noopener,noreferrer');
+};
+
+// 在当前页面预览网页
+const previewInCurrentPage = (url: string) => {
+  previewUrl.value = url;
+  visiblePreview.value = true;
+};
+
+// 预览图片
+const previewImage = (url: string) => {
+  previewImages.value = [url];
+  visibleLightbox.value = true;
+};
+
+// 关闭预览
+const closePreview = () => {
+  visiblePreview.value = false;
+  previewUrl.value = '';
 };
 </script>
 
@@ -422,10 +508,24 @@ const getLinkTypeName = (type: number): string => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
 }
 
 .table-link:hover {
   color: #2563eb;
+}
+
+.url-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.url-action-buttons {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .link-type {
