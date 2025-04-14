@@ -16,6 +16,9 @@ export interface TaskQuery {
 export interface TaskResponse {
   total: number
   records: Task[]
+  current: number
+  pages: number
+  size: number
 }
 
 export const taskApi = {

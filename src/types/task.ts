@@ -1,8 +1,7 @@
 export interface Task {
-  id: number
-  name: string
+  taskId: string
   websiteId: number
-  status: string
-  createdTime: string
-  updatedTime: string
+  status: number
+  createdAt: string
+  updatedAt: string | null
 }
