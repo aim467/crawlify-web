@@ -4,4 +4,5 @@ export interface Task {
   status: number
   createdAt: string
   updatedAt: string | null
+  websiteName?: string
 }

@@ -11,6 +11,8 @@ const api = axios.create({
 export interface TaskQuery {
   page: number
   size: number
+  websiteName?: string,
+  status?: number
 }
 
 export interface TaskResponse {
@@ -44,5 +46,9 @@ export const taskApi = {
 
   run(params: { websiteId: number }) {
     return api.post(`/spiderTask/run`, { websiteId: params.websiteId })
+  },
+
+  stop(taskId: number) {
+    return api.get(`/spiderTask/stop`, { params: { taskId } })
   }
 }

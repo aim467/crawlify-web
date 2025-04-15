@@ -4,40 +4,27 @@
     <el-card shadow="never" class="search-card">
       <el-form :model="searchForm" ref="searchFormRef" inline label-position="left" label-width="auto">
         <el-form-item label="任务状态:" prop="status">
-          <el-select v-model="searchForm.status" placeholder="请选择任务状态" clearable>
+          <el-select v-model="searchForm.status" placeholder="请选择任务状态" 
+          style="width: 200px"
+          clearable>
             <el-option label="全部" value="" />
-            <el-option label="运行中" value="运行中" />
-            <el-option label="已完成" value="已完成" />
-            <el-option label="异常" value="异常" />
+            <el-option label="初始化" value="1" />
+            <el-option label="运行中" value="2" />
+            <el-option label="已停止" value="3" />
+            <el-option label="已完成" value="4" />
+            <el-option label="部分完成" value="5" />
           </el-select>
         </el-form-item>
-        <el-form-item label="关联网站:" prop="websiteId">
-          <el-select v-model="searchForm.websiteId" placeholder="请选择关联网站" clearable>
-            <el-option label="全部" value="" />
-            <!-- 这里可以动态加载网站列表 -->
-          </el-select>
+        <el-form-item label="网站名称:" prop="websiteName">
+          <el-input v-model="searchForm.websiteName" placeholder="请输入网站名称" clearable />
         </el-form-item>
+        
         <el-form-item>
           <el-button @click="handleReset">重置</el-button>
           <el-button type="primary" :icon="Search" @click="handleSearch">查询</el-button>
         </el-form-item>
       </el-form>
     </el-card>
-
-    <!-- Stats Cards -->
-    <div class="stats-container">
-      <el-card v-for="stat in taskStats" :key="stat.title" class="stat-card" :class="stat.className" shadow="hover">
-        <div class="stat-content">
-          <el-icon :size="40" class="stat-icon">
-            <component :is="stat.icon" />
-          </el-icon>
-          <div class="stat-info">
-            <div class="stat-title">{{ stat.title }}</div>
-            <div class="stat-count">{{ stat.count }}</div>
-          </div>
-        </div>
-      </el-card>
-    </div>
 
     <!-- Table Section -->
     <el-card shadow="never" class="table-card">
@@ -47,7 +34,6 @@
           爬虫任务列表
         </div>
         <div class="table-actions">
-          <el-button type="primary" :icon="Plus" @click="handleAddTask">新建任务</el-button>
           <el-button :icon="Refresh" circle @click="handleTableRefresh" />
           <el-button :icon="Setting" circle @click="handleTableSettings" />
         </div>
@@ -56,10 +42,15 @@
       <!-- Table -->
       <el-table :data="tableData" style="width: 100%" v-loading="loading" border>
         <el-table-column prop="taskId" label="任务ID" min-width="280" align="center" />
-        <el-table-column prop="websiteId" label="关联网站ID" width="120" align="center" />
+        <el-table-column prop="websiteName" label="关联网站" width="120" align="center" />
         <el-table-column label="开始时间" width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.createdAt) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="更新时间" width="180">
+          <template #default="{ row }">
+            {{ formatDateTime(row.updatedAt) }}
           </template>
         </el-table-column>
         <el-table-column label="运行状态" width="120" align="center">
@@ -69,9 +60,10 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" align="center" fixed="right">
+        <el-table-column label="操作" width="300" align="center" fixed="right">
           <template #default="{ row }">
-            <el-tooltip content="停止" placement="top" v-if="row.status === 1">
+            <!-- 只有当status=1/2 时才显示停止按钮 -->
+            <el-tooltip content="停止" placement="top" v-if="row.status === 1 || row.status === 2">
               <el-button link type="danger" :icon="VideoPlay" @click="handleStop(row)" />
             </el-tooltip>
             <el-tooltip content="查看详情" placement="top">
@@ -103,7 +95,9 @@
 <script lang="ts" setup>
 import { ref, reactive, onMounted } from 'vue';
 import { taskApi } from '../api/task';
+import { websiteApi } from '../api/website';
 import type { Task } from '../types/task';
+import type { Website } from '../types/website';
 import {
   Search,
   Refresh,
@@ -120,11 +114,12 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 const searchFormRef = ref<FormInstance>();
 const searchForm = reactive({
   status: '',
-  websiteId: '',
+  websiteName: '',
 });
 
 const loading = ref(false);
 const tableData = ref<any[]>([]);
+const websiteOptions = ref<{label: string, value: string | number}[]>([]);
 
 const pagination = reactive({
   currentPage: 1,
@@ -142,9 +137,30 @@ const taskStats = ref([
 
 // --- Lifecycle Hooks ---
 onMounted(() => {
+  loadWebsiteOptions();
   fetchData();
   updateTaskStats();
 });
+
+// 加载网站选项列表
+const loadWebsiteOptions = async () => {
+  try {
+    const response = await websiteApi.list({
+      page: 1,
+      size: 100 // 获取足够多的网站数据
+    });
+    
+    if (response && response.records) {
+      websiteOptions.value = response.records.map(website => ({
+        label: website.name,
+        value: website.id
+      }));
+    }
+  } catch (error) {
+    console.error('Failed to load website options:', error);
+    ElMessage.error('加载网站列表失败');
+  }
+};
 
 // --- Methods ---
 const fetchData = async () => {
@@ -153,12 +169,33 @@ const fetchData = async () => {
     const response = await taskApi.list({
       page: pagination.currentPage,
       size: pagination.pageSize,
+      websiteName: searchForm.websiteName,
+      status: searchForm.status,
       // Add any additional query parameters here
     });
     
     // Handle the API response format
     const data = response.data;
-    tableData.value = data.records;
+    
+    // 处理数据，确保websiteName字段存在
+    // 后端可能已经返回了websiteName字段，如果没有，我们需要根据websiteId查找对应的网站名称
+    const tasks = data.records;
+    if (tasks && tasks.length > 0 && !tasks[0].websiteName) {
+      // 如果没有websiteName字段，则需要根据websiteId查找对应的网站名称
+      const websiteMap = new Map();
+      
+      // 从已加载的网站选项中获取网站名称
+      websiteOptions.value.forEach(option => {
+        websiteMap.set(option.value, option.label);
+      });
+      
+      // 为每个任务添加websiteName字段
+      tasks.forEach(task => {
+        task.websiteName = websiteMap.get(task.websiteId) || `未知网站(ID:${task.websiteId})`;
+      });
+    }
+    
+    tableData.value = tasks;
     pagination.total = data.total;
     pagination.currentPage = data.current;
     pagination.pages = data.pages;
@@ -202,13 +239,15 @@ const formatDateTime = (dateTimeStr: string | null) => {
 const getStatusText = (status: number) => {
   switch (status) {
     case 1:
-      return '运行中';
+      return '初始化';
     case 2:
-      return '已完成';
+      return '运行中';
     case 3:
-      return '异常';
-    default:
-      return '未知状态';
+      return '已停止';
+    case 4:
+      return '已完成';
+    case 5:
+      return '部分完成';
   }
 };
 
@@ -216,13 +255,15 @@ const getStatusText = (status: number) => {
 const getStatusType = (status: number) => {
   switch (status) {
     case 1:
-      return 'success';
+      return 'info';
     case 2:
-      return 'info';
+      return 'success';
     case 3:
-      return 'danger';
-    default:
-      return 'info';
+      return 'primary';
+    case 4:
+      return 'success';
+    case 5:
+      return 'warning';
   }
 };
 
@@ -256,10 +297,15 @@ const handleStop = (row: any) => {
     cancelButtonText: '取消',
     type: 'warning',
   })
-    .then(() => {
-      ElMessage.success('任务已停止');
-      // Implement actual stop logic here
-      fetchData();
+    .then(async () => {
+      try {
+        await taskApi.stop(row.taskId);
+        ElMessage.success('任务已停止');
+        fetchData();
+      } catch (error) {
+        console.error('Failed to stop task:', error);
+        ElMessage.error('停止任务失败');
+      }
     })
     .catch(() => {
       ElMessage.info('已取消操作');

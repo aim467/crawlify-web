@@ -39,13 +39,16 @@
         <el-table-column prop="name" label="网站名称" min-width="150" />
         <el-table-column prop="baseUrl" label="基础URL" min-width="200" />
         <el-table-column prop="domain" label="域名" min-width="180" />
-        <el-table-column label="操作" width="150" align="center" fixed="right">
+        <el-table-column label="操作" width="200" align="center" fixed="right">
           <template #default="{ row }">
             <el-tooltip content="编辑" placement="top">
                <el-button link type="primary" :icon="Edit" @click="handleEdit(row)" />
             </el-tooltip>
-             <el-tooltip content="删除" placement="top">
+            <el-tooltip content="删除" placement="top">
                <el-button link type="danger" :icon="Delete" @click="handleDelete(row)" />
+            </el-tooltip>
+            <el-tooltip content="启动采集" placement="top">
+               <el-button link type="success" :icon="VideoPlay" @click="handleStartCrawl(row)" />
             </el-tooltip>
           </template>
         </el-table-column>
@@ -104,6 +107,7 @@ import { ref, reactive } from 'vue';
 import type { FormRules } from 'element-plus';
 import type { Website } from '../types/website';
 import { websiteApi } from '../api/website';
+import { taskApi } from '../api/task';
 import {
   Search,
   Refresh,
@@ -111,6 +115,7 @@ import {
   Setting,
   Edit,
   Delete,
+  VideoPlay,
 } from '@element-plus/icons-vue';
 import type { FormInstance } from 'element-plus';
 import { ElMessage, ElMessageBox } from 'element-plus'; // For delete confirmation
@@ -330,6 +335,20 @@ const handleCurrentChange = (val: number) => {
   console.log(`current page: ${val}`);
   pagination.currentPage = val;
   fetchData();
+};
+
+// 启动采集功能
+const handleStartCrawl = async (row: Website) => {
+  try {
+    loading.value = true;
+    await taskApi.run({ websiteId: row.id });
+    ElMessage.success(`已成功启动对网站 '${row.name}' 的采集任务`);
+  } catch (error) {
+    console.error('Failed to start crawl task:', error);
+    ElMessage.error('启动采集任务失败');
+  } finally {
+    loading.value = false;
+  }
 };
 
 
