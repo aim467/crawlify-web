@@ -50,6 +50,9 @@
             <el-tooltip content="启动采集" placement="top">
                <el-button link type="success" :icon="VideoPlay" @click="handleStartCrawl(row)" />
             </el-tooltip>
+            <el-tooltip content="动态配置" placement="top">
+               <el-button link type="warning" :icon="Setting" @click="handleConfig(row)" />
+            </el-tooltip>
           </template>
         </el-table-column>
       </el-table>
@@ -117,9 +120,12 @@ import {
   Delete,
   VideoPlay,
 } from '@element-plus/icons-vue';
+import { useRouter } from 'vue-router';
 import type { FormInstance } from 'element-plus';
 import { ElMessage, ElMessageBox } from 'element-plus'; // For delete confirmation
 import { onMounted, watch } from 'vue';
+
+const router = useRouter();
 
 onMounted(() => {
   fetchData();
@@ -349,6 +355,11 @@ const handleStartCrawl = async (row: Website) => {
   } finally {
     loading.value = false;
   }
+};
+
+// 跳转到动态配置页面
+const handleConfig = (row: Website) => {
+  router.push(`/website-config?websiteId=${row.id}&websiteName=${encodeURIComponent(row.name)}`);
 };
 
 

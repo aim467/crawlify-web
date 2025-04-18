@@ -4,6 +4,7 @@ import TaskList from '../components/TaskList.vue'
 import WebsiteLinkList from '../components/LinkList.vue'
 import Login from '../views/Login.vue'
 import Demo from '../views/demo.vue'
+import WebsiteConfig from '../views/WebsiteConfig.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -35,6 +36,12 @@ const router = createRouter({
       path: '/demo',
       name: 'demo',
       component: Demo
+    },
+    {
+      path: '/website-config',
+      name: 'website-config',
+      component: WebsiteConfig,
+      meta: { requiresAuth: true }
     }
   ]
 })
