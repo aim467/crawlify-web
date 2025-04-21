@@ -1,4 +1,5 @@
 export interface DynamicConfig {
+  id?: number;
   websiteId: number;
   configId: string;
   configName: string;
@@ -15,4 +16,10 @@ export interface DynamicConfig {
   detailUrlRule: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface TestConfigResponse {
+  code: number;
+  msg: string;
+  data: string[];
 }

@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { DynamicConfig } from '../types/dynamicConfig';
+import type { DynamicConfig, TestConfigResponse } from '../types/dynamicConfig';
 
 const baseURL = 'http://localhost:4444'
 
@@ -24,16 +24,21 @@ export const dynamicConfigApi = {
       };
     }>('/dynamic-config/list', { params });
   },
-  getById: (id: number) => {
-    return request.get<DynamicConfig>(`/dynamic-config/${id}`);
+  getById: (configId: number) => {
+    return request.get<DynamicConfig>(`/dynamic-config/${configId}`);
   },
   save: (data: DynamicConfig) => {
     return request.post<boolean>('/dynamic-config', data);
   },
-  update: (id: number, data: DynamicConfig) => {
-    return request.put<boolean>(`/dynamic-config/${id}`, data);
+  update: (data: DynamicConfig) => {
+    return request.put<boolean>(`/dynamic-config`, data);
   },
-  delete: (id: number) => {
-    return request.delete<boolean>(`/dynamic-config/${id}`);
+  delete: (configId: number) => {
+    return request.delete<boolean>(`/dynamic-config/${configId}`);
+  },
+  testConfig: (configId: string) => {
+    return request.get<TestConfigResponse>('/dynamic-config/test', {
+      params: { configId }
+    });
   }
 };

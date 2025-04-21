@@ -83,7 +83,7 @@
         <el-table-column prop="resultClean" label="结果清洗" min-width="180" show-overflow-tooltip />
         <el-table-column prop="detailUrlRule" label="详情链接" min-width="180" show-overflow-tooltip />
         <el-table-column prop="updatedAt" label="更新时间" min-width="180" />
-        <el-table-column label="操作" width="200" align="center" fixed="right">
+        <el-table-column label="操作" width="250" align="center" fixed="right">
           <template #default="{ row }">
             <el-tooltip content="编辑" placement="top">
               <el-button link type="primary" :icon="Edit" @click="handleEdit(row)" />
@@ -93,6 +93,9 @@
             </el-tooltip>
             <el-tooltip content="应用" placement="top">
               <el-button link type="success" :icon="Check" @click="handleApply(row)" />
+            </el-tooltip>
+            <el-tooltip content="配置测试" placement="top">
+              <el-button link type="warning" :icon="Monitor" @click="handleConfigTest(row)" />
             </el-tooltip>
           </template>
         </el-table-column>
@@ -267,11 +270,31 @@
         </span>
       </template>
     </el-dialog>
+    <!-- 配置测试弹窗 -->
+    <el-dialog v-model="configTestDialogVisible" title="配置测试结果" width="800px">
+      <el-table :data="paginatedTestResults" style="width: 100%" border>
+        <el-table-column prop="" label="测试结果">
+          <template #default="{ $index }">
+            {{ paginatedTestResults[$index] }}
+          </template>
+        </el-table-column>
+      </el-table>
+      <div class="pagination-container">
+        <el-pagination
+          v-model:current-page="testPagination.currentPage"
+          v-model:page-size="testPagination.pageSize"
+          :page-sizes="[10, 20, 50]"
+          :total="testPagination.total"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handleTestSizeChange"
+          @current-change="handleTestCurrentChange" />
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import type { FormRules, FormInstance } from 'element-plus';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { JSONPath } from 'jsonpath-plus';
@@ -287,7 +310,7 @@ import {
   Delete,
   Check,
   Monitor,
-  User,
+  User
 } from '@element-plus/icons-vue';
 import { dynamicConfigApi } from '../api/dynamicConfig';
 import type { DynamicConfig } from '../types/dynamicConfig';
@@ -359,6 +382,26 @@ const dialogVisible = ref(false);
 const isEditMode = ref(false);
 const configFormRef = ref<FormInstance>();
 const currentConfigId = ref<number | null>(null);
+
+// 配置测试相关
+const configTestDialogVisible = ref(false);
+const configTestResults = ref<string[]>([]);
+const testPagination = reactive({
+  currentPage: 1,
+  pageSize: 10,
+  total: 0
+});
+
+const paginatedTestResults = computed(() => {
+  const start = (testPagination.currentPage - 1) * testPagination.pageSize;
+  const end = start + testPagination.pageSize;
+  return configTestResults.value
+    .slice(start, end)
+    .map((item, index) => ({
+      id: start + index + 1,
+      value: item
+    }));
+});
 
 const configForm = reactive<WebsiteConfig>({
   configId: '',
@@ -434,9 +477,6 @@ const handleAddConfig = () => {
   isEditMode.value = false;
   currentConfigId.value = null;
   configForm.websiteId = 0;
-  configForm.configType = '';
-  configForm.description = '';
-  configForm.content = '';
   dialogVisible.value = true;
 };
 
@@ -554,8 +594,8 @@ const formatXmlData = () => {
     // 使用XMLParser格式化XML
     const xmlParser = new XMLParser({
       ignoreAttributes: false,
-      format: true,
-      indentBy: '  '
+      preserveOrder: true,
+      trimValues: true
     });
 
     // 将格式化后的XML设置回表单
@@ -707,10 +747,10 @@ const executeXmlTest = () => {
 
 const handleEdit = async (row: DynamicConfig) => {
   try {
-    const { data } = await dynamicConfigApi.getById(row.id!);
+    const { data } = await dynamicConfigApi.getById(row.configId!);
     Object.assign(configForm, data);
     isEditMode.value = true;
-    currentConfigId.value = row.id;
+    currentConfigId.value = row.configId;
     dialogVisible.value = true;
   } catch (error) {
     ElMessage.error('获取配置详情失败');
@@ -757,6 +797,30 @@ const handleDelete = (row: DynamicConfig) => {
 
 const handleApply = (row: DynamicConfig) => {
   ElMessage.success(`配置 ${row.configName} 已应用`);
+};
+
+const handleConfigTest = async (row: DynamicConfig) => {
+  try {
+    loading.value = true;
+    const { data } = await dynamicConfigApi.testConfig(row.configId);
+    configTestResults.value = data?.data || [];
+    testPagination.total = configTestResults.value.length;
+    testPagination.currentPage = 1;
+    configTestDialogVisible.value = true;
+  } catch (error) {
+    ElMessage.error('配置测试失败');
+  } finally {
+    loading.value = false;
+  }
+};
+
+const handleTestSizeChange = (val: number) => {
+  testPagination.pageSize = val;
+  testPagination.currentPage = 1;
+};
+
+const handleTestCurrentChange = (val: number) => {
+  testPagination.currentPage = val;
 };
 
 // Pagination Handlers
