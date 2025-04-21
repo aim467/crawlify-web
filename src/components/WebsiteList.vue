@@ -359,8 +359,14 @@ const handleStartCrawl = async (row: Website) => {
 
 // 跳转到动态配置页面
 const handleConfig = (row: Website) => {
-  router.push(`/website-config?websiteId=${row.id}&websiteName=${encodeURIComponent(row.name)}`);
-};
+  router.push({
+    name : 'website-config',
+    query: {
+      websiteId: row.id,
+      websiteName: encodeURIComponent(row.name)
+    }
+  }
+)};
 
 
 
