@@ -24,7 +24,7 @@ export const dynamicConfigApi = {
       };
     }>('/dynamic-config/list', { params });
   },
-  getById: (configId: number) => {
+  getById: (configId: string) => {
     return request.get<DynamicConfig>(`/dynamic-config/${configId}`);
   },
   save: (data: DynamicConfig) => {
@@ -33,7 +33,7 @@ export const dynamicConfigApi = {
   update: (data: DynamicConfig) => {
     return request.put<boolean>(`/dynamic-config`, data);
   },
-  delete: (configId: number) => {
+  delete: (configId: string) => {
     return request.delete<boolean>(`/dynamic-config/${configId}`);
   },
   testConfig: (configId: string) => {

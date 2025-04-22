@@ -39,7 +39,6 @@
           <el-button type="warning" @click="handleXmlTest">XML测试</el-button>
           <el-button type="info" @click="handleRegexTest">正则表达式测试</el-button>
           <el-button :icon="Refresh" circle @click="handleTableRefresh" />
-          <el-button :icon="Setting" circle @click="handleTableSettings" />
         </div>
       </div>
 
@@ -82,6 +81,7 @@
         <el-table-column prop="resultListRule" label="列表规则" min-width="180" show-overflow-tooltip />
         <el-table-column prop="resultClean" label="结果清洗" min-width="180" show-overflow-tooltip />
         <el-table-column prop="detailUrlRule" label="详情链接" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="createdAt" label="创建时间" min-width="180" />
         <el-table-column prop="updatedAt" label="更新时间" min-width="180" />
         <el-table-column label="操作" width="250" align="center" fixed="right">
           <template #default="{ row }">
@@ -90,9 +90,6 @@
             </el-tooltip>
             <el-tooltip content="删除" placement="top">
               <el-button link type="danger" :icon="Delete" @click="handleDelete(row)" />
-            </el-tooltip>
-            <el-tooltip content="应用" placement="top">
-              <el-button link type="success" :icon="Check" @click="handleApply(row)" />
             </el-tooltip>
             <el-tooltip content="配置测试" placement="top">
               <el-button link type="warning" :icon="Monitor" @click="handleConfigTest(row)" />
@@ -195,12 +192,12 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="配置名称:" prop="configName">
-              <el-input v-model="configForm.configName" placeholder="请输入配置名称" />
+              <el-input v-model="configForm.configName" placeholder="请输入配置名称，用于标识和区分不同的爬虫配置" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="请求类型:" prop="requestType">
-              <el-select v-model="configForm.requestType" placeholder="请选择请求类型" style="width: 100%">
+              <el-select v-model="configForm.requestType" placeholder="选择请求方式，GET用于直接获取数据，POST用于提交表单数据" style="width: 100%">
                 <el-option label="GET" value="GET" />
                 <el-option label="POST" value="POST" />
               </el-select>
@@ -208,7 +205,7 @@
           </el-col>
           <el-col :span="24">
             <el-form-item label="基础URL:" prop="columnUrl">
-              <el-input v-model="configForm.columnUrl" placeholder="请输入基础URL" />
+              <el-input v-model="configForm.columnUrl" placeholder="输入目标网页的基础URL，例如：https://example.com/list" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -232,17 +229,17 @@
         </el-row>
 
         <el-form-item label="下一页URL:" prop="nextPage">
-          <el-input v-model="configForm.nextPage" placeholder="下一页URL模板，包含占位符<pageNum>" />
+          <el-input v-model="configForm.nextPage" placeholder="下一页的URL模板，使用<pageNum>作为页码占位符，例如：page=<pageNum>" />
         </el-form-item>
 
         <el-form-item label="请求头:" prop="requestHead">
-          <el-input v-model="configForm.requestHead" type="textarea" :rows="3" placeholder="请求头信息，JSON格式字符串" />
+          <el-input v-model="configForm.requestHead" type="textarea" :rows="3" placeholder="请求头信息，JSON格式，可包含User-Agent、Cookie等" />
         </el-form-item>
 
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="结果类型:" prop="resultType">
-              <el-select v-model="configForm.resultType" placeholder="请选择结果类型" style="width: 100%">
+              <el-select v-model="configForm.resultType" placeholder="选择返回数据的格式类型，支持JSON或XML解析" style="width: 100%">
                 <el-option label="JSON" value="json" />
                 <el-option label="XML" value="xml" />
               </el-select>
@@ -250,32 +247,32 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="列表规则:" prop="resultListRule">
-              <el-input v-model="configForm.resultListRule" placeholder="列表获取表达式" />
+              <el-input v-model="configForm.resultListRule" placeholder="数据提取规则，JSON使用JSONPath，XML使用XPath表达式" />
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-form-item label="结果清洗:" prop="resultClean">
-          <el-input v-model="configForm.resultClean" type="textarea" :rows="2" placeholder="结果清洗正则表达式" />
+          <el-input v-model="configForm.resultClean" type="textarea" :rows="2" placeholder="使用正则表达式清洗和格式化提取到的数据" />
         </el-form-item>
 
         <el-form-item label="详情链接:" prop="detailUrlRule">
-          <el-input v-model="configForm.detailUrlRule" placeholder="提取详情页链接规则" />
+          <el-input v-model="configForm.detailUrlRule" placeholder="提取详情页URL的规则，支持JSONPath或XPath表达式" />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
           <el-button type="primary" @click="submitConfigForm">确认</el-button>
-        </span>
+        </span> 
       </template>
     </el-dialog>
     <!-- 配置测试弹窗 -->
     <el-dialog v-model="configTestDialogVisible" title="配置测试结果" width="800px">
       <el-table :data="paginatedTestResults" style="width: 100%" border>
         <el-table-column prop="" label="测试结果">
-          <template #default="{ $index }">
-            {{ paginatedTestResults[$index] }}
+          <template #default="{ row }">
+            {{ row }}
           </template>
         </el-table-column>
       </el-table>
@@ -395,12 +392,7 @@ const testPagination = reactive({
 const paginatedTestResults = computed(() => {
   const start = (testPagination.currentPage - 1) * testPagination.pageSize;
   const end = start + testPagination.pageSize;
-  return configTestResults.value
-    .slice(start, end)
-    .map((item, index) => ({
-      id: start + index + 1,
-      value: item
-    }));
+  return configTestResults.value.slice(start, end);
 });
 
 const configForm = reactive<WebsiteConfig>({
@@ -484,9 +476,7 @@ const handleTableRefresh = () => {
   fetchData();
 };
 
-const handleTableSettings = () => {
-  ElMessage.info('打开表格设置');
-};
+
 
 // JSONPath测试相关方法
 const handleJsonPathTest = () => {
@@ -764,7 +754,7 @@ const submitConfigForm = async () => {
       try {
         configForm.websiteId = Number(websiteId.value);
         if (isEditMode.value && currentConfigId.value) {
-          await dynamicConfigApi.update(currentConfigId.value, configForm);
+          await dynamicConfigApi.update(configForm);
           ElMessage.success('更新成功');
         } else {
           await dynamicConfigApi.save(configForm);
@@ -786,17 +776,13 @@ const handleDelete = (row: DynamicConfig) => {
     type: 'warning',
   }).then(async () => {
     try {
-      await dynamicConfigApi.delete(row.id!);
+      await dynamicConfigApi.delete(row.configId!);
       ElMessage.success('删除成功');
       fetchData();
     } catch (error) {
       ElMessage.error('删除失败');
     }
   }).catch(() => { });
-};
-
-const handleApply = (row: DynamicConfig) => {
-  ElMessage.success(`配置 ${row.configName} 已应用`);
 };
 
 const handleConfigTest = async (row: DynamicConfig) => {
