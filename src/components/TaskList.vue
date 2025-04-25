@@ -243,9 +243,9 @@ const getStatusText = (status: number) => {
     case 2:
       return '运行中';
     case 3:
-      return '已停止';
-    case 4:
       return '已完成';
+    case 4:
+      return '已停止';
     case 5:
       return '部分完成';
   }
@@ -257,13 +257,13 @@ const getStatusType = (status: number) => {
     case 1:
       return 'info';
     case 2:
-      return 'success';
-    case 3:
-      return 'primary';
-    case 4:
-      return 'success';
-    case 5:
       return 'warning';
+    case 3:
+      return 'success';
+    case 4:
+      return 'danger';
+    case 5:
+      return 'primary';
   }
 };
 
