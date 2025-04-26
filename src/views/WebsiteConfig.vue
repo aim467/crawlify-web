@@ -197,7 +197,8 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="请求类型:" prop="requestType">
-              <el-select v-model="configForm.requestType" placeholder="选择请求方式，GET用于直接获取数据，POST用于提交表单数据" style="width: 100%">
+              <el-select v-model="configForm.requestType" placeholder="选择请求方式，GET用于直接获取数据，POST用于提交表单数据"
+                style="width: 100%">
                 <el-option label="GET" value="GET" />
                 <el-option label="POST" value="POST" />
               </el-select>
@@ -233,7 +234,8 @@
         </el-form-item>
 
         <el-form-item label="请求头:" prop="requestHead">
-          <el-input v-model="configForm.requestHead" type="textarea" :rows="3" placeholder="请求头信息，JSON格式，可包含User-Agent、Cookie等" />
+          <el-input v-model="configForm.requestHead" type="textarea" :rows="3"
+            placeholder="请求头信息，JSON格式，可包含User-Agent、Cookie等" />
         </el-form-item>
 
         <el-row :gutter="20">
@@ -263,8 +265,9 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="info" @click="importDialogVisible = true">导入</el-button>
           <el-button type="primary" @click="submitConfigForm">确认</el-button>
-        </span> 
+        </span>
       </template>
     </el-dialog>
     <!-- 配置测试弹窗 -->
@@ -277,15 +280,26 @@
         </el-table-column>
       </el-table>
       <div class="pagination-container">
-        <el-pagination
-          v-model:current-page="testPagination.currentPage"
-          v-model:page-size="testPagination.pageSize"
-          :page-sizes="[10, 20, 50]"
-          :total="testPagination.total"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleTestSizeChange"
-          @current-change="handleTestCurrentChange" />
+        <el-pagination v-model:current-page="testPagination.currentPage" v-model:page-size="testPagination.pageSize"
+          :page-sizes="[10, 20, 50]" :total="testPagination.total" layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handleTestSizeChange" @current-change="handleTestCurrentChange" />
       </div>
+    </el-dialog>
+
+    <!-- 导入命令弹窗 -->
+    <el-dialog v-model="importDialogVisible" title="导入配置" width="600px">
+      <el-form label-width="80px">
+        <el-form-item label="命令:">
+          <el-input v-model="importCommand" type="textarea" :rows="5"
+            placeholder="请输入curl或fetch命令，例如: curl -X GET 'https://example.com/api' -H 'Content-Type: application/json'" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="importDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleImport">导入</el-button>
+        </span>
+      </template>
     </el-dialog>
   </div>
 </template>
@@ -313,7 +327,7 @@ import { dynamicConfigApi } from '../api/dynamicConfig';
 import type { DynamicConfig } from '../types/dynamicConfig';
 import { useRoute } from "vue-router";
 
-const websiteId = ref(); 
+const websiteId = ref();
 const route = useRoute();
 
 // 定义配置类型接口
@@ -376,9 +390,11 @@ const regexResult = ref('');
 
 const loading = ref(false);
 const dialogVisible = ref(false);
+const importDialogVisible = ref(false);
+const importCommand = ref('');
 const isEditMode = ref(false);
 const configFormRef = ref<FormInstance>();
-const currentConfigId = ref<number | null>(null);
+const currentConfigId = ref<string | number | null>(null);
 
 // 配置测试相关
 const configTestDialogVisible = ref(false);
@@ -717,7 +733,7 @@ const executeXmlTest = () => {
 
       // 格式化输出结果
       if (result.length === 1) {
-        xmlResult.value = result[0];
+        xmlResult.value = result[0] || '';
       } else {
         xmlResult.value = JSON.stringify(result, null, 2);
       }
@@ -785,6 +801,196 @@ const handleDelete = (row: DynamicConfig) => {
   }).catch(() => { });
 };
 
+/**
+ * 解析 curl 命令，提取 { url, method, headers, body }
+ */
+ const parseCurlCommand = (command: string) => {
+  // 1. 按空白切块，但保留单/双引号里的整段内容
+  const tokens = command.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) || [];
+
+  let url = '';
+  let method = '';           // 先不默认 GET，方便后面根据 hasData 决定
+  let body = '';
+  let hasData = false;       // 遇到任何 data 参数就标记
+  const headers: Record<string, string> = {};
+
+  // 去除两端引号的 helper
+  const strip = (s: string) => s.replace(/^["']|["']$/g, '');
+
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i];
+
+    // --request 或 -X
+    if (t === '-X' || t === '--request') {
+      method = strip(tokens[++i]).toUpperCase();
+      continue;
+    }
+
+    // headers
+    if (t === '-H' || t === '--header') {
+      const hdr = strip(tokens[++i]);
+      const idx = hdr.indexOf(':');
+      if (idx > -1) {
+        const key = hdr.slice(0, idx).trim();
+        const val = hdr.slice(idx + 1).trim();
+        headers[key] = val;
+      }
+      continue;
+    }
+
+    // 各种 data 参数
+    if (['-d','--data','--data-raw','--data-binary','--data-urlencode'].includes(t)) {
+      hasData = true;
+      body = strip(tokens[++i]);
+      continue;
+    }
+
+    // --url 明确指定
+    if (t === '--url') {
+      url = strip(tokens[++i]);
+      continue;
+    }
+
+    // 也可能直接出现一个 http(s):// 开头的 token
+    if (!t.startsWith('-') && /^https?:\/\//.test(strip(t))) {
+      url = strip(t);
+      continue;
+    }
+  }
+
+  // 如果没通过 -X 指定，就根据有没有 data 自动选 GET/POST
+  if (!method) {
+    method = hasData ? 'POST' : 'GET';
+  }
+
+  return { url, method, headers, body };
+};
+
+
+
+function parseFetchCommand(command: string) {
+  // 1. 提取 URL——匹配 fetch( '...' 或 "..." 或 `...`
+  const urlMatch = command.match(/fetch\s*\(\s*(['"`])([\s\S]*?)\1/);
+  if (!urlMatch) {
+    throw new Error('无法解析 URL');
+  }
+  const url = urlMatch[2];
+
+  // 2. 提取 options 对象字面量
+  const optsMatch = command.match(/fetch\s*\(\s*['"`][\s\S]*?['"`]\s*,\s*({[\s\S]*})\s*\)/);
+  // 初始化默认值
+  let method = 'GET';
+  let headers = {};
+  let body;
+
+  if (optsMatch) {
+    const optsLiteral = optsMatch[1];
+    let opts;
+    try {
+      // 用 eval 将纯对象字面量变为 JS 对象
+      /* eslint-disable no-eval */
+      opts = eval('(' + optsLiteral + ')');
+      /* eslint-enable no-eval */
+    } catch (e) {
+      console.warn('eval 解析 options 失败，将跳过详细解析：', e);
+    }
+
+    if (opts && typeof opts === 'object') {
+      // method
+      if (opts.method) {
+        method = String(opts.method).toUpperCase();
+      }
+      // headers
+      if (opts.headers) {
+        // 如果是浏览器的 Headers 实例
+        if (typeof Headers !== 'undefined' && opts.headers instanceof Headers) {
+          opts.headers.forEach((val, key) => {
+            headers[key] = val;
+          });
+        }
+        // 也支持字面量对象
+        else if (typeof opts.headers === 'object') {
+          headers = { ...opts.headers };
+        }
+      }
+      // body
+      if (opts.body != null) {
+        body = opts.body;
+      }
+    }
+  }
+  return { url, method, headers, body };
+}
+
+const importLoading = ref(false);
+
+const handleImport = async () => {
+  if (!importCommand.value.trim()) {
+    ElMessage.warning('请输入curl或fetch命令');
+    return;
+  }
+
+  importLoading.value = true;
+
+  try {
+    let result;
+    const command = importCommand.value.trim();
+    if (command.startsWith('curl')) {
+      result = parseCurlCommand(command);
+    } else if (command.startsWith('fetch')) {
+      result = parseFetchCommand(command);
+    } else {
+      ElMessage.warning('仅支持curl或fetch命令');
+      return;
+    }
+
+    if (!result) {
+      throw new Error('无法解析命令');
+    }
+
+    // Update form fields
+    configForm.columnUrl = result.url;
+    configForm.nextPage = result.url;
+    configForm.requestType = result.method;
+
+    if (result.headers) {
+      configForm.requestHead = JSON.stringify(result.headers, null, 2);
+      // 将 headers 转换为 a: b 的形式
+      const headers = Object.entries(result.headers).map(([key, value]) => `${key}: ${value}`).join('\n');
+      configForm.requestHead = headers;
+    } else {
+      configForm.requestHead = '';
+    }
+
+    if (result.body) {
+      configForm.requestBody = typeof result.body === 'string' ?
+        result.body :
+        JSON.stringify(result.body, null, 2);
+    } else {
+      configForm.requestBody = '';
+    }
+
+    ElMessage.success({
+      message: '导入成功',
+      duration: 2000
+    });
+
+    // Close dialog after short delay
+    setTimeout(() => {
+      importDialogVisible.value = false;
+    }, 500);
+
+  } catch (error) {
+    console.error('Import error:', error);
+    ElMessage.error({
+      message: `导入失败: ${(error as Error).message}`,
+      duration: 3000
+    });
+  } finally {
+    importLoading.value = false;
+  }
+};
+
 const handleConfigTest = async (row: DynamicConfig) => {
   try {
     loading.value = true;
@@ -828,11 +1034,11 @@ const fetchData = async () => {
       size: pagination.pageSize,
       websiteId: Number(websiteId.value),
     });
-    if (data && data.records) {
-      tableData.value = data.records;
-      pagination.total = data.total || 0;
-      pagination.pageSize = data.size || 10;
-      pagination.currentPage = data.current || 1;
+    if (data?.data?.records) {
+      tableData.value = data.data.records;
+      pagination.total = data.data.total || 0;
+      pagination.pageSize = data.data.size || 10;
+      pagination.currentPage = data.data.current || 1;
     }
   } catch (error) {
     ElMessage.error('获取配置列表失败');
