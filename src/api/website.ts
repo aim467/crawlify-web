@@ -1,12 +1,5 @@
-import axios from 'axios'
-import type { Website } from '../types/website'
-
-const baseURL = 'http://localhost:4444'
-
-const api = axios.create({
-  baseURL,
-  timeout: 5000
-})
+import request from '../utils/request';
+import type { Website } from '../types/website';
 
 export interface WebsiteQuery {
   page: number
@@ -23,23 +16,23 @@ export interface WebsiteResponse {
 
 export const websiteApi = {
   list(query: WebsiteQuery) {
-    return api.get<WebsiteResponse>('/websiteInfo/list', { params: query })
+    return request.get<WebsiteResponse>('/websiteInfo/list', { params: query })
   },
 
   getById(id: number) {
-    // 只能用 res.data.data 拿到数据
-    return api.get<{ data: Website }>(`/websiteInfo/${id}`).then(res => res.data.data);
+    // 假设 request 返回的数据结构与 axios 一致，如果 request 做了处理，这里可能需要调整
+    return request.get<{ data: Website }>(`/websiteInfo/${id}`).then(res => res.data); // 注意：如果 request 拦截器处理了 data 嵌套，这里可能需要改为 res => res
   },
 
   create(website: Omit<Website, 'id'>) {
-    return api.post<Website>('/websiteInfo', website).then(res => res.data);
+    return request.post<Website>('/websiteInfo', website); // 假设 request 返回处理后的 data
   },
 
   update(website: Website) {
-    return api.put<Website>('/websiteInfo', website).then(res => res.data);
+    return request.put<Website>('/websiteInfo', website); // 假设 request 返回处理后的 data
   },
 
   delete(id: number) {
-    return api.delete(`/websiteInfo/${id}`).then(res => res.data);
+    return request.delete(`/websiteInfo/${id}`); // 假设 request 返回处理后的 data
   }
 }

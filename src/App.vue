@@ -53,7 +53,7 @@ const handleLogout = () => {
 }
 
 .sidebar {
-  width: 200px;
+  width: 220px;
   height: 100%;
   background-color: #fff;
   border-right: 1px solid #e5e7eb;

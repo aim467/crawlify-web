@@ -1,11 +1,4 @@
-import axios from 'axios'
-
-const baseURL = 'http://localhost:4444'
-
-const api = axios.create({
-  baseURL,
-  timeout: 5000
-})
+import request from '../utils/request';
 
 export interface WebsiteLink {
   id: number
@@ -32,22 +25,22 @@ export interface WebsiteLinkResponse {
 
 export const websiteLinkApi = {
   list(query: WebsiteLinkQuery) {
-    return api.get<WebsiteLinkResponse>('/websiteLink/list', { params: query })
+    return request.get<WebsiteLinkResponse>('/websiteLink/list', { params: query })
   },
 
   getById(id: number) {
-    return api.get<WebsiteLink>(`/websiteLink/${id}`)
+    return request.get<WebsiteLink>(`/websiteLink/${id}`)
   },
 
   create(link: Omit<WebsiteLink, 'id' | 'createdTime' | 'updatedTime'>) {
-    return api.post<WebsiteLink>('/websiteLink', link)
+    return request.post<WebsiteLink>('/websiteLink', link)
   },
 
   update(link: Partial<WebsiteLink> & { id: number }) {
-    return api.put<WebsiteLink>('/websiteLink', link)
+    return request.put<WebsiteLink>('/websiteLink', link)
   },
 
   delete(id: number) {
-    return api.delete(`/websiteLink/${id}`)
+    return request.delete(`/websiteLink/${id}`)
   }
 }

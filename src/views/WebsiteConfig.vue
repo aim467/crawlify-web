@@ -187,8 +187,13 @@
     </el-dialog>
 
     <!-- 添加/编辑配置弹窗 -->
-    <el-dialog v-model="dialogVisible" :title="isEditMode ? '编辑配置' : '新增配置'" width="800px">
+    <el-dialog v-model="dialogVisible" :title="isEditMode ? '编辑配置' : '新增配置'" width="1000px" style="overflow:visible;">
       <el-form :model="configForm" ref="configFormRef" label-width="100px" :rules="formRules">
+        <!-- 导入命令输入区，集成到表单顶部 -->
+        <el-form-item label="导入命令:" style="margin-bottom: 24px;">
+          <el-input v-model="importCommand" type="textarea" :rows="4" placeholder="请输入curl或fetch命令，例如: curl -X GET 'https://example.com/api' -H 'Content-Type: application/json'" />
+          <el-button type="primary" style="margin-top:8px;" @click="handleImport">导入</el-button>
+        </el-form-item>
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="配置名称:" prop="configName">
@@ -197,8 +202,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="请求类型:" prop="requestType">
-              <el-select v-model="configForm.requestType" placeholder="选择请求方式，GET用于直接获取数据，POST用于提交表单数据"
-                style="width: 100%">
+              <el-select v-model="configForm.requestType" placeholder="选择请求方式，GET用于直接获取数据，POST用于提交表单数据" style="width: 100%">
                 <el-option label="GET" value="GET" />
                 <el-option label="POST" value="POST" />
               </el-select>
@@ -210,12 +214,9 @@
             </el-form-item>
           </el-col>
         </el-row>
-
         <el-form-item label="请求体:" prop="requestBody">
-          <el-input v-model="configForm.requestBody" type="textarea" :rows="3"
-            placeholder="POST请求时的请求体模板，可包含占位符<pageNum>" />
+          <el-input v-model="configForm.requestBody" type="textarea" :rows="3" placeholder="POST请求时的请求体模板，可包含占位符<pageNum>" />
         </el-form-item>
-
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="起始页码:" prop="pageStart">
@@ -228,16 +229,12 @@
             </el-form-item>
           </el-col>
         </el-row>
-
         <el-form-item label="下一页URL:" prop="nextPage">
           <el-input v-model="configForm.nextPage" placeholder="下一页的URL模板，使用<pageNum>作为页码占位符，例如：page=<pageNum>" />
         </el-form-item>
-
         <el-form-item label="请求头:" prop="requestHead">
-          <el-input v-model="configForm.requestHead" type="textarea" :rows="3"
-            placeholder="请求头信息，JSON格式，可包含User-Agent、Cookie等" />
+          <el-input v-model="configForm.requestHead" type="textarea" :rows="3" placeholder="请求头信息，JSON格式，可包含User-Agent、Cookie等" />
         </el-form-item>
-
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="结果类型:" prop="resultType">
@@ -253,11 +250,9 @@
             </el-form-item>
           </el-col>
         </el-row>
-
         <el-form-item label="结果清洗:" prop="resultClean">
           <el-input v-model="configForm.resultClean" type="textarea" :rows="2" placeholder="使用正则表达式清洗和格式化提取到的数据" />
         </el-form-item>
-
         <el-form-item label="详情链接:" prop="detailUrlRule">
           <el-input v-model="configForm.detailUrlRule" placeholder="提取详情页URL的规则，支持JSONPath或XPath表达式" />
         </el-form-item>
@@ -265,7 +260,6 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="info" @click="importDialogVisible = true">导入</el-button>
           <el-button type="primary" @click="submitConfigForm">确认</el-button>
         </span>
       </template>

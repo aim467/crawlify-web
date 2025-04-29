@@ -6,7 +6,7 @@ const router = useRouter()
 const route = useRoute()
 
 const activeMenu = ref(route.path)
-const logoUrl = 'https://ai-public.mastergo.com/ai/img_res/de1e878e5cb64a628cbf9769892cac4b.jpg';
+import logoUrl from '../assets/logo.ico'
 
 const handleSelect = (path: string) => {
   router.push(path)
@@ -17,6 +17,7 @@ const handleSelect = (path: string) => {
   <div class="sidebar-container">
     <div class="logo-container">
       <img :src="logoUrl" alt="Logo" class="logo-image">
+      <h1 class="logo-title">爬虫管理平台</h1>
     </div>
     <el-menu
       :default-active="activeMenu"
@@ -51,6 +52,7 @@ const handleSelect = (path: string) => {
   background-color: #1e293b;
   border-bottom: 1px solid #2d3748;
   display: flex;
+  gap: 12px;
   justify-content: center;
   align-items: center;
 }
@@ -58,6 +60,12 @@ const handleSelect = (path: string) => {
 .logo-image {
   height: 32px;
   width: auto;
+}
+
+.logo-title {
+  color: #e2e8f0;
+  font-size: 1.2rem;
+  font-weight: 500;
 }
 
 .sidebar-menu {

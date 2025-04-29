@@ -18,15 +18,25 @@
 </template>
 
 <script lang="ts" setup>
+import request from '../utils/request';
+import { useAuthStore } from '../store/auth';
+
 const props = defineProps<{
   pageTitle: string;
   userAvatar: string;
 }>();
 
 const emit = defineEmits(['logout']);
+const authStore = useAuthStore();
 
-const handleLogout = () => {
-  emit('logout');
+const handleLogout = async () => {
+  try {
+    await request.post('/logout');
+    authStore.clearToken();
+    emit('logout');
+  } catch (error) {
+    console.error('退出登录失败:', error);
+  }
 };
 </script>
 

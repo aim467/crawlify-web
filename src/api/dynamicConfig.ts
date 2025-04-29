@@ -1,18 +1,9 @@
-import axios from 'axios'
+import service from '../utils/request';
 import type { DynamicConfig, TestConfigResponse } from '../types/dynamicConfig';
-
-const baseURL = 'http://localhost:4444'
-
-const request = axios.create({
-  baseURL,
-  timeout: 5000
-})
-
-
 
 export const dynamicConfigApi = {
   list: (params?: { page?: number; size?: number, websiteId?: number, configName?: string, columnUrl?: string, requestType?: string }) => {
-    return request.get<{
+    return service.get<{
       code: number;
       msg: string;
       data: {
@@ -25,19 +16,19 @@ export const dynamicConfigApi = {
     }>('/dynamic-config/list', { params });
   },
   getById: (configId: string) => {
-    return request.get<DynamicConfig>(`/dynamic-config/${configId}`);
+    return service.get<DynamicConfig>(`/dynamic-config/${configId}`);
   },
   save: (data: DynamicConfig) => {
-    return request.post<boolean>('/dynamic-config', data);
+    return service.post<boolean>('/dynamic-config', data);
   },
   update: (data: DynamicConfig) => {
-    return request.put<boolean>(`/dynamic-config`, data);
+    return service.put<boolean>(`/dynamic-config`, data);
   },
   delete: (configId: string) => {
-    return request.delete<boolean>(`/dynamic-config/${configId}`);
+    return service.delete<boolean>(`/dynamic-config/${configId}`);
   },
   testConfig: (configId: string) => {
-    return request.get<TestConfigResponse>('/dynamic-config/test', {
+    return service.get<TestConfigResponse>('/dynamic-config/test', {
       params: { configId }
     });
   }

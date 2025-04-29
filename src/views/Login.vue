@@ -5,7 +5,7 @@
       <h1 class="platform-title">爬虫管理平台</h1>
     </div>
     <div class="login-card" v-motion :initial="{ opacity: 0, scale: 0.9 }" :enter="{ opacity: 1, scale: 1, transition: { delay: 300 } }">
-      <el-form :model="loginForm" @submit.prevent="handleLogin">
+      <el-form :model="loginForm" @submit.prevent="handleLogin" @keyup.enter="handleLogin">
         <el-form-item>
           <el-input 
             v-model="loginForm.username" 
@@ -27,7 +27,8 @@
             class="login-input"
             :class="{ 'input-focus': activeInput === 'password' }"
             @focus="activeInput = 'password'"
-            @blur="activeInput = ''">
+            @blur="activeInput = ''"
+            @keyup.enter="handleLogin">
             <template #prefix>
               <el-icon><Lock /></el-icon>
             </template>
@@ -50,9 +51,13 @@
 import { ref } from 'vue';
 import { User, Lock } from '@element-plus/icons-vue';
 import { useRouter } from 'vue-router';
+import request from '../utils/request'; // 导入封装的 request 函数
+import { useAuthStore } from '../store/auth'; // 导入 Pinia store
+import { ElMessage } from 'element-plus'; // 导入 ElMessage 用于提示
 
 const emit = defineEmits(['login']);
 const router = useRouter();
+const authStore = useAuthStore(); // 获取 Pinia store 实例
 
 const logoUrl = 'https://ai-public.mastergo.com/ai/img_res/de1e878e5cb64a628cbf9769892cac4b.jpg';
 const loginForm = ref({
@@ -65,8 +70,26 @@ const activeInput = ref('');
 // 用于按钮悬停效果
 const isButtonHover = ref(false);
 
-const handleLogin = () => {
-  router.push('/');
+const handleLogin = async () => {
+  try {
+    // 使用封装的 request 函数发起登录请求
+    const response = await request.post('/login', {
+      username: loginForm.value.username,
+      password: loginForm.value.password
+    });
+    if (response.data && response.data.token) {
+      authStore.setToken(response.data.token); // 存储 token
+      router.push('/'); // 登录成功后跳转到首页
+    } else {
+      // 处理后端未返回 token 的情况
+      ElMessage.error(response.data.message || '登录失败，请检查用户名和密码');
+    }
+  } catch (error: any) {
+    console.error('Login failed:', error);
+    // 处理请求错误，例如网络问题或服务器错误
+    const errorMessage = error.response?.data?.message || '登录请求失败，请稍后重试';
+    ElMessage.error(errorMessage);
+  }
 };
 </script>
 

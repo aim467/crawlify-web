@@ -1,12 +1,5 @@
-import axios from 'axios'
-import type { Task } from '../types/task'
-
-const baseURL = 'http://localhost:4444'
-
-const api = axios.create({
-  baseURL,
-  timeout: 5000
-})
+import service from '../utils/request';
+import type { Task } from '../types/task';
 
 export interface TaskQuery {
   page: number
@@ -25,30 +18,30 @@ export interface TaskResponse {
 
 export const taskApi = {
   list(query: TaskQuery) {
-    return api.get<TaskResponse>('/spiderTask/list', { params: query })
+    return service.get<TaskResponse>('/spiderTask/list', { params: query })
   },
 
   getById(id: number) {
-    return api.get<Task>(`/spiderTask/${id}`)
+    return service.get<Task>(`/spiderTask/${id}`)
   },
 
   create(task: Omit<Task, 'id' | 'createdTime' | 'updatedTime'>) {
-    return api.post<Task>('/spiderTask', task)
+    return service.post<Task>('/spiderTask', task)
   },
 
   update(task: Partial<Task> & { id: number }) {
-    return api.put<Task>('/spiderTask', task)
+    return service.put<Task>('/spiderTask', task)
   },
 
   delete(id: number) {
-    return api.delete(`/spiderTask/${id}`)
+    return service.delete(`/spiderTask/${id}`)
   },
 
   run(params: { websiteId: number }) {
-    return api.post(`/spiderTask/run`, { websiteId: params.websiteId })
+    return service.post(`/spiderTask/run`, { websiteId: params.websiteId })
   },
 
   stop(taskId: number) {
-    return api.get(`/spiderTask/stop`, { params: { taskId } })
+    return service.get(`/spiderTask/stop`, { params: { taskId } })
   }
 }

@@ -3,8 +3,10 @@ import WebsiteList from '../components/WebsiteList.vue'
 import TaskList from '../components/TaskList.vue'
 import WebsiteLinkList from '../components/LinkList.vue'
 import Login from '../views/Login.vue'
-import Demo from '../views/demo.vue'
 import WebsiteConfig from '../views/WebsiteConfig.vue'
+import { useAuthStore } from '../store/auth'; // 导入 Pinia store
+import LoginPage  from "../views/LoginPage.vue";
+
 
 const router = createRouter({
   history: createWebHistory(),
@@ -12,7 +14,7 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: Login
+      component: LoginPage
     },
     {
       path: '/',
@@ -33,11 +35,6 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
-      path: '/demo',
-      name: 'demo',
-      component: Demo
-    },
-    {
       path: '/website-config',
       name: 'website-config',
       component: WebsiteConfig,
@@ -48,15 +45,20 @@ const router = createRouter({
 
 // 路由守卫
 router.beforeEach((to, from, next) => {
-  // const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true'
-  // if (to.meta.requiresAuth && !isAuthenticated) {
-  //   next('/login')
-  // } else if (to.path === '/login' && isAuthenticated) {
-  //   next('/')
-  // } else {
-  // }
-  next()
-})
+  const authStore = useAuthStore(); // 在守卫内部获取 store 实例
+  const isAuthenticated = authStore.isAuthenticated;
+
+  if (to.meta.requiresAuth && !isAuthenticated) {
+    // 如果目标路由需要认证且用户未认证，则重定向到登录页
+    next('/login');
+  } else if (to.path === '/login' && isAuthenticated) {
+    // 如果用户已认证且尝试访问登录页，则重定向到首页
+    next('/');
+  } else {
+    // 其他情况正常放行
+    next();
+  }
+});
 
 
 
