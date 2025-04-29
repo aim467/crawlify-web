@@ -2,10 +2,9 @@ import { createRouter, createWebHistory } from 'vue-router'
 import WebsiteList from '../components/WebsiteList.vue'
 import TaskList from '../components/TaskList.vue'
 import WebsiteLinkList from '../components/LinkList.vue'
-import Login from '../views/Login.vue'
 import WebsiteConfig from '../views/WebsiteConfig.vue'
 import { useAuthStore } from '../store/auth'; // 导入 Pinia store
-import LoginPage  from "../views/LoginPage.vue";
+import Login  from "../views/Login.vue";
 
 
 const router = createRouter({
@@ -14,7 +13,7 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: LoginPage
+      component: Login
     },
     {
       path: '/',
