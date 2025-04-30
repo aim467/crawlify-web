@@ -10,8 +10,8 @@
             <el-option label="全部" value="" />
             <el-option label="初始化" value="1" />
             <el-option label="运行中" value="2" />
-            <el-option label="已停止" value="3" />
-            <el-option label="已完成" value="4" />
+            <el-option label="已完成" value="3" />
+            <el-option label="已停止" value="4" />
             <el-option label="部分完成" value="5" />
           </el-select>
         </el-form-item>
@@ -66,9 +66,6 @@
             <el-tooltip content="停止" placement="top" v-if="row.status === 1 || row.status === 2">
               <el-button link type="danger" :icon="VideoPlay" @click="handleStop(row)" />
             </el-tooltip>
-            <el-tooltip content="查看详情" placement="top">
-              <el-button link type="primary" :icon="View" @click="handleViewDetail(row)" />
-            </el-tooltip>
             <el-tooltip content="删除" placement="top">
               <el-button link type="danger" :icon="Delete" @click="handleDelete(row)" />
             </el-tooltip>
@@ -94,14 +91,11 @@
 
 <script lang="ts" setup>
 import { ref, reactive, onMounted } from 'vue';
-import { taskApi } from '../api/task';
-import { websiteApi } from '../api/website';
-import type { Task } from '../types/task';
-import type { Website } from '../types/website';
+import { taskApi } from '@/api/task';
+import { websiteApi } from '@/api/website';
 import {
   Search,
   Refresh,
-  Plus,
   Setting,
   Delete,
   View,
@@ -113,7 +107,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 // --- State ---
 const searchFormRef = ref<FormInstance>();
 const searchForm = reactive({
-  status: '',
+  status: null,
   websiteName: '',
 });
 
@@ -145,13 +139,14 @@ onMounted(() => {
 // 加载网站选项列表
 const loadWebsiteOptions = async () => {
   try {
-    const response = await websiteApi.list({
+    // response 转换成 WebsiteResponse 类型
+    const { data } = await websiteApi.list({
       page: 1,
       size: 100 // 获取足够多的网站数据
     });
     
-    if (response && response.records) {
-      websiteOptions.value = response.records.map(website => ({
+    if (data && data.records) {
+      websiteOptions.value = data.records.map(website => ({
         label: website.name,
         value: website.id
       }));
@@ -170,8 +165,7 @@ const fetchData = async () => {
       page: pagination.currentPage,
       size: pagination.pageSize,
       websiteName: searchForm.websiteName,
-      status: searchForm.status,
-      // Add any additional query parameters here
+      status: searchForm.status || undefined,
     });
     
     // Handle the API response format
@@ -278,11 +272,6 @@ const handleReset = () => {
   fetchData();
 };
 
-const handleAddTask = () => {
-  ElMessage.info('新建任务功能待实现');
-  // Implement task creation logic here
-};
-
 const handleTableRefresh = () => {
   fetchData();
 };
@@ -310,11 +299,6 @@ const handleStop = (row: any) => {
     .catch(() => {
       ElMessage.info('已取消操作');
     });
-};
-
-const handleViewDetail = (row: any) => {
-  ElMessage.info(`查看任务详情: ${row.taskId}`);
-  // Implement view detail logic here
 };
 
 const handleDelete = (row: any) => {
