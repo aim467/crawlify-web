@@ -4,15 +4,11 @@ import type { DynamicConfig, TestConfigResponse } from '../types/dynamicConfig';
 export const dynamicConfigApi = {
   list: (params?: { page?: number; size?: number, websiteId?: number, configName?: string, columnUrl?: string, requestType?: string }) => {
     return service.get<{
-      code: number;
-      msg: string;
-      data: {
-        records: DynamicConfig[];
-        total: number;
-        size: number;
-        current: number;
-        pages: number;
-      };
+      records: DynamicConfig[];
+      total: number;
+      size: number;
+      current: number;
+      pages: number;
     }>('/dynamic-config/list', { params });
   },
   getById: (configId: string) => {

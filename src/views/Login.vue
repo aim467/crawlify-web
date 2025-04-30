@@ -23,7 +23,7 @@
           <!-- Logo和标题 -->
           <div class="logo-title-container">
             <div class="logo">
-              <img src="../assets/logo.png" alt="Logo" class="logo-image" />
+              <img src="../assets/logo.ico" alt="Logo" class="logo-image" />
             </div>
             <h1 class="title">爬虫管理平台</h1>
           </div>
@@ -104,7 +104,6 @@ const login = async () => {
       username: username.value,
       password: password.value
     });
-
     if (response.data && response.data.token) {
       // 存储 token
       authStore.setToken(response.data.token);

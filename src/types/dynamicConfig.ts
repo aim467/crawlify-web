@@ -19,7 +19,5 @@ export interface DynamicConfig {
 }
 
 export interface TestConfigResponse {
-  code: number;
-  msg: string;
   data: string[];
 }

@@ -265,11 +265,13 @@
       </template>
     </el-dialog>
     <!-- 配置测试弹窗 -->
-    <el-dialog v-model="configTestDialogVisible" title="配置测试结果" width="800px">
+    <el-dialog v-model="configTestDialogVisible" title="配置测试结果" width="900px">
       <el-table :data="paginatedTestResults" style="width: 100%" border>
         <el-table-column prop="" label="测试结果">
           <template #default="{ row }">
-            {{ row }}
+            <el-tooltip :content="row" placement="top" :hide-after="2000">
+              <span>{{ row.length > 100 ? row.substring(0, 100) + '...' : row }}</span>
+            </el-tooltip>
           </template>
         </el-table-column>
       </el-table>
@@ -989,7 +991,7 @@ const handleConfigTest = async (row: DynamicConfig) => {
   try {
     loading.value = true;
     const { data } = await dynamicConfigApi.testConfig(row.configId);
-    configTestResults.value = data?.data || [];
+    configTestResults.value = data || [];
     testPagination.total = configTestResults.value.length;
     testPagination.currentPage = 1;
     configTestDialogVisible.value = true;
@@ -1028,11 +1030,11 @@ const fetchData = async () => {
       size: pagination.pageSize,
       websiteId: Number(websiteId.value),
     });
-    if (data?.data?.records) {
-      tableData.value = data.data.records;
-      pagination.total = data.data.total || 0;
-      pagination.pageSize = data.data.size || 10;
-      pagination.currentPage = data.data.current || 1;
+    if (data?.records) {
+      tableData.value = data.records;
+      pagination.total = data.total || 0;
+      pagination.pageSize = data.size || 10;
+      pagination.currentPage = data.current || 1;
     }
   } catch (error) {
     ElMessage.error('获取配置列表失败');
