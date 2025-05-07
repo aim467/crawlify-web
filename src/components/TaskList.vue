@@ -25,6 +25,23 @@
         </el-form-item>
       </el-form>
     </el-card>
+    
+    <!-- Task Statistics Cards -->
+    <div class="stats-container">
+      <el-card v-for="(stat, index) in taskStats" :key="index" shadow="hover" :class="['stat-card', stat.className]">
+        <div class="stat-content">
+          <div class="stat-icon">
+            <el-icon :size="36" :color="stat.color">
+              <component :is="stat.icon" />
+            </el-icon>
+          </div>
+          <div class="stat-info">
+            <div class="stat-title">{{ stat.title }}</div>
+            <div class="stat-count" :style="{color: stat.color}">{{ stat.count }}</div>
+          </div>
+        </div>
+      </el-card>
+    </div>
 
     <!-- Table Section -->
     <el-card shadow="never" class="table-card">
@@ -41,6 +58,13 @@
 
       <!-- Table -->
       <el-table :data="tableData" style="width: 100%" v-loading="loading" border>
+        <el-table-column label="操作" width="80" align="center" fixed="left">
+          <template #default="{ row }">
+            <el-tooltip content="查看子任务" placement="top">
+              <el-button link type="primary" :icon="View" @click="handleViewSubTasks(row)" />
+            </el-tooltip>
+          </template>
+        </el-table-column>
         <el-table-column prop="taskId" label="任务ID" min-width="280" align="center" />
         <el-table-column prop="websiteName" label="关联网站" width="120" align="center" />
         <el-table-column label="开始时间" width="180">
@@ -73,6 +97,116 @@
         </el-table-column>
       </el-table>
 
+      <!-- 子任务详情弹窗 -->
+      <el-dialog
+        v-model="subTaskDialogVisible"
+        title="子任务详情"
+        width="80%"
+        :destroy-on-close="true"
+        class="subtask-dialog"
+      >
+        <div v-if="currentTask" v-loading="currentTask.subTasksLoading">
+          <div v-if="currentTask.subTasks && currentTask.subTasks.length > 0">
+            <!-- 子任务统计卡片 -->
+            <div class="subtask-stats-container">
+              <el-card shadow="hover" class="subtask-stat-card">
+                <div class="subtask-stat-content">
+                  <div class="subtask-stat-title">子任务总数</div>
+                  <div class="subtask-stat-count">{{ currentTask.subTasks.length }}</div>
+                </div>
+              </el-card>
+              <el-card shadow="hover" class="subtask-stat-card success-stat">
+                <div class="subtask-stat-content">
+                  <div class="subtask-stat-title">已完成</div>
+                  <div class="subtask-stat-count">{{ currentTask.subTasks.filter(task => task.status === 3).length }}</div>
+                </div>
+              </el-card>
+              <el-card shadow="hover" class="subtask-stat-card warning-stat">
+                <div class="subtask-stat-content">
+                  <div class="subtask-stat-title">运行中</div>
+                  <div class="subtask-stat-count">{{ currentTask.subTasks.filter(task => task.status === 2).length }}</div>
+                </div>
+              </el-card>
+              <el-card shadow="hover" class="subtask-stat-card danger-stat">
+                <div class="subtask-stat-content">
+                  <div class="subtask-stat-title">已停止</div>
+                  <div class="subtask-stat-count">{{ currentTask.subTasks.filter(task => task.status === 4).length }}</div>
+                </div>
+              </el-card>
+            </div>
+            
+            <!-- 子任务进度图表 -->
+            <div class="subtask-charts-container">
+              <el-card shadow="hover" class="chart-card">
+                <template #header>
+                  <div class="chart-header">子任务状态分布</div>
+                </template>
+                <div class="chart-content">
+                  <el-progress type="dashboard" :percentage="getSubtaskCompletionRate(currentTask.subTasks)" :color="getProgressColor" :stroke-width="10">
+                    <template #default="{ percentage }">
+                      <span class="progress-value">{{ percentage.toFixed(0) }}%</span>
+                      <span class="progress-label">完成率</span>
+                    </template>
+                  </el-progress>
+                </div>
+              </el-card>
+              
+              <el-card shadow="hover" class="chart-card timeline-card">
+                <template #header>
+                  <div class="chart-header">最近更新的子任务</div>
+                </template>
+                <div class="timeline-content">
+                  <el-timeline>
+                    <el-timeline-item
+                      v-for="(subTask, index) in getRecentSubTasks(currentTask.subTasks)"
+                      :key="index"
+                      :type="getStatusType(subTask.status)"
+                      :timestamp="formatDateTime(subTask.updatedAt || subTask.createdAt)"
+                      :hollow="subTask.status !== 3"
+                    >
+                      <div class="timeline-task-info">
+                        <div class="timeline-task-url">{{ subTask.nodeId }}</div>
+                        <div class="timeline-task-status">
+                          <el-tag size="small" :type="getStatusType(subTask.status)">
+                            {{ getStatusText(subTask.status) }}
+                          </el-tag>
+                        </div>
+                      </div>
+                    </el-timeline-item>
+                  </el-timeline>
+                </div>
+              </el-card>
+            </div>
+            
+            <!-- 子任务表格 -->
+            <el-divider content-position="center">详细子任务列表</el-divider>
+            <el-table :data="currentTask.subTasks" border style="width: 100%">
+              <el-table-column prop="nodeId" label="子任务ID" min-width="280" align="center" />
+              <el-table-column prop="nodeUrl" label="节点URL" min-width="200" align="center" />
+              <el-table-column prop="threadNum" label="线程数" width="100" align="center" />
+              <el-table-column label="状态" width="120" align="center">
+                <template #default="{ row: subTask }">
+                  <el-tag :type="getStatusType(subTask.status)">
+                    {{ getStatusText(subTask.status) }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="创建时间" width="180" align="center">
+                <template #default="{ row: subTask }">
+                  {{ formatDateTime(subTask.createdAt) }}
+                </template>
+              </el-table-column>
+              <el-table-column label="更新时间" width="180" align="center">
+                <template #default="{ row: subTask }">
+                  {{ formatDateTime(subTask.updatedAt) }}
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+          <el-empty v-else description="暂无子任务数据" />
+        </div>
+      </el-dialog>
+
       <!-- Pagination -->
       <div class="pagination-container">
         <el-pagination
@@ -91,6 +225,12 @@
 
 <script lang="ts" setup>
 import { ref, reactive, onMounted } from 'vue';
+
+// 子任务弹窗相关
+const subTaskDialogVisible = ref(false);
+const currentTask = ref<Task | null>(null);
+
+import type { SubTask } from '@/api/task';
 import { taskApi } from '@/api/task';
 import { websiteApi } from '@/api/website';
 import {
@@ -99,7 +239,9 @@ import {
   Setting,
   Delete,
   View,
-  VideoPlay
+  VideoPlay,
+  Check,
+  Warning
 } from '@element-plus/icons-vue';
 import type { FormInstance } from 'element-plus';
 import { ElMessage, ElMessageBox } from 'element-plus';
@@ -112,7 +254,7 @@ const searchForm = reactive({
 });
 
 const loading = ref(false);
-const tableData = ref<any[]>([]);
+const tableData = ref<(Task & { subTasks?: SubTask[], subTasksLoading?: boolean })[]>([]);
 const websiteOptions = ref<{label: string, value: string | number}[]>([]);
 
 const pagination = reactive({
@@ -124,9 +266,9 @@ const pagination = reactive({
 
 // Task statistics
 const taskStats = ref([
-  { title: '运行中任务', count: 0, icon: 'VideoPlay', className: 'running-stat', color: '#67C23A' },
-  { title: '已完成任务', count: 0, icon: 'Check', className: 'completed-stat', color: '#409EFF' },
-  { title: '异常任务', count: 0, icon: 'Warning', className: 'error-stat', color: '#F56C6C' }
+  { title: '运行中任务', count: 0, icon: VideoPlay, className: 'completed-stat', color: '#409EFF' },
+  { title: '已完成任务', count: 0, icon: Check, className: 'running-stat', color: '#67C23A' },
+  { title: '异常任务', count: 0, icon: Warning, className: 'error-stat', color: '#F56C6C' }
 ]);
 
 // --- Lifecycle Hooks ---
@@ -207,9 +349,9 @@ const fetchData = async () => {
 
 const updateTaskStats = () => {
   // Calculate stats based on the numeric status values
-  const runningTasks = tableData.value.filter(task => task.status === 1).length;
-  const completedTasks = tableData.value.filter(task => task.status === 2).length;
-  const errorTasks = tableData.value.filter(task => task.status === 3).length;
+  const runningTasks = tableData.value.filter(task => task.status === 1 || task.status === 2).length;
+  const completedTasks = tableData.value.filter(task => task.status === 3).length;
+  const errorTasks = tableData.value.filter(task => task.status === 4 || task.status === 5).length;
   
   taskStats.value[0].count = runningTasks;
   taskStats.value[1].count = completedTasks;
@@ -278,6 +420,66 @@ const handleTableRefresh = () => {
 
 const handleTableSettings = () => {
   ElMessage.info('表格设置功能待实现');
+};
+
+const handleViewSubTasks = async (row: Task & { subTasks?: SubTask[], subTasksLoading?: boolean }) => {
+  try {
+    row.subTasksLoading = true;
+    const response = await taskApi.getSubTasks(row.taskId);
+    row.subTasks = response.data;
+    currentTask.value = row;
+    subTaskDialogVisible.value = true;
+  } catch (error) {
+    console.error('Failed to fetch subtasks:', error);
+    ElMessage.error('获取子任务列表失败');
+  } finally {
+    row.subTasksLoading = false;
+  }
+};
+
+// 获取子任务完成率
+const getSubtaskCompletionRate = (subTasks: SubTask[]) => {
+  if (!subTasks || subTasks.length === 0) return 0;
+  const completedTasks = subTasks.filter(task => task.status === 3).length;
+  return Math.round((completedTasks / subTasks.length) * 100);
+};
+
+// 获取进度颜色
+const getProgressColor = (percentage: number) => {
+  if (percentage < 30) return '#F56C6C';
+  if (percentage < 70) return '#E6A23C';
+  return '#67C23A';
+};
+
+// 获取最近更新的子任务（最多5个）
+const getRecentSubTasks = (subTasks: SubTask[]) => {
+  if (!subTasks || subTasks.length === 0) return [];
+  
+  // 按更新时间或创建时间排序，取最近的5个
+  return [...subTasks]
+    .sort((a, b) => {
+      const aTime = a.updatedAt || a.createdAt;
+      const bTime = b.updatedAt || b.createdAt;
+      return new Date(bTime).getTime() - new Date(aTime).getTime();
+    })
+    .slice(0, 5);
+};
+
+const getProgressStatus = (status: number): '' | 'success' | 'exception' | 'warning' => {
+  switch (status) {
+    case 1: // 初始化
+      return '';
+    case 2: // 运行中
+      return 'warning';
+    case 3: // 已完成
+      return 'success';
+    case 4: // 已停止
+      return 'exception';
+    case 5: // 部分完成
+      return '';
+    default:
+      return '';
+  }
 };
 
 const handleStop = (row: any) => {
@@ -355,7 +557,6 @@ const handleCurrentChange = (val: number) => {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
-  margin-bottom: 12px;
 }
 
 .stat-card {
@@ -427,6 +628,185 @@ const handleCurrentChange = (val: number) => {
 
 .table-actions .el-button {
   margin-left: 10px;
+}
+
+.subtask-container {
+  padding: 24px;
+  background-color: #f7f8fc; /* Slightly lighter and cooler background */
+  border-radius: 8px; /* Add rounded corners to the container */
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05); /* Inner shadow for depth */
+  max-height: 400px; /* Or any other suitable max-height */
+  overflow-y: auto;
+}
+
+.subtask-container .el-table {
+  margin-bottom: 0;
+}
+
+/* 子任务统计卡片样式 */
+.subtask-stats-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Responsive columns */
+  gap: 16px; /* Increased gap */
+  margin-bottom: 24px;
+}
+
+.subtask-stat-card {
+  border-radius: 10px; /* Slightly more rounded */
+  transition: all 0.25s ease-in-out;
+  border: 1px solid #e9eef3; /* Softer border */
+  background-color: #fff;
+}
+
+.subtask-stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+}
+
+.subtask-stat-content {
+  text-align: center;
+  padding: 16px 12px; /* Increased padding */
+}
+
+.subtask-stat-title {
+  font-size: 13px; /* Slightly smaller for a cleaner look */
+  color: #5f6773;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.subtask-stat-count {
+  font-size: 22px; /* Slightly smaller for balance */
+  font-weight: 600; /* Bolder */
+  color: #2c3e50;
+}
+
+.success-stat {
+  /* background-color: #f0f9eb; */ /* Remove specific background, rely on card default */
+  border-left: 4px solid #67C23A;
+}
+
+.success-stat .subtask-stat-count {
+  color: #67C23A;
+}
+
+.warning-stat {
+  /* background-color: #fdf6ec; */
+  border-left: 4px solid #E6A23C;
+}
+
+.warning-stat .subtask-stat-count {
+  color: #E6A23C;
+}
+
+.danger-stat {
+  /* background-color: #fef0f0; */
+  border-left: 4px solid #F56C6C;
+}
+
+.danger-stat .subtask-stat-count {
+  color: #F56C6C;
+}
+
+/* 图表容器样式 */
+.subtask-charts-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Responsive columns */
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.chart-card {
+  border-radius: 10px;
+  background-color: #fff;
+  border: 1px solid #e9eef3;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.chart-header {
+  font-size: 15px;
+  font-weight: 600;
+  color: #303133;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+.chart-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  min-height: 200px; /* Use min-height */
+}
+
+.progress-value {
+  font-size: 26px;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 4px;
+  color: #303133;
+}
+
+.progress-label {
+  font-size: 13px;
+  color: #767d86;
+}
+
+/* 时间轴样式 */
+.timeline-content {
+  padding: 16px;
+  min-height: 200px; /* Use min-height */
+  max-height: 240px; /* Add max-height for very long lists */
+  overflow-y: auto;
+}
+
+.timeline-content .el-timeline-item__timestamp {
+  font-size: 12px; /* Smaller timestamp */
+}
+
+.timeline-content .el-timeline-item__content {
+  font-size: 13px; /* Adjust content font size */
+}
+
+.timeline-task-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.timeline-task-url {
+  font-size: 13px;
+  color: #303133;
+  word-break: break-all;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.timeline-task-status {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Add gap between tag and progress */
+}
+
+.el-table .el-table__expanded-cell {
+  padding: 0; /* Remove default padding for expanded cell */
+}
+
+.el-table th {
+  background-color: #f5f7fa !important; /* Lighter header for sub-table */
+  font-weight: 500;
+  color: #5f6773;
+}
+
+.el-table td, .el-table th.is-leaf {
+  border-bottom: 1px solid #eef1f6; /* Softer cell borders */
+}
+
+.subtask-container .el-divider__text {
+  font-size: 15px;
+  font-weight: 500;
+  color: #5f6773;
+  background-color: #f7f8fc; /* Match container background */
 }
 
 .pagination-container {
