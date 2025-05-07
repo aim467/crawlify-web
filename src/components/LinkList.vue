@@ -4,6 +4,15 @@
       <el-card shadow="never" class="sidebar-card">
         <div class="sidebar-header">
           <h3>网站列表</h3>
+          <div class="search-input">
+            <el-input
+              v-model="websiteSearchKeyword"
+              placeholder="搜索网站名称"
+              clearable
+              :prefix-icon="Search"
+              @input="handleWebsiteSearch"
+            />
+          </div>
         </div>
         <el-table 
           :data="websiteList" 
@@ -169,15 +178,25 @@
   <el-dialog
     v-model="visiblePreview"
     title="网页预览"
-    width="80%"
+    width="90%"
     :destroy-on-close="true"
     @close="closePreview"
+    class="preview-dialog"
   >
-    <iframe 
-      v-if="previewUrl" 
-      :src="previewUrl" 
-      style="width: 100%; height: 70vh; border: none;"
-    ></iframe>
+    <template #header="{ close, titleId, titleClass }">
+      <div class="preview-dialog-header">
+        <h4 :id="titleId" :class="titleClass">{{ previewUrl }}</h4>
+        <el-button type="primary" link :icon="Link" @click="openInNewTab(previewUrl)">在新标签页打开</el-button>
+      </div>
+    </template>
+    <div class="preview-container" v-loading="iframeLoading">
+      <iframe 
+        v-if="previewUrl" 
+        :src="previewUrl" 
+        style="width: 100%; height: 80vh; border: none;"
+        @load="handleIframeLoad"
+      ></iframe>
+    </div>
   </el-dialog>
   
   <!-- 图片预览 -->
@@ -190,7 +209,7 @@
 
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue';
-import { Refresh, View, Link } from '@element-plus/icons-vue';
+import { Refresh, View, Link, Search } from '@element-plus/icons-vue';
 import { websiteApi } from '../api/website';
 import { websiteLinkApi } from '../api/websiteLink';
 import VueEasyLightbox from 'vue-easy-lightbox';
@@ -215,6 +234,7 @@ const emit = defineEmits(['export', 'viewDetail', 'sizeChange', 'currentChange']
 // Website data and methods
 const selectedWebsite = ref<WebsiteBasic | null>(null);
 const websiteList = ref<WebsiteBasic[]>([]);
+const websiteSearchKeyword = ref('');
 const websiteCurrentPage = ref(1);
 const websitePageSize = ref(10);
 const websiteTotal = ref(0);
@@ -227,7 +247,8 @@ const loadWebsites = async () => {
   try {
     const { data } = await websiteApi.list({
       page: websiteCurrentPage.value,
-      size: websitePageSize.value
+      size: websitePageSize.value,
+      name: websiteSearchKeyword.value
     });
     websiteList.value = data.records;
     websiteTotal.value = data.total;
@@ -239,6 +260,10 @@ const loadWebsites = async () => {
 const handleWebsitePageChange = async (page: number) => {
   websiteCurrentPage.value = page;
   await loadWebsites();
+};
+
+const handleWebsiteSearch = () => {
+  loadWebsites();
 };
 
 onMounted(async () => {
@@ -348,6 +373,7 @@ const visiblePreview = ref(false);
 const previewUrl = ref('');
 const previewImages = ref<string[]>([]);
 const visibleLightbox = ref(false);
+const iframeLoading = ref(true);
 
 // 在新标签页打开链接
 const openInNewTab = (url: string) => {
@@ -358,6 +384,12 @@ const openInNewTab = (url: string) => {
 const previewInCurrentPage = (url: string) => {
   previewUrl.value = url;
   visiblePreview.value = true;
+  iframeLoading.value = true;
+};
+
+// iframe加载完成
+const handleIframeLoad = () => {
+  iframeLoading.value = false;
 };
 
 // 预览图片
@@ -377,7 +409,7 @@ const closePreview = () => {
 .link-list-container {
   padding: 12px;
   background: #f0f2f5;
-  height: 100vh;
+  height: 100%;
   display: flex;
 }
 
@@ -438,6 +470,22 @@ const closePreview = () => {
   color: #1e293b;
   margin: 0;
   padding: 0 16px;
+}
+
+.search-input {
+  padding: 8px 16px 0;
+}
+
+.search-input :deep(.el-input__wrapper) {
+  box-shadow: 0 0 0 1px #e2e8f0;
+}
+
+.search-input :deep(.el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px #94a3b8;
+}
+
+.search-input :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px #3b82f6;
 }
 
 .table-header {
@@ -591,5 +639,71 @@ const closePreview = () => {
 .url-type-9 {
   color: #06b6d4;
   background-color: #cffafe;
+}
+
+
+.preview-dialog {
+  :deep(.el-dialog) {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+  }
+
+  :deep(.el-dialog__header) {
+    margin: 0;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #1a237e 0%, #0d47a1 100%);
+    border-radius: 8px 8px 0 0;
+    border-bottom: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  :deep(.el-dialog__body) {
+    padding: 0;
+    flex: 1;
+    overflow: hidden;
+    background-color: #ffffff;
+    border-radius: 0 0 8px 8px;
+  }
+}
+
+.preview-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+
+  h4 {
+    margin: 0;
+    font-size: 16px;
+    color: #03101d;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  }
+
+  :deep(.el-button) {
+    color: #0b2444;
+    transition: all 0.3s ease;
+    &:hover {
+      color: #4170b1;
+      transform: scale(1.05);
+    }
+  }
+}
+
+.preview-container {
+  position: relative;
+  min-height: 200px;
+  background: #ffffff;
+  border-radius: 0 0 8px 8px;
 }
 </style>

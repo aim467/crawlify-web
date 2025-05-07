@@ -8,6 +8,17 @@ export interface TaskQuery {
   status?: number
 }
 
+export interface SubTask {
+  nodeId: string
+  taskId: string
+  status: number
+  websiteId: number
+  threadNum: string
+  node_url: string
+  createdAt: string
+  updatedAt: string | null
+}
+
 export interface TaskResponse {
   total: number
   records: Task[]
@@ -43,5 +54,9 @@ export const taskApi = {
 
   stop(taskId: number) {
     return service.get(`/spiderTask/stop`, { params: { taskId } })
+  },
+
+  getSubTasks(taskId: string) {
+    return service.get<SubTask[]>(`/taskNode/list?taskId=${taskId}`)
   }
 }
