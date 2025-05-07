@@ -29,7 +29,13 @@ service.interceptors.request.use(
 service.interceptors.response.use(
   (response) => {
     const res = response.data;
-    if (res.code !== 200) {
+    if (res.code === 401) {
+      // 处理未授权错误，例如跳转到登录页
+      const authStore = useAuthStore();
+      authStore.clearToken();
+      router.push('/login');
+      return Promise.reject(new Error(res.message || 'Error'));
+    } else if (res.code !== 200) {
       // 处理业务错误
       return Promise.reject(new Error(res.message || 'Error'));
     }

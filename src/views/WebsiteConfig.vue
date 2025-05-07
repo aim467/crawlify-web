@@ -269,8 +269,16 @@
       <el-table :data="paginatedTestResults" style="width: 100%" border>
         <el-table-column prop="" label="测试结果">
           <template #default="{ row }">
+            <!-- 设置url可以点击访问 -->
             <el-tooltip :content="row" placement="top" :hide-after="2000">
-              <span>{{ row.length > 100 ? row.substring(0, 100) + '...' : row }}</span>
+              <template v-if="isValidUrl(row)">
+                <a :href="row" target="_blank" class="link-text">
+                  {{ row.length > 100 ? row.substring(0, 100) + '...' : row }}
+                </a>
+              </template>
+              <template v-else>
+                <span>{{ row.length > 100 ? row.substring(0, 100) + '...' : row }}</span>
+              </template>
             </el-tooltip>
           </template>
         </el-table-column>
@@ -1020,6 +1028,15 @@ const handleSizeChange = (val: number) => {
 const handleCurrentChange = (val: number) => {
   pagination.currentPage = val;
   fetchData();
+};
+
+const isValidUrl = (url: string) => {
+  try {
+    new URL(url);
+    return true;
+  } catch (e) {
+    return false;
+  }
 };
 
 const fetchData = async () => {
