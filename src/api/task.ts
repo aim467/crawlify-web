@@ -48,8 +48,11 @@ export const taskApi = {
     return service.delete(`/spiderTask/${id}`)
   },
 
-  run(params: { websiteId: number }) {
-    return service.post(`/spiderTask/run`, { websiteId: params.websiteId })
+  run(params: { websiteId: number, threadNum?: number }) {
+    return service.post(`/spiderTask/run`, {
+      websiteId: params.websiteId,
+      threadNum: params.threadNum || 5 // 默认线程数为5
+    })
   },
 
   stop(taskId: number) {

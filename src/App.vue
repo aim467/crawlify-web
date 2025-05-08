@@ -79,4 +79,33 @@ const handleLogout = () => {
   background-color: #ffffff;
   overflow-y: auto;
 }
+
+/* 全局弹窗样式 */
+:root {
+  --el-dialog-padding-primary: 20px;
+}
+
+.el-dialog {
+  border-radius: 4px !important;
+  overflow: hidden !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.el-dialog__header {
+  background-color: #f5f7fa !important;
+  margin: 0 !important;
+  padding: 15px var(--el-dialog-padding-primary) !important;
+  border-bottom: 1px solid #e4e7ed !important;
+  position: relative !important;
+}
+
+.el-dialog__body {
+  padding: var(--el-dialog-padding-primary) !important;
+  background-color: #ffffff !important;
+}
+
+.el-dialog__title {
+  font-weight: 500 !important;
+  color: #303133 !important;
+}
 </style>
