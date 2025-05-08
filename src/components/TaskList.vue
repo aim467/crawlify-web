@@ -539,39 +539,54 @@ const handleCurrentChange = (val: number) => {
 
 <style scoped>
 .task-list-container {
-  padding: 12px;
-  background: #f0f2f5;
-  height: 100%;
+  padding: 16px;
+  background: #f5f7fa;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .search-card {
   background: #ffffff;
-  border: 1px solid #dcdfe6;
-  border-radius: 6px;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
 }
 
 .stats-container {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  gap: 16px;
 }
 
 .stat-card {
   border: none;
-  border-radius: 6px;
-  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.04);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
 
 .stat-content {
   display: flex;
   align-items: center;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.6) 100%);
 }
 
 .stat-icon {
-  margin-right: 16px;
+  margin-right: 20px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .stat-info {
@@ -580,132 +595,153 @@ const handleCurrentChange = (val: number) => {
 }
 
 .stat-title {
-  font-size: 14px;
+  font-size: 15px;
   color: #606266;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  font-weight: 500;
 }
 
 .stat-count {
-  font-size: 24px;
-  font-weight: bold;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.2;
+  background: linear-gradient(45deg, var(--el-color-primary) 0%, var(--el-color-primary-light-3) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .running-stat {
-  background-color: #f0f9eb;
+  background: linear-gradient(135deg, #f0f9eb 0%, #e1f3d8 100%);
 }
 
 .completed-stat {
-  background-color: #ecf5ff;
+  background: linear-gradient(135deg, #ecf5ff 0%, #d9ecff 100%);
 }
 
 .error-stat {
-  background-color: #fef0f0;
+  background: linear-gradient(135deg, #fef0f0 0%, #fde2e2 100%);
 }
 
 .table-card {
   background: #ffffff;
-  border: 1px solid #dcdfe6;
-  border-radius: 6px;
-  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.04);
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   flex-grow: 1;
   display: flex;
   flex-direction: column;
+  transition: all 0.3s ease;
 }
 
 .table-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #ebeef5;
 }
 
 .table-title {
-  font-size: 16px;
-  font-weight: bold;
+  font-size: 18px;
+  font-weight: 600;
   display: flex;
   align-items: center;
+  color: var(--el-color-primary);
 }
 
 .table-actions .el-button {
-  margin-left: 10px;
+  margin-left: 12px;
+  transition: all 0.3s ease;
+}
+
+.table-actions .el-button:hover {
+  transform: scale(1.05);
 }
 
 .subtask-container {
   padding: 24px;
-  background-color: #f7f8fc; /* Slightly lighter and cooler background */
-  border-radius: 8px; /* Add rounded corners to the container */
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05); /* Inner shadow for depth */
-  max-height: 400px; /* Or any other suitable max-height */
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  max-height: 600px;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #909399 #f4f4f5;
+}
+
+.subtask-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.subtask-container::-webkit-scrollbar-track {
+  background: #f4f4f5;
+  border-radius: 3px;
+}
+
+.subtask-container::-webkit-scrollbar-thumb {
+  background: #909399;
+  border-radius: 3px;
 }
 
 .subtask-container .el-table {
   margin-bottom: 0;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-/* 子任务统计卡片样式 */
 .subtask-stats-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Responsive columns */
-  gap: 16px; /* Increased gap */
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
   margin-bottom: 24px;
 }
 
 .subtask-stat-card {
-  border-radius: 10px; /* Slightly more rounded */
-  transition: all 0.25s ease-in-out;
-  border: 1px solid #e9eef3; /* Softer border */
-  background-color: #fff;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  overflow: hidden;
 }
 
 .subtask-stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
 
 .subtask-stat-content {
+  padding: 20px;
   text-align: center;
-  padding: 16px 12px; /* Increased padding */
+  background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.6) 100%);
 }
 
 .subtask-stat-title {
-  font-size: 13px; /* Slightly smaller for a cleaner look */
-  color: #5f6773;
-  margin-bottom: 6px;
+  font-size: 15px;
+  color: #606266;
+  margin-bottom: 8px;
   font-weight: 500;
 }
 
 .subtask-stat-count {
-  font-size: 22px; /* Slightly smaller for balance */
-  font-weight: 600; /* Bolder */
-  color: #2c3e50;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.2;
+  background: linear-gradient(45deg, var(--el-color-primary) 0%, var(--el-color-primary-light-3) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .success-stat {
-  /* background-color: #f0f9eb; */ /* Remove specific background, rely on card default */
-  border-left: 4px solid #67C23A;
-}
-
-.success-stat .subtask-stat-count {
-  color: #67C23A;
+  background: linear-gradient(135deg, #f0f9eb 0%, #e1f3d8 100%);
 }
 
 .warning-stat {
-  /* background-color: #fdf6ec; */
-  border-left: 4px solid #E6A23C;
-}
-
-.warning-stat .subtask-stat-count {
-  color: #E6A23C;
+  background: linear-gradient(135deg, #fdf6ec 0%, #faecd8 100%);
 }
 
 .danger-stat {
-  /* background-color: #fef0f0; */
-  border-left: 4px solid #F56C6C;
-}
-
-.danger-stat .subtask-stat-count {
-  color: #F56C6C;
+  background: linear-gradient(135deg, #fef0f0 0%, #fde2e2 100%);
 }
 
 /* 图表容器样式 */
