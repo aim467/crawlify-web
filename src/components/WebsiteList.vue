@@ -118,7 +118,7 @@
             </el-tooltip>
           </el-form-item>
         </div>
-        
+
         <div class="form-row">
           <el-form-item label="域名:" prop="domain">
             <el-tooltip content="网站的域名，会根据基础URL自动提取" placement="top" effect="light">
@@ -131,7 +131,7 @@
             </el-tooltip>
           </el-form-item>
         </div>
-        
+
         <div class="form-row-full">
           <el-form-item label="请求头:" prop="headers">
             <el-tooltip content="发送请求时使用的HTTP请求头，可以设置User-Agent等信息" placement="top" effect="light">
@@ -139,7 +139,7 @@
             </el-tooltip>
           </el-form-item>
         </div>
-        
+
         <div class="form-row-full">
           <el-form-item label="Cookie:" prop="cookies">
             <el-tooltip content="发送请求时携带的Cookie信息，用于模拟登录状态等" placement="top" effect="light">
@@ -147,7 +147,7 @@
             </el-tooltip>
           </el-form-item>
         </div>
-        
+
         <div class="form-row">
           <el-form-item label="超时时间:" prop="timeOut">
             <el-tooltip content="请求超时时间，单位为秒" placement="top" effect="light">
@@ -160,7 +160,7 @@
             </el-tooltip>
           </el-form-item>
         </div>
-        
+
         <div class="form-row">
           <el-form-item label="循环重试次数:" prop="cycleRetryTimes">
             <el-tooltip content="所有重试失败后的循环重试次数" placement="top" effect="light">
@@ -188,9 +188,9 @@
       <div class="column-settings-container">
         <p class="settings-tip">请选择要显示的列：</p>
         <el-checkbox-group v-model="visibleColumns" class="column-checkbox-group">
-          <el-checkbox 
-            v-for="option in columnOptions" 
-            :key="option.prop" 
+          <el-checkbox
+            v-for="option in columnOptions"
+            :key="option.prop"
             :label="option.prop"
             @change="(val) => columnSettings[option.prop] = val"
           >
@@ -203,6 +203,34 @@
           <el-button @click="resetColumnSettings">重置</el-button>
           <el-button @click="columnSettingsVisible = false">取消</el-button>
           <el-button type="primary" @click="saveColumnSettings">确认</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <!-- 启动任务选项对话框 -->
+    <el-dialog
+      v-model="taskOptionsDialogVisible"
+      title="启动采集任务"
+      width="500px"
+    >
+      <el-form
+        :model="taskOptionsForm"
+        ref="taskOptionsFormRef"
+        label-width="100px"
+        :rules="taskOptionsRules"
+      >
+        <el-form-item label="线程数:" prop="threadNum">
+          <el-tooltip content="设置爬虫任务的线程数，数值越大爬取速度越快，但可能会增加服务器负载" placement="top" effect="light">
+            <el-input-number v-model="taskOptionsForm.threadNum" :min="1" :max="20" placeholder="请输入线程数" />
+          </el-tooltip>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="taskOptionsDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitTaskOptions">
+            确认启动
+          </el-button>
         </span>
       </template>
     </el-dialog>
@@ -294,6 +322,14 @@ const websiteForm = reactive({
 
 const isDomainAutoFilled = ref(false);
 
+// 任务选项对话框相关
+const taskOptionsDialogVisible = ref(false);
+const taskOptionsFormRef = ref<FormInstance>();
+const currentTaskWebsite = ref<Website | null>(null);
+const taskOptionsForm = reactive({
+  threadNum: 5
+});
+
 const formRules = reactive<FormRules>({
   name: [
     { required: true, message: '请输入网站名称', trigger: 'blur' },
@@ -320,6 +356,14 @@ const formRules = reactive<FormRules>({
   ],
   cycleRetryTimes: [
     { type: 'number', min: 0, max: 10, message: '循环重试次数必须在0-10次之间', trigger: 'blur' }
+  ]
+});
+
+// 任务选项表单验证规则
+const taskOptionsRules = reactive<FormRules>({
+  threadNum: [
+    { required: true, message: '请输入线程数', trigger: 'blur' },
+    { type: 'number', min: 1, max: 20, message: '线程数必须在1-20之间', trigger: 'blur' }
   ]
 });
 
@@ -468,7 +512,7 @@ const saveColumnSettings = () => {
   if (!validateColumnSettings()) {
     return;
   }
-  
+
   try {
     localStorage.setItem('websiteTableColumnSettings', JSON.stringify(columnSettings.value));
     columnSettingsVisible.value = false;
@@ -521,7 +565,7 @@ const handleEdit = async (row: Website) => {
     websiteForm.name = data.name;
     websiteForm.baseUrl = data.baseUrl;
     websiteForm.domain = data.domain;
-    
+
     dialogVisible.value = true;
   } catch (error) {
     console.error('Failed to fetch website details:', error);
@@ -534,7 +578,7 @@ const handleEdit = async (row: Website) => {
 const submitWebsiteForm = async () => {
   try {
     await websiteFormRef.value?.validate();
-    
+
     if (isEditMode.value && currentWebsiteId.value) {
       await websiteApi.update({
         id: currentWebsiteId.value,
@@ -545,7 +589,7 @@ const submitWebsiteForm = async () => {
       await websiteApi.create(websiteForm);
       ElMessage.success('网站创建成功');
     }
-    
+
     dialogVisible.value = false;
     fetchData();
   } catch (error) {
@@ -589,18 +633,36 @@ const handleCurrentChange = (val: number) => {
   fetchData();
 };
 
-// 启动采集功能
-const handleStartCrawl = async (row: Website) => {
-  try {
-    loading.value = true;
-    await taskApi.run({ websiteId: row.id });
-    ElMessage.success(`已成功启动对网站 '${row.name}' 的采集任务`);
-  } catch (error) {
-    console.error('Failed to start crawl task:', error);
-    ElMessage.error('启动采集任务失败');
-  } finally {
-    loading.value = false;
-  }
+// 启动采集功能 - 显示选项对话框
+const handleStartCrawl = (row: Website) => {
+  currentTaskWebsite.value = row;
+  taskOptionsForm.threadNum = 2; // 默认线程数
+  taskOptionsDialogVisible.value = true;
+};
+
+// 提交任务选项并启动任务
+const submitTaskOptions = async () => {
+  if (!taskOptionsFormRef.value || !currentTaskWebsite.value) return;
+
+  await taskOptionsFormRef.value.validate(async (valid: boolean) => {
+    if (valid) {
+      try {
+        loading.value = true;
+        // 调用API启动任务，传入线程数
+        await taskApi.run({
+          websiteId: currentTaskWebsite.value.id,
+          threadNum: taskOptionsForm.threadNum
+        });
+        ElMessage.success(`已成功启动对网站 '${currentTaskWebsite.value.name}' 的采集任务`);
+        taskOptionsDialogVisible.value = false;
+      } catch (error) {
+        console.error('Failed to start crawl task:', error);
+        ElMessage.error('启动采集任务失败');
+      } finally {
+        loading.value = false;
+      }
+    }
+  });
 };
 
 // 跳转到动态配置页面
@@ -634,17 +696,15 @@ const handleConfig = (row: Website) => {
   border-radius: 6px;
 }
 
-.search-form {
-  .form-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 16px;
-    
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
+.search-form .form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.search-form .form-row:last-child {
+  margin-bottom: 0;
 }
 
 .el-form--inline .el-form-item {
@@ -708,34 +768,32 @@ const handleConfig = (row: Website) => {
 }
 
 /* 网站表单样式 */
-.website-form {
-  .form-row {
-    display: flex;
-    gap: 20px;
-    margin-bottom: 10px;
-    
-    .el-form-item {
-      flex: 1;
-      margin-bottom: 0;
-    }
-  }
-  
-  .form-row-full {
-    margin-bottom: 10px;
-    
-    .el-form-item {
-      margin-bottom: 0;
-    }
-  }
-  
-  .el-input-number {
-    width: 100%;
-  }
-  
-  .el-tooltip {
-    width: 100%;
-    display: block;
-  }
+.website-form .form-row {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 10px;
+}
+
+.website-form .form-row .el-form-item {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.website-form .form-row-full {
+  margin-bottom: 10px;
+}
+
+.website-form .form-row-full .el-form-item {
+  margin-bottom: 0;
+}
+
+.website-form .el-input-number {
+  width: 100%;
+}
+
+.website-form .el-tooltip {
+  width: 100%;
+  display: block;
 }
 
 /* 表格列设置样式 */
@@ -753,10 +811,10 @@ const handleConfig = (row: Website) => {
   display: flex;
   flex-wrap: wrap;
   gap: 15px;
-  
-  .el-checkbox {
-    margin-right: 0;
-    min-width: 120px;
-  }
+}
+
+.column-checkbox-group .el-checkbox {
+  margin-right: 0;
+  min-width: 120px;
 }
 </style>

@@ -186,7 +186,7 @@
     <template #header="{ close, titleId, titleClass }">
       <div class="preview-dialog-header">
         <h4 :id="titleId" :class="titleClass">{{ previewUrl }}</h4>
-        <el-button type="primary" link :icon="Link" @click="openInNewTab(previewUrl)">在新标签页打开</el-button>
+        <el-button class="open-new-tab" type="primary" link :icon="Link" @click="openInNewTab(previewUrl)">在新标签页打开</el-button>
       </div>
     </template>
     <div class="preview-container" v-loading="iframeLoading">
@@ -705,5 +705,8 @@ const closePreview = () => {
   min-height: 200px;
   background: #ffffff;
   border-radius: 0 0 8px 8px;
+}
+.open-new-tab {
+  margin-right: 20px;
 }
 </style>
