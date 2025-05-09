@@ -707,6 +707,7 @@ const closePreview = () => {
   border-radius: 0 0 8px 8px;
 }
 .open-new-tab {
-  margin-right: 20px;
+  margin-right: 40px;
+  background-color: white !important;
 }
 </style>
