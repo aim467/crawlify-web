@@ -299,9 +299,9 @@ const searchForm = reactive({
   baseUrl: '',
   domain: '',
   charset: '',
-  timeOut: null,
-  retryTimes: null,
-  cycleRetryTimes: null
+  timeOut: null as number | null,
+  retryTimes: null as number | null,
+  cycleRetryTimes: null as number | null
 });
 const loading = ref(false); // For table loading state
 const dialogVisible = ref(false);
@@ -315,9 +315,9 @@ const websiteForm = reactive({
   charset: '',
   headers: '',
   cookies: '',
-  timeOut: 30,
-  retryTimes: 3,
-  cycleRetryTimes: 1
+  timeOut: 5000,
+  retryTimes: 0,
+  cycleRetryTimes: 0
 });
 
 const isDomainAutoFilled = ref(false);
@@ -453,13 +453,23 @@ const columnSettings = ref({
 // 用于复选框组的选中列表
 const visibleColumns = ref<string[]>([]);
 
+// 防止watch循环触发的标志
+const isUpdatingColumns = ref(false);
+
 // 监听columnSettings变化，更新visibleColumns
 watch(
   columnSettings,
   (newSettings) => {
+    if (isUpdatingColumns.value) return;
+    
+    isUpdatingColumns.value = true;
     visibleColumns.value = Object.entries(newSettings)
       .filter(([_, visible]) => visible)
       .map(([prop]) => prop);
+    
+    setTimeout(() => {
+      isUpdatingColumns.value = false;
+    }, 0);
   },
   { immediate: true, deep: true }
 );
@@ -468,6 +478,9 @@ watch(
 watch(
   visibleColumns,
   (newVisibleColumns) => {
+    if (isUpdatingColumns.value) return;
+    
+    isUpdatingColumns.value = true;
     // 先将所有列设置为不可见
     Object.keys(columnSettings.value).forEach(key => {
       columnSettings.value[key] = false;
@@ -476,6 +489,10 @@ watch(
     newVisibleColumns.forEach(prop => {
       columnSettings.value[prop] = true;
     });
+    
+    setTimeout(() => {
+      isUpdatingColumns.value = false;
+    }, 0);
   },
   { deep: true }
 );
