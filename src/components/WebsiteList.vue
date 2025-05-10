@@ -29,7 +29,7 @@
           </el-form-item>
           <el-form-item>
             <el-button @click="handleReset">重置</el-button>
-            <el-button type="primary" :icon="Search" @click="handleSearch">查询</el-button>
+            <el-button type="primary" icon="search" @click="handleSearch">查询</el-button>
           </el-form-item>
         </div>
       </el-form>
@@ -43,9 +43,9 @@
           网站列表
         </div>
         <div class="table-actions">
-          <el-button type="primary" :icon="Plus" @click="handleAddWebsite">新增网站</el-button>
-          <el-button :icon="Refresh" circle @click="handleTableRefresh" />
-          <el-button :icon="Setting" circle @click="handleTableSettings" />
+          <el-button type="primary" icon="plus" @click="handleAddWebsite">新增网站</el-button>
+          <el-button icon="refresh" circle @click="handleTableRefresh" />
+          <el-button icon="setting" circle @click="handleTableSettings" />
         </div>
       </div>
 
@@ -64,16 +64,16 @@
         <el-table-column label="操作" width="200" align="center" fixed="right">
           <template #default="{ row }">
             <el-tooltip content="编辑" placement="top">
-               <el-button link type="primary" :icon="Edit" @click="handleEdit(row)" />
+               <el-button link type="primary" icon="edit" @click="handleEdit(row)" />
             </el-tooltip>
             <el-tooltip content="删除" placement="top">
-               <el-button link type="danger" :icon="Delete" @click="handleDelete(row)" />
+               <el-button link type="danger" icon="delete" @click="handleDelete(row)" />
             </el-tooltip>
             <el-tooltip content="启动采集" placement="top">
-               <el-button link type="success" :icon="VideoPlay" @click="handleStartCrawl(row)" />
+               <el-button link type="success" icon="videoPlay" @click="handleStartCrawl(row)" />
             </el-tooltip>
             <el-tooltip content="动态配置" placement="top">
-               <el-button link type="warning" :icon="Setting" @click="handleConfig(row)" />
+               <el-button link type="warning" icon="setting" @click="handleConfig(row)" />
             </el-tooltip>
           </template>
         </el-table-column>
@@ -243,15 +243,6 @@ import type { FormRules } from 'element-plus';
 import type { Website } from '../types/website';
 import { websiteApi } from '../api/website';
 import { taskApi } from '../api/task';
-import {
-  Search,
-  Refresh,
-  Plus,
-  Setting,
-  Edit,
-  Delete,
-  VideoPlay,
-} from '@element-plus/icons-vue';
 import { useRouter } from 'vue-router';
 import type { FormInstance } from 'element-plus';
 import { ElMessage, ElMessageBox } from 'element-plus'; // For delete confirmation

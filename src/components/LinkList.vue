@@ -9,7 +9,7 @@
               v-model="websiteSearchKeyword"
               placeholder="搜索网站名称"
               clearable
-              :prefix-icon="Search"
+              prefix-icon="search"
               @input="handleWebsiteSearch"
             />
           </div>
@@ -40,7 +40,7 @@
             {{ selectedWebsite ? `${selectedWebsite.name} 的链接` : '请选择网站' }}
           </div>
           <div class="table-actions">
-            <el-button :icon="Refresh" circle @click="handleTableRefresh" />
+            <el-button icon="refresh" circle @click="handleTableRefresh" />
           </div>
         </div>
 
@@ -106,14 +106,14 @@
                   <span class="table-link">{{ row.url }}</span>
                   <div class="url-action-buttons">
                     <el-dropdown v-if="row.urlType === 1" trigger="click">
-                      <el-button type="primary" size="small" :icon="View" circle></el-button>
+                      <el-button type="primary" size="small" icon="view" circle></el-button>
                       <template #dropdown>
                         <el-dropdown-menu>
-                          <el-dropdown-item @click="openInNewTab(row.url)">
-                            <el-icon><Link /></el-icon> 在新标签页打开
+                          <el-dropdown-item icon="link" @click="openInNewTab(row.url)">
+                            在新标签页打开
                           </el-dropdown-item>
-                          <el-dropdown-item @click="previewInCurrentPage(row.url)">
-                            <el-icon><View /></el-icon> 在当前页面预览
+                          <el-dropdown-item icon="view"  @click="previewInCurrentPage(row.url)">
+                            在当前页面预览
                           </el-dropdown-item>
                         </el-dropdown-menu>
                       </template>
@@ -122,7 +122,7 @@
                       v-else-if="row.urlType === 4" 
                       type="primary" 
                       size="small" 
-                      :icon="View" 
+                      icon="view" 
                       circle
                       @click="previewImage(row.url)"
                     ></el-button>
@@ -130,7 +130,7 @@
                       v-else 
                       type="primary" 
                       size="small" 
-                      :icon="Link" 
+                      icon="link" 
                       circle
                       @click="openInNewTab(row.url)"
                     ></el-button>
@@ -186,7 +186,7 @@
     <template #header="{ close, titleId, titleClass }">
       <div class="preview-dialog-header">
         <h4 :id="titleId" :class="titleClass">{{ previewUrl }}</h4>
-        <el-button class="open-new-tab" type="primary" link :icon="Link" @click="openInNewTab(previewUrl)">在新标签页打开</el-button>
+        <el-button class="open-new-tab" type="primary" link icon="link" @click="openInNewTab(previewUrl)">在新标签页打开</el-button>
       </div>
     </template>
     <div class="preview-container" v-loading="iframeLoading">
@@ -209,7 +209,6 @@
 
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue';
-import { Refresh, View, Link, Search } from '@element-plus/icons-vue';
 import { websiteApi } from '../api/website';
 import { websiteLinkApi } from '../api/websiteLink';
 import VueEasyLightbox from 'vue-easy-lightbox';
