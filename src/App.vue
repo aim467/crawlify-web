@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Sidebar from '@/components/Sidebar.vue'
 import Header from '@/components/Header.vue'
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -20,6 +20,26 @@ const handleLogout = () => {
   localStorage.removeItem('isAuthenticated')
   router.push('/login')
 }
+
+// 防止弹窗闪烁
+onMounted(() => {
+  // 添加loading类
+  document.documentElement.classList.add('loading')
+
+  // 页面完全加载后移除loading类
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      document.documentElement.classList.remove('loading')
+    }, 100) // 短暂延迟确保所有资源都已加载
+  })
+
+  // 如果页面已经加载完成，立即移除loading类
+  if (document.readyState === 'complete') {
+    setTimeout(() => {
+      document.documentElement.classList.remove('loading')
+    }, 100)
+  }
+})
 </script>
 
 <template>
@@ -45,6 +65,32 @@ const handleLogout = () => {
 #app {
   width: 100%;
   height: 100vh;
+}
+
+/* 防止弹窗闪烁的全局修复 */
+.v-modal {
+  opacity: 0;
+  transition: opacity 0.3s ease !important;
+}
+
+/* 确保弹窗在初始加载时不可见，直到完全准备好 */
+.el-dialog__wrapper {
+  opacity: 0;
+  visibility: hidden; /* 使用visibility而不是display:none，以便过渡效果能正常工作 */
+  transition: opacity 0.3s ease, visibility 0.3s ease !important;
+}
+
+.el-dialog__wrapper.dialog-fade-enter-active,
+.el-dialog__wrapper.dialog-fade-leave-active,
+.el-dialog__wrapper.dialog-fade-enter-to {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* 添加全局样式，防止页面加载时弹窗闪烁 */
+html.loading .el-dialog__wrapper,
+html.loading .v-modal {
+  display: none !important;
 }
 
 .layout {
@@ -94,7 +140,14 @@ const handleLogout = () => {
 /* 弹窗容器 */
 .el-overlay {
   backdrop-filter: blur(2px);
-  transition: backdrop-filter 0.3s ease;
+  transition: backdrop-filter 0.3s ease, opacity 0.3s ease;
+  opacity: 1;
+}
+
+/* 防止初始渲染时闪烁 */
+.el-overlay-dialog:not(.dialog-fade-enter-active):not(.dialog-fade-leave-active) {
+  animation: none !important;
+  transition: none !important;
 }
 
 .el-dialog {
@@ -102,7 +155,9 @@ const handleLogout = () => {
   overflow: hidden !important;
   box-shadow: var(--el-dialog-shadow) !important;
   border: none !important;
-  transition: transform 0.3s ease, opacity 0.3s ease !important;
+  transform: translateZ(0) !important; /* 启用GPU加速 */
+  -webkit-font-smoothing: antialiased !important; /* 平滑字体 */
+  -moz-osx-font-smoothing: grayscale !important;
 }
 
 /* 不同尺寸的弹窗样式 */
@@ -189,6 +244,9 @@ const handleLogout = () => {
   overflow-y: auto !important;
   overflow-x: hidden !important;
   scrollbar-width: thin !important;
+  /* 添加平滑过渡效果，防止闪烁 */
+  opacity: 1 !important; /* 默认可见，由特定选择器控制隐藏 */
+  transition: opacity 0.2s ease !important;
 }
 
 /* 自定义滚动条样式 */
@@ -271,50 +329,62 @@ const handleLogout = () => {
   gap: 12px !important;
 }
 
-/* 弹窗动画效果 */
-.el-overlay-dialog {
-  animation: fadeIn 0.3s ease-out forwards;
+/* 弹窗动画效果 - 使用transition代替animation避免闪烁 */
+.el-overlay {
+  transition: opacity 0.3s ease, backdrop-filter 0.3s ease !important;
 }
 
 .el-dialog {
-  animation: dialogZoomIn 0.3s ease-out forwards;
-  transform-origin: center;
+  transform-origin: center !important;
+  transition: transform 0.3s ease, opacity 0.3s ease !important;
+  opacity: 1 !important;
+  transform: scale(1) !important;
+  will-change: transform, opacity !important; /* 优化性能 */
+  backface-visibility: hidden !important; /* 防止闪烁 */
+  -webkit-backface-visibility: hidden !important;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+/* 弹窗进入和离开的过渡效果 */
+.dialog-fade-enter-from .el-overlay,
+.dialog-fade-leave-to .el-overlay {
+  opacity: 0 !important;
 }
 
-@keyframes dialogZoomIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+.dialog-fade-enter-from .el-dialog,
+.dialog-fade-leave-to .el-dialog {
+  opacity: 0 !important;
+  transform: scale(0.95) !important;
 }
 
-/* 弹窗关闭动画 */
+/* 确保过渡期间不会有闪烁 */
+.dialog-fade-enter-active,
 .dialog-fade-leave-active {
-  animation: dialogZoomOut 0.2s ease-in forwards !important;
+  transition: all 0.3s ease !important;
+  pointer-events: none !important; /* 过渡期间禁止交互 */
 }
 
-@keyframes dialogZoomOut {
-  from {
-    opacity: 1;
-    transform: scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: scale(0.95);
-  }
+/* 确保弹窗内容在过渡期间不会闪烁 */
+.el-dialog__wrapper {
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: opacity 0.3s ease !important;
+}
+
+/* 防止内容闪烁 */
+.dialog-fade-enter-from .el-dialog__body {
+  opacity: 0 !important;
+}
+
+.dialog-fade-enter-active .el-dialog__body {
+  transition-delay: 0.15s !important; /* 延迟显示内容，等弹窗动画完成 */
+}
+
+/* 确保弹窗在打开前不可见 - 使用visibility而不是display:none */
+.el-dialog__wrapper:not(.dialog-fade-enter-active):not(.dialog-fade-leave-active):not(.dialog-fade-enter-to) {
+  visibility: hidden !important;
+  opacity: 0 !important;
 }
 
 /* 弹窗内表单元素样式优化 */
