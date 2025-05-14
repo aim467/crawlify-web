@@ -5,7 +5,9 @@ export interface TaskQuery {
   page: number
   size: number
   websiteName?: string,
-  status?: number
+  status?: number,
+  startTime?: string,
+  endTime?: string
 }
 
 export interface SubTask {

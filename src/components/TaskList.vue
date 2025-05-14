@@ -18,6 +18,25 @@
         <el-form-item label="网站名称:" prop="websiteName">
           <el-input v-model="searchForm.websiteName" placeholder="请输入网站名称" clearable />
         </el-form-item>
+
+        <el-form-item label="创建时间:" prop="startTime">
+          <el-date-picker
+            v-model="searchForm.startTime"
+            type="datetime"
+            placeholder="选择开始时间"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            style="width: 200px"
+          />
+        </el-form-item>
+        <el-form-item label="至" prop="endTime">
+          <el-date-picker
+            v-model="searchForm.endTime"
+            type="datetime"
+            placeholder="选择结束时间"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            style="width: 200px"
+          />
+        </el-form-item>
         
         <el-form-item>
           <el-button @click="handleReset">重置</el-button>
@@ -225,6 +244,7 @@
 
 <script lang="ts" setup>
 import { ref, reactive, onMounted } from 'vue';
+import type { Task } from '@/types/task';
 
 // 子任务弹窗相关
 const subTaskDialogVisible = ref(false);
@@ -246,6 +266,8 @@ const searchFormRef = ref<FormInstance>();
 const searchForm = reactive({
   status: null,
   websiteName: '',
+  startTime: null,
+  endTime: null,
 });
 
 const loading = ref(false);
@@ -303,6 +325,8 @@ const fetchData = async () => {
       size: pagination.pageSize,
       websiteName: searchForm.websiteName,
       status: searchForm.status || undefined,
+      startTime: searchForm.startTime || undefined,
+      endTime: searchForm.endTime || undefined
     });
     
     // Handle the API response format
