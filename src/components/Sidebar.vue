@@ -42,9 +42,14 @@ const handleSelect = (path: string) => {
 
 <style scoped>
 .sidebar-container {
-  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 240px;
+  height: 100vh;
   background-color: #1e293b;
   border-right: 1px solid #2d3748;
+  z-index: 1000;
 }
 
 .logo-container {
@@ -72,7 +77,23 @@ const handleSelect = (path: string) => {
   border-right: none;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   background-color: #1e293b;
-  height: calc(100% - 65px);
+  height: calc(100vh - 65px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #4a5568 #2d3748;
+}
+
+.sidebar-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-menu::-webkit-scrollbar-track {
+  background: #2d3748;
+}
+
+.sidebar-menu::-webkit-scrollbar-thumb {
+  background-color: #4a5568;
+  border-radius: 3px;
 }
 
 .el-menu-item {

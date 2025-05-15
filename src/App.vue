@@ -98,6 +98,23 @@ html.loading .v-modal {
   height: 100%;
 }
 
+.main-container {
+  flex: 1;
+  margin-left: 240px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background-color: #f8fafc;
+}
+
 .sidebar {
   width: 220px;
   height: 100%;
