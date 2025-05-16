@@ -709,7 +709,7 @@ const toggleExpand = (row: any, field: 'headers' | 'cookies') => {
 .website-list-container {
   padding: 12px;
   background: #f0f2f5;
-  height: 100%;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
 }
