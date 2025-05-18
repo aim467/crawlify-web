@@ -302,7 +302,7 @@ const websiteForm = reactive({
   charset: '',
   headers: '',
   cookies: '',
-  timeOut: 5000,
+  timeOut: 5, // Default to 5 seconds (will be converted to ms in submit)
   retryTimes: 0,
   cycleRetryTimes: 0
 });
@@ -418,7 +418,8 @@ const fetchData = async () => {
     tableData.value = data.records.map(record => ({
       ...record,
       headers: convertToString(record.headers, ': '),
-      cookies: convertToString(record.cookies, '=')
+      cookies: convertToString(record.cookies, '='),
+      timeOut: record.timeOut / 1000
     }));
     pagination.total = data.total;
   } catch (error) {
@@ -437,12 +438,14 @@ const submitWebsiteForm = async () => {
       try {
         const formData = {
           ...websiteForm,
+          timeOut: websiteForm.timeOut * 1000, // Convert seconds to milliseconds
           headers: convertToObject(websiteForm.headers, ': '),
           cookies: convertToObject(websiteForm.cookies, '=')
         };
+        formData.timeOut = formData.timeOut * 1000;
 
         if (isEditMode.value && currentWebsiteId.value) {
-          await websiteApi.update(currentWebsiteId.value, formData);
+          await websiteApi.update(formData);
           ElMessage.success('更新成功');
         } else {
           await websiteApi.create(formData);
@@ -467,6 +470,7 @@ const handleEdit = async (row: Website) => {
     currentWebsiteId.value = row.id;
     Object.assign(websiteForm, {
       ...website,
+      timeOut: website.timeOut / 1000, // Convert milliseconds to seconds for display
       headers: convertToString(website.headers, ': '),
       cookies: convertToString(website.cookies, '=')
     });
