@@ -2,7 +2,8 @@
   <div class="website-list-container">
     <!-- Filter/Search Form -->
     <el-card shadow="never" class="search-card">
-      <el-form :model="searchForm" ref="searchFormRef" inline label-position="left" label-width="auto" class="search-form">
+      <el-form :model="searchForm" ref="searchFormRef" inline label-position="left" label-width="auto"
+        class="search-form">
         <div class="form-row">
           <el-form-item label="网站名称:" prop="name">
             <el-input v-model="searchForm.name" placeholder="请输入网站名称" clearable style="width: 220px" />
@@ -19,17 +20,20 @@
         </div>
         <div class="form-row">
           <el-form-item label="超时时间:" prop="timeOut">
-            <el-input-number v-model="searchForm.timeOut" :min="1" :max="60" placeholder="请输入超时时间(秒)" clearable style="width: 220px" />
+            <el-input-number v-model="searchForm.timeOut" :min="1" :max="60" placeholder="请输入超时时间(秒)" clearable
+              style="width: 220px" />
           </el-form-item>
           <el-form-item label="重试次数:" prop="retryTimes">
-            <el-input-number v-model="searchForm.retryTimes" :min="0" :max="10" placeholder="请输入重试次数" clearable style="width: 220px" />
+            <el-input-number v-model="searchForm.retryTimes" :min="0" :max="10" placeholder="请输入重试次数" clearable
+              style="width: 220px" />
           </el-form-item>
           <el-form-item label="循环重试次数:" prop="cycleRetryTimes">
-            <el-input-number v-model="searchForm.cycleRetryTimes" :min="0" :max="10" placeholder="请输入循环重试次数" clearable style="width: 220px" />
+            <el-input-number v-model="searchForm.cycleRetryTimes" :min="0" :max="10" placeholder="请输入循环重试次数" clearable
+              style="width: 220px" />
           </el-form-item>
           <el-form-item>
             <el-button @click="handleReset">重置</el-button>
-            <el-button type="primary" :icon="Search" @click="handleSearch">查询</el-button>
+            <el-button type="primary" icon="search" @click="handleSearch">查询</el-button>
           </el-form-item>
         </div>
       </el-form>
@@ -43,9 +47,9 @@
           网站列表
         </div>
         <div class="table-actions">
-          <el-button type="primary" :icon="Plus" @click="handleAddWebsite">新增网站</el-button>
-          <el-button :icon="Refresh" circle @click="handleTableRefresh" />
-          <el-button :icon="Setting" circle @click="handleTableSettings" />
+          <el-button type="primary" icon="plus" @click="handleAddWebsite">新增网站</el-button>
+          <el-button icon="refresh" circle @click="handleTableRefresh" />
+          <el-button icon="setting" circle @click="handleTableSettings" />
         </div>
       </div>
 
@@ -56,117 +60,125 @@
         <el-table-column prop="baseUrl" label="基础URL" min-width="200" v-if="columnSettings.baseUrl" />
         <el-table-column prop="domain" label="域名" min-width="180" v-if="columnSettings.domain" />
         <el-table-column prop="charset" label="字符编码" min-width="180" v-if="columnSettings.charset" />
-        <el-table-column prop="headers" label="请求头" min-width="180" v-if="columnSettings.headers" />
-        <el-table-column prop="cookies" label="cookie" min-width="180" v-if="columnSettings.cookies" />
+        <el-table-column prop="headers" label="请求头" min-width="180" v-if="columnSettings.headers">
+          <template #default="{ row }">
+            <el-tooltip :content="row.headers" placement="top" :hide-after="0">
+              <div class="truncated-text" @click="toggleExpand(row, 'headers')">
+                {{ row.isHeadersExpanded ? row.headers : truncateText(row.headers, 50) }}
+              </div>
+            </el-tooltip>
+          </template>
+        </el-table-column>
+        <el-table-column prop="cookies" label="cookie" min-width="180" v-if="columnSettings.cookies">
+          <template #default="{ row }">
+            <el-tooltip :content="row.cookies" placement="top" :hide-after="0">
+              <div class="truncated-text" @click="toggleExpand(row, 'cookies')">
+                {{ row.isCookiesExpanded ? row.cookies : truncateText(row.cookies, 50) }}
+              </div>
+            </el-tooltip>
+          </template>
+        </el-table-column>
         <el-table-column prop="timeOut" label="超时时间" min-width="180" v-if="columnSettings.timeOut" />
         <el-table-column prop="retryTimes" label="重试次数" min-width="180" v-if="columnSettings.retryTimes" />
         <el-table-column prop="cycleRetryTimes" label="循环重试次数" min-width="180" v-if="columnSettings.cycleRetryTimes" />
         <el-table-column label="操作" width="200" align="center" fixed="right">
           <template #default="{ row }">
             <el-tooltip content="编辑" placement="top">
-               <el-button link type="primary" :icon="Edit" @click="handleEdit(row)" />
+              <el-button link type="primary" icon="edit" @click="handleEdit(row)" />
             </el-tooltip>
             <el-tooltip content="删除" placement="top">
-               <el-button link type="danger" :icon="Delete" @click="handleDelete(row)" />
+              <el-button link type="danger" icon="delete" @click="handleDelete(row)" />
             </el-tooltip>
             <el-tooltip content="启动采集" placement="top">
-               <el-button link type="success" :icon="VideoPlay" @click="handleStartCrawl(row)" />
+              <el-button link type="success" icon="videoPlay" @click="handleStartCrawl(row)" />
             </el-tooltip>
             <el-tooltip content="动态配置" placement="top">
-               <el-button link type="warning" :icon="Setting" @click="handleConfig(row)" />
+              <el-button link type="warning" icon="setting" @click="handleConfig(row)" />
             </el-tooltip>
           </template>
         </el-table-column>
       </el-table>
 
       <!-- Pagination -->
-       <div class="pagination-container">
-         <el-pagination
-           v-model:current-page="pagination.currentPage"
-           v-model:page-size="pagination.pageSize"
-           :page-sizes="[10, 20, 50, 100]"
-           :total="pagination.total"
-           layout="total, sizes, prev, pager, next, jumper"
-           @size-change="handleSizeChange"
-           @current-change="handleCurrentChange"
-         />
-       </div>
+      <div class="pagination-container">
+        <el-pagination v-model:current-page="pagination.currentPage" v-model:page-size="pagination.pageSize"
+          :page-sizes="[10, 20, 50, 100]" :total="pagination.total" layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handleSizeChange" @current-change="handleCurrentChange" />
+      </div>
     </el-card>
 
     <!-- Add/Edit Website Dialog -->
-    <el-dialog
-      v-model="dialogVisible"
-      :title="isEditMode ? '编辑网站' : '新增网站'"
-      width="700px"
-    >
-      <el-form
-        :model="websiteForm"
-        ref="websiteFormRef"
-        label-width="100px"
-        :rules="formRules"
-        class="website-form"
-      >
-        <div class="form-row">
-          <el-form-item label="网站名称:" prop="name">
-            <el-tooltip content="网站的名称，用于标识和区分不同的网站" placement="top" effect="light">
-              <el-input v-model="websiteForm.name" placeholder="请输入网站名称，2-50个字符" />
-            </el-tooltip>
-          </el-form-item>
-          <el-form-item label="基础URL:" prop="baseUrl">
-            <el-tooltip content="网站的基础URL，用于构建完整的请求地址" placement="top" effect="light">
-              <el-input v-model="websiteForm.baseUrl" placeholder="请输入基础URL，如https://example.com" />
-            </el-tooltip>
-          </el-form-item>
-        </div>
+    <el-dialog v-model="dialogVisible" :title="isEditMode ? '编辑网站' : '新增网站'" width="90%" class="website-dialog">
+      <el-form :model="websiteForm" ref="websiteFormRef" label-width="120px" :rules="formRules" class="website-form">
+        <div class="form-container">
+          <!-- 左侧基本信息 -->
+          <div class="form-left">
+            <el-form-item label="网站名称:" prop="name">
+              <el-tooltip content="网站的名称，用于标识和区分不同的网站" placement="top" effect="light">
+                <el-input v-model="websiteForm.name" placeholder="请输入网站名称，2-50个字符" style="width: 100%" />
+              </el-tooltip>
+            </el-form-item>
+            <el-form-item label="基础URL:" prop="baseUrl">
+              <el-tooltip content="网站的基础URL，用于构建完整的请求地址" placement="top" effect="light">
+                <el-input v-model="websiteForm.baseUrl" placeholder="请输入基础URL，如https://example.com"
+                  style="width: 100%" />
+              </el-tooltip>
+            </el-form-item>
+            <el-form-item label="域名:" prop="domain">
+              <el-tooltip content="网站的域名，会根据基础URL自动提取" placement="top" effect="light">
+                <el-input v-model="websiteForm.domain" placeholder="请输入域名，如example.com" style="width: 100%" />
+              </el-tooltip>
+            </el-form-item>
+            <el-form-item label="字符编码:" prop="charset">
+              <el-tooltip content="网站使用的字符编码，如UTF-8、GBK等" placement="top" effect="light">
+                <el-input v-model="websiteForm.charset" placeholder="请输入字符编码，如UTF-8" style="width: 100%" />
+              </el-tooltip>
+            </el-form-item>
+            <el-form-item label="超时时间:" prop="timeOut">
+              <el-tooltip content="请求超时时间，单位为秒" placement="top" effect="light">
+                <el-input-number v-model="websiteForm.timeOut" :min="1" :max="60" placeholder="请输入超时时间(秒)"
+                  style="width: 100%" />
+              </el-tooltip>
+            </el-form-item>
+            <el-form-item label="重试次数:" prop="retryTimes">
+              <el-tooltip content="请求失败后的重试次数" placement="top" effect="light">
+                <el-input-number v-model="websiteForm.retryTimes" :min="0" :max="10" placeholder="请输入重试次数"
+                  style="width: 100%" />
+              </el-tooltip>
+            </el-form-item>
+            <el-form-item label="循环重试次数:" prop="cycleRetryTimes">
+              <el-tooltip content="所有重试失败后的循环重试次数" placement="top" effect="light">
+                <el-input-number v-model="websiteForm.cycleRetryTimes" :min="0" :max="10" placeholder="请输入循环重试次数"
+                  style="width: 100%" />
+              </el-tooltip>
+            </el-form-item>
+          </div>
 
-        <div class="form-row">
-          <el-form-item label="域名:" prop="domain">
-            <el-tooltip content="网站的域名，会根据基础URL自动提取" placement="top" effect="light">
-              <el-input v-model="websiteForm.domain" placeholder="请输入域名，如example.com" />
-            </el-tooltip>
-          </el-form-item>
-          <el-form-item label="字符编码:" prop="charset">
-            <el-tooltip content="网站使用的字符编码，如UTF-8、GBK等" placement="top" effect="light">
-              <el-input v-model="websiteForm.charset" placeholder="请输入字符编码，如UTF-8" />
-            </el-tooltip>
-          </el-form-item>
-        </div>
-
-        <div class="form-row-full">
-          <el-form-item label="请求头:" prop="headers">
-            <el-tooltip content="发送请求时使用的HTTP请求头，可以设置User-Agent等信息" placement="top" effect="light">
-              <el-input v-model="websiteForm.headers" type="textarea" placeholder="请输入请求头，格式如：User-Agent: Mozilla/5.0" />
-            </el-tooltip>
-          </el-form-item>
-        </div>
-
-        <div class="form-row-full">
-          <el-form-item label="Cookie:" prop="cookies">
-            <el-tooltip content="发送请求时携带的Cookie信息，用于模拟登录状态等" placement="top" effect="light">
-              <el-input v-model="websiteForm.cookies" type="textarea" placeholder="请输入Cookie，格式如：name=value; name2=value2" />
-            </el-tooltip>
-          </el-form-item>
-        </div>
-
-        <div class="form-row">
-          <el-form-item label="超时时间:" prop="timeOut">
-            <el-tooltip content="请求超时时间，单位为秒" placement="top" effect="light">
-              <el-input-number v-model="websiteForm.timeOut" :min="1" :max="60" placeholder="请输入超时时间(秒)" />
-            </el-tooltip>
-          </el-form-item>
-          <el-form-item label="重试次数:" prop="retryTimes">
-            <el-tooltip content="请求失败后的重试次数" placement="top" effect="light">
-              <el-input-number v-model="websiteForm.retryTimes" :min="0" :max="10" placeholder="请输入重试次数" />
-            </el-tooltip>
-          </el-form-item>
-        </div>
-
-        <div class="form-row">
-          <el-form-item label="循环重试次数:" prop="cycleRetryTimes">
-            <el-tooltip content="所有重试失败后的循环重试次数" placement="top" effect="light">
-              <el-input-number v-model="websiteForm.cycleRetryTimes" :min="0" :max="10" placeholder="请输入循环重试次数" />
-            </el-tooltip>
-          </el-form-item>
+          <!-- 右侧请求头和Cookie -->
+          <div class="form-right">
+            <el-form-item label="请求头:" prop="headers">
+              <el-input v-model="websiteForm.headers" type="textarea" :rows="15"
+                :autosize="{ minRows: 15, maxRows: 20 }" placeholder="请输入请求头，格式如：User-Agent: Mozilla/5.0"
+                resize="vertical">
+                <template #prepend>
+                  <el-tooltip content="发送请求时使用的HTTP请求头，可以设置User-Agent等信息" placement="top" effect="light">
+                    <el-icon><InfoFilled /></el-icon>
+                  </el-tooltip>
+                </template>
+              </el-input>
+            </el-form-item>
+            <el-form-item label="Cookie:" prop="cookies">
+              <el-input v-model="websiteForm.cookies" type="textarea" :rows="15"
+                :autosize="{ minRows: 15, maxRows: 20 }" placeholder="请输入Cookie，格式如：name=value; name2=value2"
+                resize="vertical">
+                <template #prepend>
+                  <el-tooltip content="发送请求时携带的Cookie信息，用于模拟登录状态等" placement="top" effect="light">
+                    <el-icon><InfoFilled /></el-icon>
+                  </el-tooltip>
+                </template>
+              </el-input>
+            </el-form-item>
+          </div>
         </div>
       </el-form>
       <template #footer>
@@ -180,20 +192,12 @@
     </el-dialog>
 
     <!-- 表格列设置对话框 -->
-    <el-dialog
-      v-model="columnSettingsVisible"
-      title="表格列设置"
-      width="500px"
-    >
+    <el-dialog v-model="columnSettingsVisible" title="表格列设置" width="500px">
       <div class="column-settings-container">
         <p class="settings-tip">请选择要显示的列：</p>
         <el-checkbox-group v-model="visibleColumns" class="column-checkbox-group">
-          <el-checkbox
-            v-for="option in columnOptions"
-            :key="option.prop"
-            :label="option.prop"
-            @change="(val) => columnSettings[option.prop] = val"
-          >
+          <el-checkbox v-for="option in columnOptions" :key="option.prop" :label="option.prop"
+            @change="(val) => columnSettings[option.prop] = val">
             {{ option.label }}
           </el-checkbox>
         </el-checkbox-group>
@@ -208,17 +212,8 @@
     </el-dialog>
 
     <!-- 启动任务选项对话框 -->
-    <el-dialog
-      v-model="taskOptionsDialogVisible"
-      title="启动采集任务"
-      width="500px"
-    >
-      <el-form
-        :model="taskOptionsForm"
-        ref="taskOptionsFormRef"
-        label-width="100px"
-        :rules="taskOptionsRules"
-      >
+    <el-dialog v-model="taskOptionsDialogVisible" title="启动采集任务" width="500px">
+      <el-form :model="taskOptionsForm" ref="taskOptionsFormRef" label-width="100px" :rules="taskOptionsRules">
         <el-form-item label="线程数:" prop="threadNum">
           <el-tooltip content="设置爬虫任务的线程数，数值越大爬取速度越快，但可能会增加服务器负载" placement="top" effect="light">
             <el-input-number v-model="taskOptionsForm.threadNum" :min="1" :max="20" placeholder="请输入线程数" />
@@ -243,19 +238,11 @@ import type { FormRules } from 'element-plus';
 import type { Website } from '../types/website';
 import { websiteApi } from '../api/website';
 import { taskApi } from '../api/task';
-import {
-  Search,
-  Refresh,
-  Plus,
-  Setting,
-  Edit,
-  Delete,
-  VideoPlay,
-} from '@element-plus/icons-vue';
 import { useRouter } from 'vue-router';
 import type { FormInstance } from 'element-plus';
 import { ElMessage, ElMessageBox } from 'element-plus'; // For delete confirmation
 import { onMounted, watch } from 'vue';
+import { InfoFilled } from '@element-plus/icons-vue';
 
 const router = useRouter();
 
@@ -299,9 +286,9 @@ const searchForm = reactive({
   baseUrl: '',
   domain: '',
   charset: '',
-  timeOut: null,
-  retryTimes: null,
-  cycleRetryTimes: null
+  timeOut: null as number | null,
+  retryTimes: null as number | null,
+  cycleRetryTimes: null as number | null
 });
 const loading = ref(false); // For table loading state
 const dialogVisible = ref(false);
@@ -315,9 +302,9 @@ const websiteForm = reactive({
   charset: '',
   headers: '',
   cookies: '',
-  timeOut: 30,
-  retryTimes: 3,
-  cycleRetryTimes: 1
+  timeOut: 5, // Default to 5 seconds (will be converted to ms in submit)
+  retryTimes: 0,
+  cycleRetryTimes: 0
 });
 
 const isDomainAutoFilled = ref(false);
@@ -337,13 +324,17 @@ const formRules = reactive<FormRules>({
   ],
   baseUrl: [
     { required: true, message: '请输入基础URL', trigger: 'blur' },
-    { pattern: /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/ \w \.-]*)*\/?$/,
-      message: '请输入有效的URL', trigger: 'blur' }
+    {
+      pattern: /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/ \w \.-]*)*\/?$/,
+      message: '请输入有效的URL', trigger: 'blur'
+    }
   ],
   domain: [
     { required: true, message: '请输入域名', trigger: 'blur' },
-    { pattern: /^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/,
-      message: '请输入有效的域名', trigger: 'blur' }
+    {
+      pattern: /^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/,
+      message: '请输入有效的域名', trigger: 'blur'
+    }
   ],
   charset: [
     { pattern: /^[a-zA-Z0-9-]+$/, message: '请输入有效的字符编码', trigger: 'blur' }
@@ -386,6 +377,29 @@ const pagination = reactive({
 });
 
 // --- Methods ---
+// 工具函数：将字符串格式转换为对象格式
+const convertToObject = (str: string, separator: string) => {
+  if (!str) return {};
+  const result = {};
+  str.split('\n')
+    .filter(line => line.trim())
+    .forEach(line => {
+      const [key, value] = line.split(separator).map(item => item.trim());
+      if (key && value) {
+        result[key] = value;
+      }
+    });
+  return result;
+};
+
+// 工具函数：将对象格式转换为字符串格式
+const convertToString = (obj: Record<string, string>, separator: string) => {
+  if (!obj || typeof obj !== 'object') return '';
+  return Object.entries(obj)
+    .map(([key, value]) => `${key}${separator}${value}`)
+    .join('\n');
+};
+
 const fetchData = async () => {
   try {
     loading.value = true;
@@ -400,7 +414,13 @@ const fetchData = async () => {
       retryTimes: searchForm.retryTimes,
       cycleRetryTimes: searchForm.cycleRetryTimes
     });
-    tableData.value = data.records;
+    // 转换后端返回的数据格式
+    tableData.value = data.records.map(record => ({
+      ...record,
+      headers: convertToString(record.headers, ': '),
+      cookies: convertToString(record.cookies, '='),
+      timeOut: record.timeOut / 1000
+    }));
     pagination.total = data.total;
   } catch (error) {
     ElMessage.error('获取网站列表失败');
@@ -409,11 +429,62 @@ const fetchData = async () => {
   }
 };
 
+// 修改submitWebsiteForm函数
+const submitWebsiteForm = async () => {
+  if (!websiteFormRef.value) return;
+
+  await websiteFormRef.value.validate(async (valid) => {
+    if (valid) {
+      try {
+        const formData = {
+          ...websiteForm,
+          timeOut: websiteForm.timeOut * 1000, // Convert seconds to milliseconds
+          headers: convertToObject(websiteForm.headers, ': '),
+          cookies: convertToObject(websiteForm.cookies, '=')
+        };
+        formData.timeOut = formData.timeOut * 1000;
+
+        if (isEditMode.value && currentWebsiteId.value) {
+          await websiteApi.update(formData);
+          ElMessage.success('更新成功');
+        } else {
+          await websiteApi.create(formData);
+          ElMessage.success('创建成功');
+        }
+
+        dialogVisible.value = false;
+        fetchData();
+      } catch (error) {
+        ElMessage.error(isEditMode.value ? '更新失败' : '创建失败');
+      }
+    }
+  });
+};
+
+// 修改handleEdit函数
+const handleEdit = async (row: Website) => {
+  try {
+    loading.value = true;
+    const website = await websiteApi.getById(row.id);
+    isEditMode.value = true;
+    currentWebsiteId.value = row.id;
+    Object.assign(websiteForm, {
+      ...website,
+      timeOut: website.timeOut / 1000, // Convert milliseconds to seconds for display
+      headers: convertToString(website.headers, ': '),
+      cookies: convertToString(website.cookies, '=')
+    });
+    dialogVisible.value = true;
+  } catch (error) {
+    ElMessage.error('获取网站信息失败');
+  } finally {
+    loading.value = false;
+  }
+};
 const handleSearch = () => {
   pagination.currentPage = 1; // Reset to first page on search
   fetchData(); // Call API or filter local data
 };
-
 const handleReset = () => {
   searchFormRef.value?.resetFields();
   // Reset status specifically if not handled by resetFields or if you want a different default
@@ -429,13 +500,10 @@ const handleAddWebsite = () => {
   isDomainAutoFilled.value = false;
   dialogVisible.value = true;
 };
-
 const handleTableRefresh = () => {
   console.log('Table Refresh clicked');
   fetchData(); // Re-fetch data
 };
-
-// 表格列设置相关状态
 const columnSettingsVisible = ref(false);
 const columnSettings = ref({
   id: true,
@@ -449,25 +517,30 @@ const columnSettings = ref({
   retryTimes: true,
   cycleRetryTimes: true
 });
-
-// 用于复选框组的选中列表
 const visibleColumns = ref<string[]>([]);
-
-// 监听columnSettings变化，更新visibleColumns
+const isUpdatingColumns = ref(false);
 watch(
   columnSettings,
   (newSettings) => {
+    if (isUpdatingColumns.value) return;
+
+    isUpdatingColumns.value = true;
     visibleColumns.value = Object.entries(newSettings)
       .filter(([_, visible]) => visible)
       .map(([prop]) => prop);
+
+    setTimeout(() => {
+      isUpdatingColumns.value = false;
+    }, 0);
   },
   { immediate: true, deep: true }
 );
-
-// 监听visibleColumns变化，更新columnSettings
 watch(
   visibleColumns,
   (newVisibleColumns) => {
+    if (isUpdatingColumns.value) return;
+
+    isUpdatingColumns.value = true;
     // 先将所有列设置为不可见
     Object.keys(columnSettings.value).forEach(key => {
       columnSettings.value[key] = false;
@@ -476,11 +549,13 @@ watch(
     newVisibleColumns.forEach(prop => {
       columnSettings.value[prop] = true;
     });
+
+    setTimeout(() => {
+      isUpdatingColumns.value = false;
+    }, 0);
   },
   { deep: true }
 );
-
-// 表格列配置选项
 const columnOptions = [
   { label: 'ID', prop: 'id' },
   { label: '网站名称', prop: 'name' },
@@ -493,8 +568,6 @@ const columnOptions = [
   { label: '重试次数', prop: 'retryTimes' },
   { label: '循环重试次数', prop: 'cycleRetryTimes' }
 ];
-
-// 初始化表格列设置
 const initColumnSettings = () => {
   try {
     const savedSettings = localStorage.getItem('websiteTableColumnSettings');
@@ -505,8 +578,6 @@ const initColumnSettings = () => {
     console.error('Failed to load column settings:', error);
   }
 };
-
-// 保存表格列设置
 const saveColumnSettings = () => {
   // 先验证设置
   if (!validateColumnSettings()) {
@@ -522,8 +593,6 @@ const saveColumnSettings = () => {
     ElMessage.error('保存设置失败');
   }
 };
-
-// 重置表格列设置
 const resetColumnSettings = () => {
   columnOptions.forEach(option => {
     columnSettings.value[option.prop] = true;
@@ -532,8 +601,6 @@ const resetColumnSettings = () => {
   visibleColumns.value = columnOptions.map(option => option.prop);
   ElMessage.success('已重置为默认设置');
 };
-
-// 保存前验证设置
 const validateColumnSettings = () => {
   // 确保至少选择了ID和网站名称列
   if (!columnSettings.value.id || !columnSettings.value.name) {
@@ -551,53 +618,9 @@ const validateColumnSettings = () => {
   }
   return true;
 };
-
 const handleTableSettings = () => {
   columnSettingsVisible.value = true;
 };
-
-const handleEdit = async (row: Website) => {
-  try {
-    isEditMode.value = true;
-    currentWebsiteId.value = row.id;
-    loading.value = true;
-    const data = await websiteApi.getById(row.id);
-    websiteForm.name = data.name;
-    websiteForm.baseUrl = data.baseUrl;
-    websiteForm.domain = data.domain;
-
-    dialogVisible.value = true;
-  } catch (error) {
-    console.error('Failed to fetch website details:', error);
-    ElMessage.error('获取网站详情失败');
-  } finally {
-    loading.value = false;
-  }
-};
-
-const submitWebsiteForm = async () => {
-  try {
-    await websiteFormRef.value?.validate();
-
-    if (isEditMode.value && currentWebsiteId.value) {
-      await websiteApi.update({
-        id: currentWebsiteId.value,
-        ...websiteForm
-      });
-      ElMessage.success('网站更新成功');
-    } else {
-      await websiteApi.create(websiteForm);
-      ElMessage.success('网站创建成功');
-    }
-
-    dialogVisible.value = false;
-    fetchData();
-  } catch (error) {
-    console.error('Failed to submit website form:', error);
-    ElMessage.error('操作失败');
-  }
-};
-
 const handleDelete = (row: Website) => {
   ElMessageBox.confirm(`确定要删除网站 '${row.name}' 吗?`, '警告', {
     confirmButtonText: '确定删除',
@@ -618,28 +641,23 @@ const handleDelete = (row: Website) => {
       ElMessage({ type: 'info', message: '已取消删除' });
     });
 };
-
-// Pagination Handlers
 const handleSizeChange = (val: number) => {
   console.log(`${val} items per page`);
   pagination.pageSize = val;
   pagination.currentPage = 1; // Go to first page when size changes
   fetchData();
 };
-
 const handleCurrentChange = (val: number) => {
   console.log(`current page: ${val}`);
   pagination.currentPage = val;
   fetchData();
 };
-
 // 启动采集功能 - 显示选项对话框
 const handleStartCrawl = (row: Website) => {
   currentTaskWebsite.value = row;
   taskOptionsForm.threadNum = 2; // 默认线程数
   taskOptionsDialogVisible.value = true;
 };
-
 // 提交任务选项并启动任务
 const submitTaskOptions = async () => {
   if (!taskOptionsFormRef.value || !currentTaskWebsite.value) return;
@@ -664,27 +682,38 @@ const submitTaskOptions = async () => {
     }
   });
 };
-
 // 跳转到动态配置页面
 const handleConfig = (row: Website) => {
   router.push({
-    name : 'website-config',
+    name: 'website-config',
     query: {
       websiteId: row.id,
       websiteName: encodeURIComponent(row.name)
     }
   }
-)};
+  )
+};
 
+// 在script部分添加以下方法
+const truncateText = (text: string, maxLength: number) => {
+  if (!text) return '';
+  return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
+};
 
-
+const toggleExpand = (row: any, field: 'headers' | 'cookies') => {
+  if (field === 'headers') {
+    row.isHeadersExpanded = !row.isHeadersExpanded;
+  } else {
+    row.isCookiesExpanded = !row.isCookiesExpanded;
+  }
+};
 </script>
 
 <style scoped>
 .website-list-container {
   padding: 12px;
   background: #f0f2f5;
-  height: 100%;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
 }
@@ -720,7 +749,7 @@ const handleConfig = (row: Website) => {
   background: #ffffff;
   border: 1px solid #dcdfe6;
   border-radius: 6px;
-  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.04);
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.04);
   flex-grow: 1;
   display: flex;
   flex-direction: column;
@@ -730,7 +759,7 @@ const handleConfig = (row: Website) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px; /* Space between header and table */
+  margin-bottom: 15px;
 }
 
 .table-title {
@@ -742,10 +771,9 @@ const handleConfig = (row: Website) => {
 
 .info-icon {
   margin-left: 8px;
-  color: #909399; /* Adjust color as needed */
+  color: #909399;
   cursor: help;
 }
-
 
 .table-actions .el-button {
   margin-left: 10px;
@@ -753,37 +781,53 @@ const handleConfig = (row: Website) => {
 
 .pagination-container {
   display: flex;
-  justify-content: flex-end; /* Align pagination to the right */
+  justify-content: flex-end;
   margin-top: 20px;
 }
 
-/* Add slight margin between action icons in the table */
-.el-table .el-button + .el-button {
-    margin-left: 8px;
+.el-table .el-button+.el-button {
+  margin-left: 8px;
 }
 
-/* Ensure selects don't overflow excessively */
 .el-select {
-    min-width: 180px;
+  min-width: 180px;
 }
 
-/* 网站表单样式 */
 .website-form .form-row {
   display: flex;
   gap: 20px;
   margin-bottom: 10px;
 }
 
+.form-container {
+  display: flex;
+  gap: 30px;
+}
+
+.form-left {
+  flex: 3;
+  padding-right: 20px;
+  border-right: 1px solid #dcdfe6;
+}
+
+.form-right {
+  flex: 7;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-right :deep(.el-form-item__content) {
+  width: 100%;
+}
+
+.form-right :deep(.el-textarea__inner) {
+  font-family: monospace;
+  white-space: pre-wrap;
+}
+
 .website-form .form-row .el-form-item {
   flex: 1;
-  margin-bottom: 0;
-}
-
-.website-form .form-row-full {
-  margin-bottom: 10px;
-}
-
-.website-form .form-row-full .el-form-item {
   margin-bottom: 0;
 }
 
@@ -796,7 +840,6 @@ const handleConfig = (row: Website) => {
   display: block;
 }
 
-/* 表格列设置样式 */
 .column-settings-container {
   padding: 10px;
 }
@@ -816,5 +859,19 @@ const handleConfig = (row: Website) => {
 .column-checkbox-group .el-checkbox {
   margin-right: 0;
   min-width: 120px;
+}
+
+/*
+在style部分添加以下样式
+*/
+
+.truncated-text {
+  cursor: pointer;
+  color: var(--el-color-primary);
+  white-space: pre-wrap;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 </style>

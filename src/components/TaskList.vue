@@ -18,10 +18,29 @@
         <el-form-item label="网站名称:" prop="websiteName">
           <el-input v-model="searchForm.websiteName" placeholder="请输入网站名称" clearable />
         </el-form-item>
+
+        <el-form-item label="创建时间:" prop="startTime">
+          <el-date-picker
+            v-model="searchForm.startTime"
+            type="datetime"
+            placeholder="选择开始时间"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            style="width: 200px"
+          />
+        </el-form-item>
+        <el-form-item label="至" prop="endTime">
+          <el-date-picker
+            v-model="searchForm.endTime"
+            type="datetime"
+            placeholder="选择结束时间"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            style="width: 200px"
+          />
+        </el-form-item>
         
         <el-form-item>
           <el-button @click="handleReset">重置</el-button>
-          <el-button type="primary" :icon="Search" @click="handleSearch">查询</el-button>
+          <el-button type="primary" icon="search" @click="handleSearch">查询</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -51,8 +70,8 @@
           爬虫任务列表
         </div>
         <div class="table-actions">
-          <el-button :icon="Refresh" circle @click="handleTableRefresh" />
-          <el-button :icon="Setting" circle @click="handleTableSettings" />
+          <el-button icon="refresh" circle @click="handleTableRefresh" />
+          <el-button icon="setting" circle @click="handleTableSettings" />
         </div>
       </div>
 
@@ -61,7 +80,7 @@
         <el-table-column label="操作" width="80" align="center" fixed="left">
           <template #default="{ row }">
             <el-tooltip content="查看子任务" placement="top">
-              <el-button link type="primary" :icon="View" @click="handleViewSubTasks(row)" />
+              <el-button link type="primary" icon="view" @click="handleViewSubTasks(row)" />
             </el-tooltip>
           </template>
         </el-table-column>
@@ -88,10 +107,10 @@
           <template #default="{ row }">
             <!-- 只有当status=1/2 时才显示停止按钮 -->
             <el-tooltip content="停止" placement="top" v-if="row.status === 1 || row.status === 2">
-              <el-button link type="danger" :icon="VideoPlay" @click="handleStop(row)" />
+              <el-button link type="danger" icon="videoPlay" @click="handleStop(row)" />
             </el-tooltip>
             <el-tooltip content="删除" placement="top">
-              <el-button link type="danger" :icon="Delete" @click="handleDelete(row)" />
+              <el-button link type="danger" icon="delete" @click="handleDelete(row)" />
             </el-tooltip>
           </template>
         </el-table-column>
@@ -225,6 +244,7 @@
 
 <script lang="ts" setup>
 import { ref, reactive, onMounted } from 'vue';
+import type { Task } from '@/types/task';
 
 // 子任务弹窗相关
 const subTaskDialogVisible = ref(false);
@@ -234,11 +254,6 @@ import type { SubTask } from '@/api/task';
 import { taskApi } from '@/api/task';
 import { websiteApi } from '@/api/website';
 import {
-  Search,
-  Refresh,
-  Setting,
-  Delete,
-  View,
   VideoPlay,
   Check,
   Warning
@@ -251,6 +266,8 @@ const searchFormRef = ref<FormInstance>();
 const searchForm = reactive({
   status: null,
   websiteName: '',
+  startTime: null,
+  endTime: null,
 });
 
 const loading = ref(false);
@@ -308,6 +325,8 @@ const fetchData = async () => {
       size: pagination.pageSize,
       websiteName: searchForm.websiteName,
       status: searchForm.status || undefined,
+      startTime: searchForm.startTime || undefined,
+      endTime: searchForm.endTime || undefined
     });
     
     // Handle the API response format

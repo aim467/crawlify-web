@@ -106,85 +106,13 @@
       </div>
     </el-card>
 
-    <!-- JSONPath测试弹窗 -->
-    <el-dialog v-model="jsonPathDialogVisible" title="JSONPath测试工具" width="1000px">
-      <div class="jsonpath-container">
-        <div class="jsonpath-inputs">
-          <div class="jsonpath-input-group">
-            <div class="jsonpath-label">JSON数据:</div>
-            <el-input v-model="jsonPathForm.jsonData" type="textarea" :rows="10" placeholder="请输入JSON数据"
-              class="jsonpath-textarea" />
-          </div>
-          <div class="jsonpath-input-group">
-            <div class="jsonpath-label">JSONPath表达式:</div>
-            <el-input v-model="jsonPathForm.jsonPath" placeholder="例如: $.store.book[0].title"
-              class="jsonpath-expression" />
-            <div class="jsonpath-buttons">
-              <el-button type="primary" @click="executeJsonPathTest" class="jsonpath-execute-btn">执行</el-button>
-              <el-button type="success" @click="formatJsonData" class="jsonpath-format-btn">格式化</el-button>
-            </div>
-          </div>
-        </div>
-        <div class="jsonpath-result-group">
-          <div class="jsonpath-label">执行结果:</div>
-          <el-input v-model="jsonPathResult" type="textarea" :rows="10" readonly placeholder="执行结果将显示在这里"
-            class="jsonpath-result" />
-        </div>
-      </div>
-    </el-dialog>
-
-    <!-- XML测试弹窗 -->
-    <el-dialog v-model="xmlDialogVisible" title="XML测试工具" width="1000px">
-      <div class="jsonpath-container">
-        <div class="jsonpath-inputs">
-          <div class="jsonpath-input-group">
-            <div class="jsonpath-label">XML数据:</div>
-            <el-input v-model="xmlForm.xmlData" type="textarea" :rows="10" placeholder="请输入XML数据"
-              class="jsonpath-textarea" />
-          </div>
-          <div class="jsonpath-input-group">
-            <div class="jsonpath-label">XPath表达式:</div>
-            <el-input v-model="xmlForm.xpath" placeholder="例如: //book[1]/title" class="jsonpath-expression" />
-            <div class="jsonpath-buttons">
-              <el-button type="primary" @click="executeXmlTest" class="jsonpath-execute-btn">执行</el-button>
-              <el-button type="success" @click="formatXmlData" class="jsonpath-format-btn">格式化</el-button>
-            </div>
-          </div>
-        </div>
-        <div class="jsonpath-result-group">
-          <div class="jsonpath-label">执行结果:</div>
-          <el-input v-model="xmlResult" type="textarea" :rows="10" readonly placeholder="执行结果将显示在这里"
-            class="jsonpath-result" />
-        </div>
-      </div>
-    </el-dialog>
-
-    <!-- 正则表达式测试弹窗 -->
-    <el-dialog v-model="regexDialogVisible" title="正则表达式测试工具" width="1000px">
-      <div class="jsonpath-container">
-        <div class="jsonpath-inputs">
-          <div class="jsonpath-input-group">
-            <div class="jsonpath-label">测试文本:</div>
-            <el-input v-model="regexForm.testText" type="textarea" :rows="10" placeholder="请输入要测试的文本"
-              class="jsonpath-textarea" />
-          </div>
-          <div class="jsonpath-input-group">
-            <div class="jsonpath-label">正则表达式:</div>
-            <el-input v-model="regexForm.pattern" placeholder="例如: \\b\\w+@\\w+\\.\\w+\\b"
-              class="jsonpath-expression" />
-            <div class="jsonpath-buttons">
-              <el-button type="primary" @click="executeRegexTest" class="jsonpath-execute-btn">执行</el-button>
-              <el-button type="success" @click="formatRegexPattern" class="jsonpath-format-btn">格式化</el-button>
-            </div>
-          </div>
-        </div>
-        <div class="jsonpath-result-group">
-          <div class="jsonpath-label">执行结果:</div>
-          <el-input v-model="regexResult" type="textarea" :rows="10" readonly placeholder="执行结果将显示在这里"
-            class="jsonpath-result" />
-        </div>
-      </div>
-    </el-dialog>
+    <!-- 统一测试弹窗 -->
+    <TestDialog
+      v-model:visible="testDialogVisible"
+      :type="currentTestType"
+      v-model:inputData="testForm.inputData"
+      v-model:expressionData="testForm.expressionData"
+    />
 
     <!-- 添加/编辑配置弹窗 -->
     <el-dialog v-model="dialogVisible" :title="isEditMode ? '编辑配置' : '新增配置'" width="1000px" style="overflow:visible;">
@@ -312,24 +240,18 @@
 import { ref, reactive, onMounted, computed } from 'vue';
 import type { FormRules, FormInstance } from 'element-plus';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { JSONPath } from 'jsonpath-plus';
-import { XMLParser } from 'fast-xml-parser';
-import * as xpath from 'xpath';
-import { DOMParser } from 'xmldom';
 import {
   Search,
   Refresh,
   Plus,
-  Setting,
   Edit,
   Delete,
-  Check,
-  Monitor,
-  User
+  Monitor
 } from '@element-plus/icons-vue';
 import { dynamicConfigApi } from '../api/dynamicConfig';
 import type { DynamicConfig } from '../types/dynamicConfig';
 import { useRoute } from "vue-router";
+import TestDialog, { TestType } from '../components';
 
 const websiteId = ref();
 const route = useRoute();
@@ -368,29 +290,13 @@ const searchForm = reactive({
   requestType: '',
 });
 
-// JSONPath测试相关
-const jsonPathDialogVisible = ref(false);
-const jsonPathForm = reactive({
-  jsonData: '',
-  jsonPath: '',
+// 统一测试弹窗相关
+const testDialogVisible = ref(false);
+const currentTestType = ref<TestType>(TestType.JSON);
+const testForm = reactive({
+  inputData: '',
+  expressionData: '',
 });
-const jsonPathResult = ref('');
-
-// XML测试相关
-const xmlDialogVisible = ref(false);
-const xmlForm = reactive({
-  xmlData: '',
-  xpath: '',
-});
-const xmlResult = ref('');
-
-// 正则表达式测试相关
-const regexDialogVisible = ref(false);
-const regexForm = reactive({
-  testText: '',
-  pattern: '',
-});
-const regexResult = ref('');
 
 const loading = ref(false);
 const dialogVisible = ref(false);
@@ -498,10 +404,13 @@ const handleTableRefresh = () => {
 
 
 
-// JSONPath测试相关方法
+// 测试相关方法
 const handleJsonPathTest = () => {
+  // 设置测试类型
+  currentTestType.value = TestType.JSON;
+
   // 提供一个示例JSON数据
-  jsonPathForm.jsonData = JSON.stringify({
+  testForm.inputData = JSON.stringify({
     "store": {
       "book": [
         {
@@ -523,47 +432,16 @@ const handleJsonPathTest = () => {
       }
     }
   }, null, 2);
-  jsonPathForm.jsonPath = '$.store.book[0].title';
-  jsonPathResult.value = '';
-  jsonPathDialogVisible.value = true;
+  testForm.expressionData = '$.store.book[0].title';
+  testDialogVisible.value = true;
 };
 
-// JSON格式化方法
-const formatJsonData = () => {
-  try {
-    // 验证JSON格式
-    const jsonObj = JSON.parse(jsonPathForm.jsonData);
-    // 格式化JSON
-    jsonPathForm.jsonData = JSON.stringify(jsonObj, null, 2);
-    ElMessage.success('JSON格式化成功');
-  } catch (error) {
-    ElMessage.error('JSON格式错误，无法格式化');
-  }
-};
-
-const executeJsonPathTest = () => {
-  try {
-    // 验证JSON格式
-    const jsonObj = JSON.parse(jsonPathForm.jsonData);
-
-    // 使用jsonpath-plus执行JSONPath查询
-    const result = JSONPath({ path: jsonPathForm.jsonPath, json: jsonObj });
-
-    // 显示结果
-    jsonPathResult.value = JSON.stringify(result, null, 2);
-  } catch (error) {
-    if (error instanceof SyntaxError) {
-      ElMessage.error('JSON格式错误，请检查输入');
-    } else {
-      ElMessage.error('JSONPath执行错误: ' + (error as Error).message);
-    }
-  }
-};
-
-// XML测试相关方法
 const handleXmlTest = () => {
+  // 设置测试类型
+  currentTestType.value = TestType.XML;
+
   // 提供一个示例XML数据
-  xmlForm.xmlData = `<?xml version="1.0" encoding="UTF-8"?>
+  testForm.inputData = `<?xml version="1.0" encoding="UTF-8"?>
 <bookstore>
   <book category="reference">
     <title>XML开发指南</title>
@@ -578,181 +456,18 @@ const handleXmlTest = () => {
     <price>39.95</price>
   </book>
 </bookstore>`;
-  xmlForm.xpath = '//book[1]/title';
-  xmlResult.value = '';
-  xmlDialogVisible.value = true;
+  testForm.expressionData = '//book[1]/title';
+  testDialogVisible.value = true;
 };
 
-// XML格式化方法
-const formatXmlData = () => {
-  try {
-    if (!xmlForm.xmlData.trim()) {
-      ElMessage.warning('请输入XML数据');
-      return;
-    }
-
-    // 使用DOMParser解析XML
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlForm.xmlData, "text/xml");
-
-    // 检查解析错误
-    const parseError = xmlDoc.getElementsByTagName("parsererror");
-    if (parseError.length > 0) {
-      throw new Error("XML格式错误");
-    }
-
-    // 使用XMLParser格式化XML
-    const xmlParser = new XMLParser({
-      ignoreAttributes: false,
-      preserveOrder: true,
-      trimValues: true
-    });
-
-    // 将格式化后的XML设置回表单
-    // 由于XMLParser不直接支持格式化输出，我们使用原始的XML字符串进行简单的格式化
-    // 这里使用一个简单的方法来格式化XML
-    const formattedXml = formatXml(xmlForm.xmlData);
-    xmlForm.xmlData = formattedXml;
-
-    ElMessage.success('XML格式化成功');
-  } catch (error) {
-    ElMessage.error('XML格式错误，无法格式化');
-  }
-};
-
-// 简单的XML格式化函数
-const formatXml = (xml: string): string => {
-  let formatted = '';
-  let indent = '';
-
-  xml.split(/>[\s\r\n]*</).forEach(node => {
-    if (node.match(/^\/\w/)) {
-      // 如果是结束标签，减少缩进
-      indent = indent.substring(2);
-    }
-
-    formatted += indent + '<' + node + '>\n';
-
-    if (node.match(/^<\w[^>]*[^/]$/) && !node.startsWith('<?xml')) {
-      // 如果是开始标签且不是自闭合标签，增加缩进
-      indent += '  ';
-    }
-  });
-
-  // 处理格式化后可能出现的问题
-  return formatted
-    .replace(/><\//g, '>\n</')
-    .replace(/<\?xml/g, '<?xml')
-    .replace(/\n<\?xml/g, '<?xml');
-};
-
-// 正则表达式测试相关方法
 const handleRegexTest = () => {
+  // 设置测试类型
+  currentTestType.value = TestType.REGEX;
+
   // 提供一个示例文本和正则表达式
-  regexForm.testText = 'test@example.com\ncontact@domain.com\ninvalid.email\nsupport@company.net';
-  regexForm.pattern = '\\b\\w+@\\w+\\.\\w+\\b';
-  regexResult.value = '';
-  regexDialogVisible.value = true;
-};
-
-const formatRegexPattern = () => {
-  try {
-    if (!regexForm.pattern.trim()) {
-      ElMessage.warning('请输入正则表达式');
-      return;
-    }
-    // 尝试创建正则表达式对象来验证格式
-    new RegExp(regexForm.pattern);
-    ElMessage.success('正则表达式格式正确');
-  } catch (error) {
-    ElMessage.error('正则表达式格式错误：' + (error as Error).message);
-  }
-};
-
-const executeRegexTest = () => {
-  try {
-    if (!regexForm.testText.trim()) {
-      ElMessage.warning('请输入测试文本');
-      return;
-    }
-    if (!regexForm.pattern.trim()) {
-      ElMessage.warning('请输入正则表达式');
-      return;
-    }
-
-    // 创建正则表达式对象
-    const regex = new RegExp(regexForm.pattern, 'g');
-    const matches = regexForm.testText.match(regex);
-
-    if (matches) {
-      regexResult.value = `找到 ${matches.length} 个匹配：\n\n${matches.join('\n')}`;
-    } else {
-      regexResult.value = '未找到匹配';
-    }
-  } catch (error) {
-    ElMessage.error('正则表达式执行错误：' + (error as Error).message);
-    regexResult.value = '执行出错，请检查正则表达式格式';
-  }
-};
-
-const executeXmlTest = () => {
-  try {
-    // 验证XML格式
-    if (!xmlForm.xmlData.trim()) {
-      ElMessage.warning('请输入XML数据');
-      return;
-    }
-
-    // 使用DOMParser解析XML
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlForm.xmlData, "text/xml");
-
-    // 检查解析错误
-    const parseError = xmlDoc.getElementsByTagName("parsererror");
-    if (parseError.length > 0) {
-      throw new Error("XML格式错误");
-    }
-
-    // 使用xpath执行XPath查询
-    const nodes = xpath.select(xmlForm.xpath, xmlDoc);
-
-    // 处理结果
-    if (Array.isArray(nodes)) {
-      // 如果结果是节点数组
-      if (nodes.length === 0) {
-        xmlResult.value = "未找到匹配结果";
-        return;
-      }
-
-      const result = nodes.map(node => {
-        if (node.nodeType === 1) { // 元素节点
-          return node.toString();
-        } else if (node.nodeType === 2) { // 属性节点
-          return node.nodeValue;
-        } else if (node.nodeType === 3) { // 文本节点
-          return node.nodeValue;
-        }
-        return node.toString();
-      });
-
-      // 格式化输出结果
-      if (result.length === 1) {
-        xmlResult.value = result[0] || '';
-      } else {
-        xmlResult.value = JSON.stringify(result, null, 2);
-      }
-    } else {
-      // 如果结果是单个值
-      xmlResult.value = String(nodes);
-    }
-  } catch (error) {
-    if (error instanceof Error && error.message.includes("XML格式错误")) {
-      ElMessage.error('XML格式错误，请检查输入');
-    } else {
-      ElMessage.error('XPath执行错误: ' + (error as Error).message);
-    }
-    xmlResult.value = "执行出错，请检查XML数据和XPath表达式";
-  }
+  testForm.inputData = 'test@example.com\ncontact@domain.com\ninvalid.email\nsupport@company.net';
+  testForm.expressionData = '\\b\\w+@\\w+\\.\\w+\\b';
+  testDialogVisible.value = true;
 };
 
 const handleEdit = async (row: DynamicConfig) => {
@@ -884,7 +599,7 @@ function parseFetchCommand(command: string) {
   const optsMatch = command.match(/fetch\s*\(\s*['"`][\s\S]*?['"`]\s*,\s*({[\s\S]*})\s*\)/);
   // 初始化默认值
   let method = 'GET';
-  let headers = {};
+  let headers: Record<string, string> = {};
   let body;
 
   if (optsMatch) {
@@ -908,13 +623,13 @@ function parseFetchCommand(command: string) {
       if (opts.headers) {
         // 如果是浏览器的 Headers 实例
         if (typeof Headers !== 'undefined' && opts.headers instanceof Headers) {
-          opts.headers.forEach((val, key) => {
+          opts.headers.forEach((val: string, key: string) => {
             headers[key] = val;
           });
         }
         // 也支持字面量对象
         else if (typeof opts.headers === 'object') {
-          headers = { ...opts.headers };
+          headers = { ...opts.headers as Record<string, string> };
         }
       }
       // body
@@ -999,7 +714,8 @@ const handleConfigTest = async (row: DynamicConfig) => {
   try {
     loading.value = true;
     const { data } = await dynamicConfigApi.testConfig(row.configId);
-    configTestResults.value = data || [];
+    // 确保 data 是字符串数组
+    configTestResults.value = Array.isArray(data) ? data : [];
     testPagination.total = configTestResults.value.length;
     testPagination.currentPage = 1;
     configTestDialogVisible.value = true;
@@ -1124,33 +840,5 @@ const fetchData = async () => {
   min-width: 180px;
 }
 
-/* 添加JSONPath、XML和正则表达式测试工具的样式 */
-.jsonpath-container {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.jsonpath-inputs {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.jsonpath-input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.jsonpath-label {
-  font-weight: bold;
-  margin-bottom: 4px;
-}
-
-.jsonpath-buttons {
-  display: flex;
-  gap: 10px;
-  margin-top: 8px;
-}
+/* 测试工具的样式已移至TestDialog.vue组件中 */
 </style>
