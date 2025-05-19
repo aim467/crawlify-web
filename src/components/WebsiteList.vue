@@ -302,7 +302,7 @@ const websiteForm = reactive({
   charset: '',
   headers: '',
   cookies: '',
-  timeOut: 5, // Default to 5 seconds (will be converted to ms in submit)
+  timeOut: 3, // Default to 3 seconds (will be converted to ms in submit)
   retryTimes: 0,
   cycleRetryTimes: 0
 });
@@ -442,7 +442,6 @@ const submitWebsiteForm = async () => {
           headers: convertToObject(websiteForm.headers, ': '),
           cookies: convertToObject(websiteForm.cookies, '=')
         };
-        formData.timeOut = formData.timeOut * 1000;
 
         if (isEditMode.value && currentWebsiteId.value) {
           await websiteApi.update(formData);
