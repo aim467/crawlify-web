@@ -787,8 +787,6 @@ const handleConfigTest = async (row: DynamicConfig) => {
   } catch (error) {
     ElMessage.error({
       message: `配置测试失败: ${(error as Error).message}`,
-      requestType: searchForm.requestType, // 添加请求类型到查询参数
-      requestType: searchForm.requestType, // 添加请求类型到查询参数
       duration: 3000
     });
   } finally {
