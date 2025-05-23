@@ -12,7 +12,8 @@
             <el-option label="运行中" value="2" />
             <el-option label="已完成" value="3" />
             <el-option label="已停止" value="4" />
-            <el-option label="部分完成" value="5" />
+            <el-option label="异常" value="5" />
+            <el-option label="部分完成" value="6" />
           </el-select>
         </el-form-item>
         <el-form-item label="网站名称:" prop="websiteName">
@@ -150,6 +151,12 @@
                 <div class="subtask-stat-content">
                   <div class="subtask-stat-title">已停止</div>
                   <div class="subtask-stat-count">{{ currentTask.subTasks.filter(task => task.status === 4).length }}</div>
+                </div>
+              </el-card>
+              <el-card shadow="hover" class="subtask-stat-card error-stat">
+                <div class="subtask-stat-content">
+                  <div class="subtask-stat-title">异常</div>
+                  <div class="subtask-stat-count">{{ currentTask.subTasks.filter(task => task.status === 5).length }}</div>
                 </div>
               </el-card>
             </div>
@@ -402,6 +409,8 @@ const getStatusText = (status: number) => {
     case 4:
       return '已停止';
     case 5:
+      return '异常';
+    case 6:
       return '部分完成';
   }
 };
@@ -638,7 +647,7 @@ const handleCurrentChange = (val: number) => {
 }
 
 .error-stat {
-  background: linear-gradient(135deg, #fef0f0 0%, #fde2e2 100%);
+  background: linear-gradient(135deg, #fef0f0 0%, #f56c6c 100%);
 }
 
 .table-card {
@@ -711,9 +720,13 @@ const handleCurrentChange = (val: number) => {
 
 .subtask-stats-container {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
   margin-bottom: 24px;
+}
+
+.primary-stat {
+  background: linear-gradient(135deg, #f0f4ff 0%, #d9e1ff 100%);
 }
 
 .subtask-stat-card {
@@ -761,6 +774,10 @@ const handleCurrentChange = (val: number) => {
 
 .danger-stat {
   background: linear-gradient(135deg, #fef0f0 0%, #fde2e2 100%);
+}
+
+.error-stat {
+  background: linear-gradient(135deg, #fef0f0 0%, #e39f9f 100%);
 }
 
 /* 图表容器样式 */
