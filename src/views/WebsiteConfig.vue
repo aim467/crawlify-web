@@ -4,16 +4,36 @@
     <el-card shadow="never" class="search-card">
       <el-form :model="searchForm" ref="searchFormRef" inline label-position="left" label-width="auto">
         <el-form-item label="配置ID:" prop="configId">
-          <el-input v-model="searchForm.configId" placeholder="请输入配置ID" clearable />
+          <el-input
+            v-model="searchForm.configId"
+            placeholder="请输入配置ID"
+            clearable
+            @keyup.enter="handleSearch"
+          />
         </el-form-item>
         <el-form-item label="配置名称:" prop="configName">
-          <el-input v-model="searchForm.configName" placeholder="请输入配置名称" clearable />
+          <el-input
+            v-model="searchForm.configName"
+            placeholder="请输入配置名称"
+            clearable
+            @keyup.enter="handleSearch"
+          />
         </el-form-item>
         <el-form-item label="基础URL:" prop="columnUrl">
-          <el-input v-model="searchForm.columnUrl" placeholder="请输入基础URL" clearable />
+          <el-input
+            v-model="searchForm.columnUrl"
+            placeholder="请输入基础URL"
+            clearable
+            @keyup.enter="handleSearch"
+          />
         </el-form-item>
         <el-form-item label="请求类型:" prop="requestType">
-          <el-select v-model="searchForm.requestType" placeholder="请选择请求类型" clearable>
+          <el-select
+            v-model="searchForm.requestType"
+            placeholder="请选择请求类型"
+            clearable
+            @change="handleSearch"
+          >
             <el-option label="全部" value="" />
             <el-option label="GET" value="GET" />
             <el-option label="POST" value="POST" />
@@ -21,7 +41,14 @@
         </el-form-item>
         <el-form-item>
           <el-button @click="handleReset">重置</el-button>
-          <el-button type="primary" :icon="Search" @click="handleSearch">查询</el-button>
+          <el-button
+            type="primary"
+            icon="search"
+            @click="handleSearch"
+            :loading="loading"
+          >
+            查询
+          </el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -34,11 +61,11 @@
           动态配置列表
         </div>
         <div class="table-actions">
-          <el-button type="primary" :icon="Plus" @click="handleAddConfig">新增配置</el-button>
+          <el-button type="primary" icon="plus" @click="handleAddConfig">新增配置</el-button>
           <el-button type="success" @click="handleJsonPathTest">JSONPath测试</el-button>
           <el-button type="warning" @click="handleXmlTest">XML测试</el-button>
           <el-button type="info" @click="handleRegexTest">正则表达式测试</el-button>
-          <el-button :icon="Refresh" circle @click="handleTableRefresh" />
+          <el-button icon="refresh" circle @click="handleTableRefresh" />
         </div>
       </div>
 
@@ -86,13 +113,13 @@
         <el-table-column label="操作" width="250" align="center" fixed="right">
           <template #default="{ row }">
             <el-tooltip content="编辑" placement="top">
-              <el-button link type="primary" :icon="Edit" @click="handleEdit(row)" />
+              <el-button link type="primary" icon="edit" @click="handleEdit(row)" />
             </el-tooltip>
             <el-tooltip content="删除" placement="top">
-              <el-button link type="danger" :icon="Delete" @click="handleDelete(row)" />
+              <el-button link type="danger" icon="delete" @click="handleDelete(row)" />
             </el-tooltip>
             <el-tooltip content="配置测试" placement="top">
-              <el-button link type="warning" :icon="Monitor" @click="handleConfigTest(row)" />
+              <el-button link type="warning" icon="monitor" @click="handleConfigTest(row)" />
             </el-tooltip>
           </template>
         </el-table-column>
@@ -194,28 +221,51 @@
     </el-dialog>
     <!-- 配置测试弹窗 -->
     <el-dialog v-model="configTestDialogVisible" title="配置测试结果" width="900px">
-      <el-table :data="paginatedTestResults" style="width: 100%" border>
-        <el-table-column prop="" label="测试结果">
-          <template #default="{ row }">
-            <!-- 设置url可以点击访问 -->
-            <el-tooltip :content="row" placement="top" :hide-after="2000">
-              <template v-if="isValidUrl(row)">
-                <a :href="row" target="_blank" class="link-text">
-                  {{ row.length > 100 ? row.substring(0, 100) + '...' : row }}
-                </a>
-              </template>
-              <template v-else>
-                <span>{{ row.length > 100 ? row.substring(0, 100) + '...' : row }}</span>
-              </template>
-            </el-tooltip>
-          </template>
-        </el-table-column>
-      </el-table>
-      <div class="pagination-container">
-        <el-pagination v-model:current-page="testPagination.currentPage" v-model:page-size="testPagination.pageSize"
-          :page-sizes="[10, 20, 50]" :total="testPagination.total" layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleTestSizeChange" @current-change="handleTestCurrentChange" />
+      <div v-if="configTestResults.length === 0" class="empty-result">
+        <el-empty description="暂无测试数据" />
       </div>
+      <template v-else>
+        <el-tabs v-model="activeTestTab" type="card">
+          <el-tab-pane label="原始数据" name="raw">
+            <el-table :data="paginatedTestResults" style="width: 100%" border>
+              <el-table-column prop="" label="测试结果">
+                <template #default="{ row }">
+                  <el-tooltip :content="row" placement="top" :hide-after="2000">
+                    <template v-if="isValidUrl(row)">
+                      <a :href="row" target="_blank" class="link-text">
+                        {{ row.length > 100 ? row.substring(0, 100) + '...' : row }}
+                      </a>
+                    </template>
+                    <template v-else>
+                      <span>{{ row.length > 100 ? row.substring(0, 100) + '...' : row }}</span>
+                    </template>
+                  </el-tooltip>
+                </template>
+              </el-table-column>
+            </el-table>
+          </el-tab-pane>
+          <el-tab-pane label="格式化视图" name="formatted" v-if="hasJsonData">
+            <json-viewer
+              :value="formattedTestResults"
+              :expand-depth="3"
+              copyable
+              boxed
+              sort
+            />
+          </el-tab-pane>
+        </el-tabs>
+        <div class="pagination-container">
+          <el-pagination
+            v-model:current-page="testPagination.currentPage"
+            v-model:page-size="testPagination.pageSize"
+            :page-sizes="[10, 20, 50]"
+            :total="testPagination.total"
+            layout="total, sizes, prev, pager, next, jumper"
+            @size-change="handleTestSizeChange"
+            @current-change="handleTestCurrentChange"
+          />
+        </div>
+      </template>
     </el-dialog>
 
     <!-- 导入命令弹窗 -->
@@ -240,14 +290,6 @@
 import { ref, reactive, onMounted, computed } from 'vue';
 import type { FormRules, FormInstance } from 'element-plus';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import {
-  Search,
-  Refresh,
-  Plus,
-  Edit,
-  Delete,
-  Monitor
-} from '@element-plus/icons-vue';
 import { dynamicConfigApi } from '../api/dynamicConfig';
 import type { DynamicConfig } from '../types/dynamicConfig';
 import { useRoute } from "vue-router";
@@ -710,17 +752,43 @@ const handleImport = async () => {
   }
 };
 
+const activeTestTab = ref('raw');
+const hasJsonData = ref(false);
+const formattedTestResults = ref<any[]>([]);
+
 const handleConfigTest = async (row: DynamicConfig) => {
   try {
     loading.value = true;
     const { data } = await dynamicConfigApi.testConfig(row.configId);
-    // 确保 data 是字符串数组
+    
+    // 处理测试结果
     configTestResults.value = Array.isArray(data) ? data : [];
     testPagination.total = configTestResults.value.length;
     testPagination.currentPage = 1;
+    
+    // 尝试解析JSON数据
+    formattedTestResults.value = configTestResults.value.map(item => {
+      try {
+        return JSON.parse(item);
+      } catch {
+        return item;
+      }
+    });
+    
+    hasJsonData.value = formattedTestResults.value.some(
+      item => typeof item === 'object' && !Array.isArray(item)
+    );
+    
     configTestDialogVisible.value = true;
+    ElMessage.success({
+      message: '测试完成',
+      duration: 2000
+    });
   } catch (error) {
-    ElMessage.error('配置测试失败');
+    ElMessage.error({
+      message: `配置测试失败: ${(error as Error).message}`,
+      duration: 3000
+    });
   } finally {
     loading.value = false;
   }

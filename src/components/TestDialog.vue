@@ -1,25 +1,34 @@
 <template>
-  <el-dialog v-model="dialogVisible" :title="dialogTitle" width="1000px">
-    <div class="test-container">
-      <div class="test-inputs">
-        <div class="test-input-group">
-          <div class="test-label">{{ inputLabel }}:</div>
-          <el-input v-model="inputData" type="textarea" :rows="10" :placeholder="inputPlaceholder"
-            class="test-textarea" />
-        </div>
-        <div class="test-input-group">
-          <div class="test-label">{{ expressionLabel }}:</div>
-          <el-input v-model="expressionData" :placeholder="expressionPlaceholder" class="test-expression" />
-          <div class="test-buttons">
-            <el-button type="primary" @click="executeTest" class="test-execute-btn">执行</el-button>
-            <el-button type="success" @click="formatData" class="test-format-btn">格式化</el-button>
+  <el-dialog v-model="dialogVisible" :title="dialogTitle" width="95%" :style="{height: '80%'}">
+    <div class="dialog-container">
+      <!-- 操作按钮放在上方 -->
+      <div class="action-buttons">
+        <el-button type="primary" @click="executeTest" class="execute-btn">执行</el-button>
+        <el-button type="success" @click="formatData" class="format-btn">格式化</el-button>
+      </div>
+      
+      <!-- 表达式输入放在操作按钮下方 -->
+      <div class="expression-group">
+        <div class="expression-label">{{ expressionLabel }}:</div>
+        <el-input v-model="expressionData" :placeholder="expressionPlaceholder" class="expression-input" />
+      </div>
+      
+      <!-- 左右布局容器 -->
+      <div class="content-container">
+        <div class="left-section">
+          <div class="input-group">
+            <div class="input-label">{{ inputLabel }}:</div>
+            <el-input v-model="inputData" type="textarea" :rows="18" :placeholder="inputPlaceholder"
+              class="input-textarea" />
           </div>
         </div>
-      </div>
-      <div class="test-result-group">
-        <div class="test-label">执行结果:</div>
-        <el-input v-model="resultData" type="textarea" :rows="10" readonly placeholder="执行结果将显示在这里"
-          class="test-result" />
+        <div class="right-section">
+          <div class="result-group">
+            <div class="result-label">执行结果:</div>
+            <el-input v-model="resultData" type="textarea" :rows="18" readonly placeholder="执行结果将显示在这里"
+              class="result-output" />
+          </div>
+        </div>
       </div>
     </div>
   </el-dialog>
@@ -380,32 +389,65 @@ const formatRegexPattern = () => {
 </script>
 
 <style scoped>
-.test-container {
+
+.dialog-container {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 20px;
+  height: 80%;
 }
 
-.test-inputs {
+.content-container {
+  display: flex;
+  flex-direction: row;
+  gap: 24px;
+  flex: 1;
+}
+
+.left-section, 
+.right-section {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 15px;
 }
 
-.test-input-group {
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.expression-group {
+  margin-bottom: 16px;
+}
+
+.input-group,
+.expression-group,
+.result-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  width: 100%;
 }
 
-.test-label {
-  font-weight: bold;
-  margin-bottom: 4px;
+.input-label,
+.expression-label,
+.result-label {
+  font-weight: 600;
+  font-size: 14px;
+  color: #606266;
+  margin-bottom: 6px;
 }
 
-.test-buttons {
-  display: flex;
-  gap: 10px;
-  margin-top: 8px;
+.input-textarea :deep(.el-textarea__inner),
+.result-output :deep(.el-textarea__inner) {
+  height: 100%;
+  font-family: Monaco, Consolas, monospace;
+  font-size: 13px;
+}
+
+.expression-input :deep(.el-input__inner) {
+  font-family: Monaco, Consolas, monospace;
+  font-size: 13px;
 }
 </style>
