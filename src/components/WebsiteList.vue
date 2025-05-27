@@ -667,14 +667,13 @@ const submitTaskOptions = async () => {
         loading.value = true;
         // 调用API启动任务，传入线程数
         await taskApi.run({
-          websiteId: currentTaskWebsite.value.id,
+          websiteId: currentTaskWebsite.value?.id ?? null,
           threadNum: taskOptionsForm.threadNum
         });
         ElMessage.success(`已成功启动对网站 '${currentTaskWebsite.value.name}' 的采集任务`);
         taskOptionsDialogVisible.value = false;
       } catch (error) {
-        console.error('Failed to start crawl task:', error);
-        ElMessage.error('启动采集任务失败');
+        ElMessage.error((error as Error).message || '操作失败');
       } finally {
         loading.value = false;
       }
