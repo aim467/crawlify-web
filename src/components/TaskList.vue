@@ -256,8 +256,8 @@ const taskStats = ref([
   { title: '初始化', count: 0, icon: Loading, className: 'init-stat', color: '#909399' },
   { title: '运行中', count: 0, icon: VideoPlay, className: 'running-stat', color: '#E6A23C' },
   { title: '已完成', count: 0, icon: CircleCheck, className: 'completed-stat', color: '#67C23A' },
-  { title: '部分完成', count: 0, icon: PartlyCloudy, className: 'partial-stat', color: '#409EFF' },
   { title: '已停止', count: 0, icon: VideoPause, className: 'stopped-stat', color: '#909399' },
+  { title: '部分完成', count: 0, icon: PartlyCloudy, className: 'partial-stat', color: '#409EFF' },
   { title: '异常', count: 0, icon: Warning, className: 'error-stat', color: '#F56C6C' }
 ]);
 
@@ -288,7 +288,6 @@ const pagination = reactive({
 onMounted(() => {
   loadWebsiteOptions();
   fetchData();
-  updateTaskStats();
 });
 
 // 加载网站选项列表
@@ -326,11 +325,10 @@ const fetchData = async () => {
     });
     
     // Handle the API response format
-    const data = response.data;
+    const { pageResult, taskStatusCount } = response.data;
     
     // 处理数据，确保websiteName字段存在
-    // 后端可能已经返回了websiteName字段，如果没有，我们需要根据websiteId查找对应的网站名称
-    const tasks = data.records;
+    const tasks = pageResult.records;
     if (tasks && tasks.length > 0 && !tasks[0].websiteName) {
       // 如果没有websiteName字段，则需要根据websiteId查找对应的网站名称
       const websiteMap = new Map();
@@ -346,49 +344,26 @@ const fetchData = async () => {
       });
     }
     
+    // 更新表格数据和分页信息
     tableData.value = tasks;
-    pagination.total = data.total;
-    pagination.currentPage = data.current;
-    pagination.pages = data.pages;
-    pagination.pageSize = data.size;
+    pagination.total = pageResult.total;
+    pagination.currentPage = pageResult.current;
+    pagination.pages = pageResult.pages;
+    pagination.pageSize = pageResult.size;
     
-    // Update task statistics after fetching data
-    updateTaskStats();
+    // 直接使用返回的任务统计数据
+    taskStats.value[0].count = taskStatusCount.initCount;
+    taskStats.value[1].count = taskStatusCount.runningCount;
+    taskStats.value[2].count = taskStatusCount.completedCount;
+    taskStats.value[3].count = taskStatusCount.stoppedCount;
+    taskStats.value[4].count = taskStatusCount.partialCount;
+    taskStats.value[5].count = taskStatusCount.failedCount;
   } catch (error) {
     console.error('Failed to fetch task list:', error);
     ElMessage.error('获取任务列表失败');
   } finally {
     loading.value = false;
   }
-};
-
-const updateTaskStats = () => {
-  const stats = {
-    init: 0,     // 初始化 (1)
-    running: 0,  // 运行中 (2)
-    completed: 0,// 已完成 (3)
-    stopped: 0,  // 已停止 (4)
-    error: 0,    // 异常 (5)
-    partial: 0   // 部分完成 (6)
-  };
-
-  tableData.value.forEach(task => {
-    switch (task.status) {
-      case 1: stats.init++; break;
-      case 2: stats.running++; break;
-      case 3: stats.completed++; break;
-      case 4: stats.stopped++; break;
-      case 5: stats.error++; break;
-      case 6: stats.partial++; break;
-    }
-  });
-
-  taskStats.value[0].count = stats.init;
-  taskStats.value[1].count = stats.running;
-  taskStats.value[2].count = stats.completed;
-  taskStats.value[3].count = stats.partial;
-  taskStats.value[4].count = stats.stopped;
-  taskStats.value[5].count = stats.error;
 };
 
 // Format date time string

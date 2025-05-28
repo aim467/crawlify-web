@@ -21,12 +21,28 @@ export interface SubTask {
   updatedAt: string | null
 }
 
-export interface TaskResponse {
+export interface TaskStatusCount {
+  initCount: number
+  runningCount: number
+  completedCount: number
+  stoppedCount: number
+  failedCount: number
+  partialCount: number
+}
+
+export interface PageResult {
   total: number
   records: Task[]
   current: number
   pages: number
   size: number
+}
+
+export interface TaskResponse {
+  data: {
+    pageResult: PageResult
+    taskStatusCount: TaskStatusCount
+  }
 }
 
 export const taskApi = {
