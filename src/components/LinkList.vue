@@ -106,13 +106,13 @@
                   <span class="table-link">{{ row.url }}</span>
                   <div class="url-action-buttons">
                     <el-dropdown v-if="row.urlType === 1" trigger="click">
-                      <el-button type="primary" size="small" icon="view" circle></el-button>
+                      <el-button type="primary" size="small" icon="view" circle />
                       <template #dropdown>
                         <el-dropdown-menu>
                           <el-dropdown-item icon="link" @click="openInNewTab(row.url)">
                             在新标签页打开
                           </el-dropdown-item>
-                          <el-dropdown-item icon="view"  @click="previewInCurrentPage(row.url)">
+                          <el-dropdown-item icon="view" @click="previewInCurrentPage(row.url)">
                             在当前页面预览
                           </el-dropdown-item>
                         </el-dropdown-menu>
@@ -125,7 +125,7 @@
                       icon="view" 
                       circle
                       @click="previewImage(row.url)"
-                    ></el-button>
+                    />
                     <el-button 
                       v-else 
                       type="primary" 
@@ -133,7 +133,7 @@
                       icon="link" 
                       circle
                       @click="openInNewTab(row.url)"
-                    ></el-button>
+                    />
                   </div>
                 </div>
               </el-tooltip>
@@ -173,7 +173,7 @@
       </el-card>
     </div>
   </div>
-  
+
   <!-- 网页预览对话框 -->
   <el-dialog
     v-model="visiblePreview"
@@ -195,10 +195,10 @@
         :src="previewUrl" 
         style="width: 100%; height: 80vh; border: none;"
         @load="handleIframeLoad"
-      ></iframe>
+      />
     </div>
   </el-dialog>
-  
+
   <!-- 图片预览 -->
   <vue-easy-lightbox
     :visible="visibleLightbox"
@@ -515,19 +515,26 @@ const closePreview = () => {
 
 :deep(.el-table) {
   --el-table-border-color: #dcdfe6;
-  --el-table-header-bg-color: #f8fafc;
+  --el-table-header-bg-color: #3b82f6;
   border-radius: 6px;
   overflow: hidden;
+  background-color: #ffffff;
 }
 
 :deep(.el-table th) {
   font-weight: bold;
-  color: #1e293b;
-  background-color: #f8fafc;
+  color: white;
+  background-color: var(--el-table-header-bg-color);
 }
 
 :deep(.el-table td) {
   color: #475569;
+  padding: 12px 16px;
+}
+
+:deep(.el-table tr:hover) {
+  background-color: #f0f9ff;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
 }
 
 :deep(.el-card) {
@@ -590,6 +597,7 @@ const closePreview = () => {
   color: #22c55e;
   background-color: #dcfce7;
 }
+
 .url-type-0 {
   color: #64748b;
   background-color: #f1f5f9;
@@ -639,7 +647,6 @@ const closePreview = () => {
   color: #06b6d4;
   background-color: #cffafe;
 }
-
 
 .preview-dialog {
   :deep(.el-dialog) {
@@ -697,6 +704,22 @@ const closePreview = () => {
       transform: scale(1.05);
     }
   }
+}
+
+.preview-container {
+  position: relative;
+  min-height: 200px;
+  background: #ffffff;
+  border-radius: 0 0 8px 8px;
+}
+.open-new-tab {
+  margin-right: 40px;
+  background-color: white !important;
+}
+
+&:hover {
+      color: #4170b1;
+      transform: scale(1.05);
 }
 
 .preview-container {
