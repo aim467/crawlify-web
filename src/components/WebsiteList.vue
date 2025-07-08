@@ -197,7 +197,7 @@
         <p class="settings-tip">请选择要显示的列：</p>
         <el-checkbox-group v-model="visibleColumns" class="column-checkbox-group">
           <el-checkbox v-for="option in columnOptions" :key="option.prop" :label="option.prop"
-            @change="(val) => columnSettings[option.prop] = val">
+            @change="val => changeColumnSetting(option.prop, val)">
             {{ option.label }}
           </el-checkbox>
         </el-checkbox-group>
@@ -212,14 +212,64 @@
     </el-dialog>
 
     <!-- 启动任务选项对话框 -->
-    <el-dialog v-model="taskOptionsDialogVisible" title="启动采集任务" width="500px">
-      <el-form :model="taskOptionsForm" ref="taskOptionsFormRef" label-width="100px" :rules="taskOptionsRules">
-        <el-form-item label="线程数:" prop="threadNum">
-          <el-tooltip content="设置爬虫任务的线程数，数值越大爬取速度越快，但可能会增加服务器负载" placement="top" effect="light">
-            <el-input-number v-model="taskOptionsForm.threadNum" :min="1" :max="20" placeholder="请输入线程数" />
-          </el-tooltip>
-        </el-form-item>
-      </el-form>
+    <el-dialog v-model="taskOptionsDialogVisible" title="启动采集任务" width="800px">
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; align-items: flex-start; width: 100%; gap: 10px;">
+          <el-table
+            :data="nodeList"
+            style="flex: 1; min-width: 0; max-height: 320px; overflow-y: auto; background: #f9f9fb; border: 1px solid #ebeef5;"
+            height="320"
+            @row-click="handleNodeRowClick"
+            :row-class-name="nodeTableRowClassName"
+            :empty-text="nodeLoading ? '加载中...' : '暂无节点'"
+            :highlight-current-row="true"
+            :row-key="row => row.nodeId"
+          >
+            <el-table-column
+              label="选择"
+              width="120"
+              align="center"
+            >
+              <template #default="{ row }">
+                <el-radio
+                  :model-value="selectedNodeId"
+                  :label="row.nodeId"
+                  :disabled="row.status !== 1"
+                  @change="() => handleNodeRadioChange(row.nodeId)"
+                />
+              </template>
+            </el-table-column>
+            <el-table-column prop="nodeIp" label="节点IP" min-width="60" />
+            <el-table-column prop="nodePort" label="端口" min-width="40" />
+            <el-table-column label="状态" min-width="80">
+              <template #default="{ row }">
+                <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small">
+                  {{ row.status === 1 ? '正常' : '离线' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="任务数" min-width="80">
+              <template #default="{ row }">
+                <el-tag type="warning" size="small">{{ row.taskCount }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="线程数" min-width="120">
+              <template #default="{ row }">
+                <el-input-number
+                  v-model="row.threadNum"
+                  :min="1"
+                  :max="20"
+                  :disabled="row.status !== 1"
+                  size="small"
+                  style="width: 90px;"
+                  placeholder="线程数"
+                />
+              </template>
+            </el-table-column>
+          </el-table>
+          <el-button @click="handleRefreshNode" :loading="nodeLoading" icon="refresh" circle style="margin-top: 2px;" title="刷新节点" />
+        </div>
+      </div>
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="taskOptionsDialogVisible = false">取消</el-button>
@@ -243,6 +293,7 @@ import type { FormInstance } from 'element-plus';
 import { ElMessage, ElMessageBox } from 'element-plus'; // For delete confirmation
 import { onMounted, watch } from 'vue';
 import { InfoFilled } from '@element-plus/icons-vue';
+import { nodeApi } from '../api/node';
 
 const router = useRouter();
 
@@ -313,9 +364,6 @@ const isDomainAutoFilled = ref(false);
 const taskOptionsDialogVisible = ref(false);
 const taskOptionsFormRef = ref<FormInstance>();
 const currentTaskWebsite = ref<Website | null>(null);
-const taskOptionsForm = reactive({
-  threadNum: 5
-});
 
 const formRules = reactive<FormRules>({
   name: [
@@ -350,14 +398,8 @@ const formRules = reactive<FormRules>({
   ]
 });
 
-// 任务选项表单验证规则
-const taskOptionsRules = reactive<FormRules>({
-  threadNum: [
-    { required: true, message: '请输入线程数', trigger: 'blur' },
-    { type: 'number', min: 1, max: 20, message: '线程数必须在1-20之间', trigger: 'blur' }
-  ]
-});
-
+// 任务选项表单验证规则（移除线程数相关）
+const taskOptionsRules = reactive<FormRules>({});
 
 // Table data
 const tableData = ref<Website[]>([
@@ -376,11 +418,24 @@ const pagination = reactive({
   total: 1, // Total items based on the image
 });
 
+type SpiderNodeWithThread = {
+  nodeId: string;
+  nodeIp: string;
+  nodePort: number;
+  status: number;
+  taskCount: number;
+  threadNum: number;
+};
+
+const nodeList = ref<SpiderNodeWithThread[]>([]);
+const nodeLoading = ref(false);
+const selectedNodeId = ref<string | null>(null);
+
 // --- Methods ---
 // 工具函数：将字符串格式转换为对象格式
-const convertToObject = (str: string, separator: string) => {
-  if (!str) return {};
-  const result = {};
+const convertToObject = (str: string | undefined, separator: string) => {
+  if (!str) return '';
+  const result: Record<string, string> = {};
   str.split('\n')
     .filter(line => line.trim())
     .forEach(line => {
@@ -393,8 +448,9 @@ const convertToObject = (str: string, separator: string) => {
 };
 
 // 工具函数：将对象格式转换为字符串格式
-const convertToString = (obj: Record<string, string>, separator: string) => {
-  if (!obj || typeof obj !== 'object') return '';
+const convertToString = (obj: Record<string, string> | string | undefined, separator: string) => {
+  if (!obj) return '';
+  if (typeof obj === 'string') return obj;
   return Object.entries(obj)
     .map(([key, value]) => `${key}${separator}${value}`)
     .join('\n');
@@ -408,18 +464,14 @@ const fetchData = async () => {
       size: pagination.pageSize,
       name: searchForm.name,
       baseUrl: searchForm.baseUrl,
-      domain: searchForm.domain,
-      charset: searchForm.charset,
-      timeOut: searchForm.timeOut,
-      retryTimes: searchForm.retryTimes,
-      cycleRetryTimes: searchForm.cycleRetryTimes
+      domain: searchForm.domain
     });
     // 转换后端返回的数据格式
     tableData.value = data.records.map(record => ({
       ...record,
       headers: convertToString(record.headers, ': '),
       cookies: convertToString(record.cookies, '='),
-      timeOut: record.timeOut / 1000
+      timeOut: record.timeOut ? record.timeOut / 1000 : undefined
     }));
     pagination.total = data.total;
   } catch (error) {
@@ -436,18 +488,20 @@ const submitWebsiteForm = async () => {
   await websiteFormRef.value.validate(async (valid) => {
     if (valid) {
       try {
-        const formData = {
+        const formData: any = {
           ...websiteForm,
           timeOut: websiteForm.timeOut * 1000, // Convert seconds to milliseconds
-          headers: convertToObject(websiteForm.headers, ': '),
-          cookies: convertToObject(websiteForm.cookies, '=')
+          headers: websiteForm.headers,
+          cookies: websiteForm.cookies
         };
 
         if (isEditMode.value && currentWebsiteId.value) {
+          formData.id = currentWebsiteId.value;
           await websiteApi.update(formData);
           ElMessage.success('更新成功');
         } else {
-          await websiteApi.create(formData);
+          const { id, ...createData } = formData;
+          await websiteApi.create(createData);
           ElMessage.success('创建成功');
         }
 
@@ -464,12 +518,13 @@ const submitWebsiteForm = async () => {
 const handleEdit = async (row: Website) => {
   try {
     loading.value = true;
-    const website = await websiteApi.getById(row.id);
+    const websiteRes = await websiteApi.getById(row.id);
+    const website = websiteRes.data;
     isEditMode.value = true;
     currentWebsiteId.value = row.id;
     Object.assign(websiteForm, {
       ...website,
-      timeOut: website.timeOut / 1000, // Convert milliseconds to seconds for display
+      timeOut: website.timeOut ? website.timeOut / 1000 : 3, // Convert milliseconds to seconds for display
       headers: convertToString(website.headers, ': '),
       cookies: convertToString(website.cookies, '=')
     });
@@ -504,7 +559,7 @@ const handleTableRefresh = () => {
   fetchData(); // Re-fetch data
 };
 const columnSettingsVisible = ref(false);
-const columnSettings = ref({
+const columnSettings = ref<Record<string, boolean>>({
   id: true,
   name: true,
   baseUrl: true,
@@ -541,11 +596,11 @@ watch(
 
     isUpdatingColumns.value = true;
     // 先将所有列设置为不可见
-    Object.keys(columnSettings.value).forEach(key => {
+    Object.keys(columnSettings.value).forEach((key: string) => {
       columnSettings.value[key] = false;
     });
     // 再将选中的列设置为可见
-    newVisibleColumns.forEach(prop => {
+    newVisibleColumns.forEach((prop: string) => {
       columnSettings.value[prop] = true;
     });
 
@@ -654,31 +709,42 @@ const handleCurrentChange = (val: number) => {
 // 启动采集功能 - 显示选项对话框
 const handleStartCrawl = (row: Website) => {
   currentTaskWebsite.value = row;
-  taskOptionsForm.threadNum = 2; // 默认线程数
   taskOptionsDialogVisible.value = true;
+  selectedNodeId.value = null;
+  fetchNodeList();
 };
 // 提交任务选项并启动任务
 const submitTaskOptions = async () => {
-  if (!taskOptionsFormRef.value || !currentTaskWebsite.value) return;
-
-  await taskOptionsFormRef.value.validate(async (valid: boolean) => {
-    if (valid) {
-      try {
-        loading.value = true;
-        // 调用API启动任务，传入线程数
-        await taskApi.run({
-          websiteId: currentTaskWebsite.value?.id ?? null,
-          threadNum: taskOptionsForm.threadNum
-        });
-        ElMessage.success(`已成功启动对网站 '${currentTaskWebsite.value.name}' 的采集任务`);
-        taskOptionsDialogVisible.value = false;
-      } catch (error) {
-        ElMessage.error((error as Error).message || '操作失败');
-      } finally {
-        loading.value = false;
-      }
-    }
-  });
+  if (!currentTaskWebsite.value) return;
+  if (!selectedNodeId.value) {
+    ElMessage.warning('请选择节点');
+    return;
+  }
+  // 找到选中的节点，获取其线程数
+  const selectedNode = nodeList.value.find(node => node.nodeId === selectedNodeId.value);
+  if (!selectedNode) {
+    ElMessage.error('未找到选中节点');
+    return;
+  }
+  if (!selectedNode.threadNum || selectedNode.threadNum < 1 || selectedNode.threadNum > 20) {
+    ElMessage.warning('线程数必须在1-20之间');
+    return;
+  }
+  try {
+    loading.value = true;
+    const website = currentTaskWebsite.value;
+    await (taskApi.run as any)({
+      websiteId: website.id,
+      threadNum: selectedNode.threadNum,
+      nodeId: selectedNode.nodeId
+    });
+    ElMessage.success(`已成功启动对网站 '${website.name}' 的采集任务`);
+    taskOptionsDialogVisible.value = false;
+  } catch (error) {
+    ElMessage.error((error as Error).message || '操作失败');
+  } finally {
+    loading.value = false;
+  }
 };
 // 跳转到动态配置页面
 const handleConfig = (row: Website) => {
@@ -704,6 +770,50 @@ const toggleExpand = (row: any, field: 'headers' | 'cookies') => {
   } else {
     row.isCookiesExpanded = !row.isCookiesExpanded;
   }
+};
+
+const fetchNodeList = async () => {
+  nodeLoading.value = true;
+  try {
+    const { data } = await nodeApi.getNodeList();
+    // 为每个节点添加 threadNum 字段，默认 2
+    nodeList.value = data.map((node: any) => ({ ...node, threadNum: 1 }));
+  } catch (e) {
+    ElMessage.error('获取节点列表失败');
+  } finally {
+    nodeLoading.value = false;
+  }
+};
+
+const handleRefreshNode = async () => {
+  nodeLoading.value = true;
+  try {
+    await nodeApi.refreshNode();
+    await fetchNodeList();
+    ElMessage.success('节点列表已刷新');
+  } catch (e) {
+    ElMessage.error('刷新节点失败');
+  } finally {
+    nodeLoading.value = false;
+  }
+};
+
+const changeColumnSetting = (prop: string, val: boolean) => {
+  (columnSettings.value as Record<string, boolean>)[prop] = val;
+};
+
+// 节点表格单选逻辑
+const handleNodeRadioChange = (nodeId: string) => {
+  selectedNodeId.value = nodeId;
+};
+const handleNodeRowClick = (row: any) => {
+  if (row.status === 1) {
+    selectedNodeId.value = row.nodeId;
+  }
+};
+// 高亮选中行
+const nodeTableRowClassName = ({ row }: { row: any }) => {
+  return row.nodeId === selectedNodeId.value ? 'selected-node-row' : '';
 };
 </script>
 
@@ -867,9 +977,18 @@ const toggleExpand = (row: any, field: 'headers' | 'cookies') => {
   cursor: pointer;
   color: var(--el-color-primary);
   white-space: pre-wrap;
+}
+.truncated-text:hover {
+  text-decoration: underline;
+}
 
-  &:hover {
-    text-decoration: underline;
-  }
+.selected-node-row {
+  background-color: #e6f7ff !important;
+}
+.el-table__body .el-radio {
+  margin: 0 auto;
+}
+.el-table__body .el-input-number {
+  margin: 0 auto;
 }
 </style>
