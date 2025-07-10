@@ -101,9 +101,9 @@
 
       <!-- Pagination -->
       <div class="pagination-container">
-        <el-pagination v-model:current-page="pagination.currentPage" v-model:page-size="pagination.pageSize"
+        <el-pagination :current-page="pagination.currentPage" :page-size="pagination.pageSize"
           :page-sizes="[10, 20, 50, 100]" :total="pagination.total" layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleSizeChange" @current-change="handleCurrentChange" />
+          @size-change="handleSizeChange" @current-change="handleCurrentChange" @update:current-page="pagination.currentPage = $event" @update:page-size="pagination.pageSize = $event" />
       </div>
     </el-card>
 
@@ -212,45 +212,48 @@
     </el-dialog>
 
     <!-- 启动任务选项对话框 -->
-    <el-dialog v-model="taskOptionsDialogVisible" title="启动采集任务" width="800px">
+    <el-dialog v-model="taskOptionsDialogVisible" title="启动采集任务" width="1000px">
       <div style="display: flex; flex-direction: column; gap: 10px;">
         <div style="display: flex; align-items: flex-start; width: 100%; gap: 10px;">
-          <el-table
-            :data="nodeList"
-            style="flex: 1; min-width: 0; max-height: 320px; overflow-y: auto; background: #f9f9fb; border: 1px solid #ebeef5;"
-            height="320"
-            @row-click="handleNodeRowClick"
-            :row-class-name="nodeTableRowClassName"
-            :empty-text="nodeLoading ? '加载中...' : '暂无节点'"
-            :highlight-current-row="true"
-            :row-key="row => row.nodeId"
-          >
+          <div class="node-table-container" style="flex: 1; min-width: 0;">
+            <el-table
+              :data="nodeList"
+              style="max-height: 320px; background: #f9f9fb; border: 1px solid #ebeef5;"
+              height="320"
+              @row-click="handleNodeRowClick"
+              :row-class-name="nodeTableRowClassName"
+              :empty-text="nodeLoading ? '加载中...' : '暂无节点'"
+              :highlight-current-row="true"
+              :row-key="row => row.nodeId"
+              border
+            >
             <el-table-column
               label="选择"
               width="120"
               align="center"
+              fixed="left"
             >
               <template #default="{ row }">
-                <el-radio
-                  :model-value="selectedNodeId"
-                  :label="row.nodeId"
+                <el-checkbox
+                  :model-value="selectedNodeIds.includes(row.nodeId)"
                   :disabled="row.status !== 1"
-                  @change="() => handleNodeRadioChange(row.nodeId)"
+                  @change="val => handleNodeSelectionChange(row, val)"
                 />
               </template>
             </el-table-column>
-            <el-table-column prop="nodeIp" label="节点IP" min-width="60" />
-            <el-table-column prop="nodePort" label="端口" min-width="40" />
-            <el-table-column label="状态" min-width="80">
+            <el-table-column prop="nodeId" label="节点ID" width="220" fixed="left" />
+            <el-table-column prop="nodeIp" label="节点IP" min-width="120" />
+            <el-table-column prop="nodePort" label="端口" min-width="80" />
+            <el-table-column label="状态" min-width="100">
               <template #default="{ row }">
                 <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small">
                   {{ row.status === 1 ? '正常' : '离线' }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="任务数" min-width="80">
+            <el-table-column label="任务数" min-width="100">
               <template #default="{ row }">
-                <el-tag type="warning" size="small">{{ row.taskCount }}</el-tag>
+                <el-tag type="warning" size="small">{{ row.taskCount}}</el-tag>
               </template>
             </el-table-column>
             <el-table-column label="线程数" min-width="120">
@@ -267,6 +270,7 @@
               </template>
             </el-table-column>
           </el-table>
+            </div>
           <el-button @click="handleRefreshNode" :loading="nodeLoading" icon="refresh" circle style="margin-top: 2px;" title="刷新节点" />
         </div>
       </div>
@@ -429,7 +433,9 @@ type SpiderNodeWithThread = {
 
 const nodeList = ref<SpiderNodeWithThread[]>([]);
 const nodeLoading = ref(false);
-const selectedNodeId = ref<string | null>(null);
+const selectedNodeIds = ref<string[]>([]);
+const selectedNodes = ref<SpiderNodeWithThread[]>([]);
+
 
 // --- Methods ---
 // 工具函数：将字符串格式转换为对象格式
@@ -710,35 +716,36 @@ const handleCurrentChange = (val: number) => {
 const handleStartCrawl = (row: Website) => {
   currentTaskWebsite.value = row;
   taskOptionsDialogVisible.value = true;
-  selectedNodeId.value = null;
+  selectedNodeIds.value = [];
   fetchNodeList();
 };
 // 提交任务选项并启动任务
 const submitTaskOptions = async () => {
   if (!currentTaskWebsite.value) return;
-  if (!selectedNodeId.value) {
-    ElMessage.warning('请选择节点');
+  if (selectedNodeIds.value.length === 0) {
+    ElMessage.warning('请选择至少一个节点');
     return;
   }
-  // 找到选中的节点，获取其线程数
-  const selectedNode = nodeList.value.find(node => node.nodeId === selectedNodeId.value);
-  if (!selectedNode) {
-    ElMessage.error('未找到选中节点');
-    return;
+  
+  // 验证所有选中节点的线程数
+  const selectedNodes = nodeList.value.filter(node => selectedNodeIds.value.includes(node.nodeId));
+  for (const node of selectedNodes) {
+    if (!node.threadNum || node.threadNum < 1 || node.threadNum > 20) {
+      ElMessage.warning(`节点 ${node.nodeId} 的线程数必须在1-20之间`);
+      return;
+    }
   }
-  if (!selectedNode.threadNum || selectedNode.threadNum < 1 || selectedNode.threadNum > 20) {
-    ElMessage.warning('线程数必须在1-20之间');
-    return;
-  }
+  
   try {
     loading.value = true;
     const website = currentTaskWebsite.value;
-    await (taskApi.run as any)({
+
+    await taskApi.run({
       websiteId: website.id,
-      threadNum: selectedNode.threadNum,
-      nodeId: selectedNode.nodeId
+      spiderNodes: selectedNodes
     });
-    ElMessage.success(`已成功启动对网站 '${website.name}' 的采集任务`);
+
+    ElMessage.success(`已成功启动对网站 '${website.name}' 的采集任务，共选择 ${selectedNodeIds.value.length} 个节点`);
     taskOptionsDialogVisible.value = false;
   } catch (error) {
     ElMessage.error((error as Error).message || '操作失败');
@@ -778,6 +785,22 @@ const fetchNodeList = async () => {
     const { data } = await nodeApi.getNodeList();
     // 为每个节点添加 threadNum 字段，默认 2
     nodeList.value = data.map((node: any) => ({ ...node, threadNum: 1 }));
+    // 增加一个测试 nodeList
+    nodeList.value.push({
+      nodeId: '1',
+      nodeIp: '127.0.0.1',
+      nodePort: 8080,
+      status: 1,
+      taskCount: 0,
+      threadNum: 1
+    });
+
+    // 遍历 nodeList，如果 taskCount 为 null，初始化为 0
+    nodeList.value.forEach(node => {
+      if (node.taskCount === null) {
+        node.taskCount = 0;
+      }
+    });
   } catch (e) {
     ElMessage.error('获取节点列表失败');
   } finally {
@@ -798,23 +821,39 @@ const handleRefreshNode = async () => {
   }
 };
 
-const changeColumnSetting = (prop: string, val: boolean) => {
+const changeColumnSetting = (prop: string, val: any) => {
   (columnSettings.value as Record<string, boolean>)[prop] = val;
 };
 
-// 节点表格单选逻辑
-const handleNodeRadioChange = (nodeId: string) => {
-  selectedNodeId.value = nodeId;
+// 节点表格多选逻辑
+const handleNodeSelectionChange = (node: SpiderNodeWithThread, val: boolean) => {
+  if (val) {
+    if (!selectedNodeIds.value.includes(node.nodeId)) {
+      selectedNodeIds.value.push(node.nodeId);
+      selectedNodes.value.push(node);
+    }
+  } else {
+    selectedNodeIds.value = selectedNodeIds.value.filter(id => id !== node.nodeId);
+    selectedNodes.value = selectedNodes.value.filter(n => n.nodeId !== node.nodeId);
+  }
 };
 const handleNodeRowClick = (row: any) => {
   if (row.status === 1) {
-    selectedNodeId.value = row.nodeId;
+    const nodeId = row.nodeId;
+    if (selectedNodeIds.value.includes(nodeId)) {
+      selectedNodeIds.value = selectedNodeIds.value.filter(id => id !== nodeId);
+      selectedNodes.value = selectedNodes.value.filter(n => n.nodeId !== nodeId);
+    } else {
+      selectedNodeIds.value.push(nodeId);
+      selectedNodes.value.push(row);
+    }
   }
 };
 // 高亮选中行
 const nodeTableRowClassName = ({ row }: { row: any }) => {
-  return row.nodeId === selectedNodeId.value ? 'selected-node-row' : '';
+  return selectedNodeIds.value.includes(row.nodeId) ? 'selected-node-row' : '';
 };
+
 </script>
 
 <style scoped>
@@ -990,5 +1029,23 @@ const nodeTableRowClassName = ({ row }: { row: any }) => {
 }
 .el-table__body .el-input-number {
   margin: 0 auto;
+}
+
+/* 节点表格滚动优化 */
+.node-table-container {
+  overflow-x: auto;
+  border-radius: 6px;
+}
+
+.node-table-container :deep(.el-table) {
+  border-radius: 6px;
+}
+
+.node-table-container :deep(.el-table__fixed) {
+  border-radius: 6px 0 0 6px;
+}
+
+.node-table-container :deep(.el-table__fixed-right) {
+  border-radius: 0 6px 6px 0;
 }
 </style>
