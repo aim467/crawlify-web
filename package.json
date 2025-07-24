@@ -24,7 +24,7 @@
     "xpath": "^0.0.34"
   },
   "devDependencies": {
-    "@types/node": "^20.17.32",
+    "@types/node": "^20.19.9",
     "@types/xmldom": "^0.1.34",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vue/tsconfig": "^0.7.0",
