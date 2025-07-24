@@ -111,73 +111,182 @@
     <el-dialog v-model="dialogVisible" :title="isEditMode ? '编辑网站' : '新增网站'" width="90%" class="website-dialog">
       <el-form :model="websiteForm" ref="websiteFormRef" label-width="120px" :rules="formRules" class="website-form">
         <div class="form-container">
-          <!-- 左侧基本信息 -->
+          <!-- 左侧配置信息 -->
           <div class="form-left">
-            <el-form-item label="网站名称:" prop="name">
-              <el-tooltip content="网站的名称，用于标识和区分不同的网站" placement="top" effect="light">
-                <el-input v-model="websiteForm.name" placeholder="请输入网站名称，2-50个字符" style="width: 100%" />
-              </el-tooltip>
-            </el-form-item>
-            <el-form-item label="基础URL:" prop="baseUrl">
-              <el-tooltip content="网站的基础URL，用于构建完整的请求地址" placement="top" effect="light">
-                <el-input v-model="websiteForm.baseUrl" placeholder="请输入基础URL，如https://example.com"
-                  style="width: 100%" />
-              </el-tooltip>
-            </el-form-item>
-            <el-form-item label="域名:" prop="domain">
-              <el-tooltip content="网站的域名，会根据基础URL自动提取" placement="top" effect="light">
-                <el-input v-model="websiteForm.domain" placeholder="请输入域名，如example.com" style="width: 100%" />
-              </el-tooltip>
-            </el-form-item>
-            <el-form-item label="字符编码:" prop="charset">
-              <el-tooltip content="网站使用的字符编码，如UTF-8、GBK等" placement="top" effect="light">
-                <el-input v-model="websiteForm.charset" placeholder="请输入字符编码，如UTF-8" style="width: 100%" />
-              </el-tooltip>
-            </el-form-item>
-            <el-form-item label="超时时间:" prop="timeOut">
-              <el-tooltip content="请求超时时间，单位为秒" placement="top" effect="light">
-                <el-input-number v-model="websiteForm.timeOut" :min="1" :max="60" placeholder="请输入超时时间(秒)"
-                  style="width: 100%" />
-              </el-tooltip>
-            </el-form-item>
-            <el-form-item label="重试次数:" prop="retryTimes">
-              <el-tooltip content="请求失败后的重试次数" placement="top" effect="light">
-                <el-input-number v-model="websiteForm.retryTimes" :min="0" :max="10" placeholder="请输入重试次数"
-                  style="width: 100%" />
-              </el-tooltip>
-            </el-form-item>
-            <el-form-item label="循环重试次数:" prop="cycleRetryTimes">
-              <el-tooltip content="所有重试失败后的循环重试次数" placement="top" effect="light">
-                <el-input-number v-model="websiteForm.cycleRetryTimes" :min="0" :max="10" placeholder="请输入循环重试次数"
-                  style="width: 100%" />
-              </el-tooltip>
-            </el-form-item>
+            <!-- 基本信息组 -->
+            <div class="form-group">
+              <div class="form-group-title">
+                <el-icon><InfoFilled /></el-icon>
+                <span>基本信息</span>
+              </div>
+              <el-form-item label="网站名称:" prop="name">
+                <el-tooltip content="网站的名称，用于标识和区分不同的网站" placement="top" effect="light">
+                  <el-input v-model="websiteForm.name" placeholder="请输入网站名称，2-50个字符" />
+                </el-tooltip>
+              </el-form-item>
+              <el-form-item label="基础URL:" prop="baseUrl">
+                <el-tooltip content="网站的基础URL，用于构建完整的请求地址" placement="top" effect="light">
+                  <el-input v-model="websiteForm.baseUrl" placeholder="请输入基础URL，如https://example.com" />
+                </el-tooltip>
+              </el-form-item>
+              <el-form-item label="域名:" prop="domain">
+                <el-tooltip content="网站的域名，会根据基础URL自动提取" placement="top" effect="light">
+                  <el-input v-model="websiteForm.domain" placeholder="请输入域名，如example.com" />
+                </el-tooltip>
+              </el-form-item>
+              <el-form-item label="字符编码:" prop="charset">
+                <el-tooltip content="网站使用的字符编码，如UTF-8、GBK等" placement="top" effect="light">
+                  <el-input v-model="websiteForm.charset" placeholder="请输入字符编码，如UTF-8" />
+                </el-tooltip>
+              </el-form-item>
+            </div>
+
+            <!-- 请求配置组 -->
+            <div class="form-group">
+              <div class="form-group-title">
+                <el-icon><Setting /></el-icon>
+                <span>请求配置</span>
+              </div>
+              <div class="form-row">
+                <el-form-item label="超时时间:" prop="timeOut" class="form-item-half">
+                  <el-tooltip content="请求超时时间，单位为秒" placement="top" effect="light">
+                    <el-input-number v-model="websiteForm.timeOut" :min="1" :max="60" placeholder="超时(秒)" 
+                      style="width: 100%" />
+                  </el-tooltip>
+                </el-form-item>
+                <el-form-item label="重试次数:" prop="retryTimes" class="form-item-half">
+                  <el-tooltip content="请求失败后的重试次数" placement="top" effect="light">
+                    <el-input-number v-model="websiteForm.retryTimes" :min="0" :max="10" placeholder="重试次数"
+                      style="width: 100%" />
+                  </el-tooltip>
+                </el-form-item>
+              </div>
+              <el-form-item label="循环重试次数:" prop="cycleRetryTimes">
+                <el-tooltip content="所有重试失败后的循环重试次数" placement="top" effect="light">
+                  <el-input-number v-model="websiteForm.cycleRetryTimes" :min="0" :max="10" 
+                    placeholder="循环重试次数" style="width: 180px" />
+                </el-tooltip>
+              </el-form-item>
+            </div>
           </div>
 
           <!-- 右侧请求头和Cookie -->
           <div class="form-right">
-            <el-form-item label="请求头:" prop="headers">
-              <el-input v-model="websiteForm.headers" type="textarea" :rows="15"
-                :autosize="{ minRows: 15, maxRows: 20 }" placeholder="请输入请求头，格式如：User-Agent: Mozilla/5.0"
-                resize="vertical">
-                <template #prepend>
-                  <el-tooltip content="发送请求时使用的HTTP请求头，可以设置User-Agent等信息" placement="top" effect="light">
-                    <el-icon><InfoFilled /></el-icon>
-                  </el-tooltip>
-                </template>
-              </el-input>
-            </el-form-item>
-            <el-form-item label="Cookie:" prop="cookies">
-              <el-input v-model="websiteForm.cookies" type="textarea" :rows="15"
-                :autosize="{ minRows: 15, maxRows: 20 }" placeholder="请输入Cookie，格式如：name=value; name2=value2"
-                resize="vertical">
-                <template #prepend>
-                  <el-tooltip content="发送请求时携带的Cookie信息，用于模拟登录状态等" placement="top" effect="light">
-                    <el-icon><InfoFilled /></el-icon>
-                  </el-tooltip>
-                </template>
-              </el-input>
-            </el-form-item>
+            <div class="form-group">
+              <div class="form-group-title">
+                <el-icon><Connection /></el-icon>
+                <span>HTTP配置</span>
+                <div class="form-group-actions">
+                  <el-radio-group v-model="httpConfigMode" @change="switchHttpConfigMode" size="small">
+                    <el-radio-button label="text">文本模式</el-radio-button>
+                    <el-radio-button label="table">表格模式</el-radio-button>
+                  </el-radio-group>
+                </div>
+              </div>
+
+              <!-- 文本模式 -->
+              <template v-if="httpConfigMode === 'text'">
+                <el-form-item label="请求头:" prop="headers">
+                  <el-input v-model="websiteForm.headers" type="textarea" :rows="15"
+                    :autosize="{ minRows: 15, maxRows: 20 }" placeholder="请输入请求头，格式如：User-Agent: Mozilla/5.0&#10;Accept: text/html,application/xhtml+xml&#10;Accept-Language: zh-CN,zh;q=0.9"
+                    resize="vertical">
+                    <template #prepend>
+                      <el-tooltip content="发送请求时使用的HTTP请求头，可以设置User-Agent等信息" placement="top" effect="light">
+                        <el-icon><InfoFilled /></el-icon>
+                      </el-tooltip>
+                    </template>
+                  </el-input>
+                </el-form-item>
+                <el-form-item label="Cookie:" prop="cookies">
+                  <el-input v-model="websiteForm.cookies" type="textarea" :rows="15"
+                    :autosize="{ minRows: 15, maxRows: 20 }" placeholder="请输入Cookie，格式如：name=value; name2=value2&#10;sessionId=abc123; userId=456"
+                    resize="vertical">
+                    <template #prepend>
+                      <el-tooltip content="发送请求时携带的Cookie信息，用于模拟登录状态等" placement="top" effect="light">
+                        <el-icon><InfoFilled /></el-icon>
+                      </el-tooltip>
+                    </template>
+                  </el-input>
+                </el-form-item>
+              </template>
+
+              <!-- 表格模式 -->
+              <template v-else>
+                <!-- 请求头表格 -->
+                <div class="table-section">
+                  <div class="table-section-header">
+                    <div class="table-section-title">
+                      <el-icon><InfoFilled /></el-icon>
+                      <span>请求头配置</span>
+                    </div>
+                    <div class="table-section-actions">
+                      <el-button type="primary" size="small" :icon="Plus" @click="addTableRow('headers')">添加</el-button>
+                      <el-button type="success" size="small" :icon="Upload" @click="handleImport('headers')">导入</el-button>
+                    </div>
+                  </div>
+                  <el-table 
+                    :data="headersTableData" 
+                    class="config-table" 
+                    empty-text="暂无请求头配置"
+                    :height="200"
+                    border
+                    stripe>
+                    <el-table-column label="Header名称" width="180">
+                      <template #default="{ row }">
+                        <el-input v-model="row.key" placeholder="如：User-Agent" size="small" />
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="Header值">
+                      <template #default="{ row }">
+                        <el-input v-model="row.value" placeholder="如：Mozilla/5.0 (Windows NT 10.0; Win64; x64)" size="small" />
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="操作" width="60" align="center">
+                      <template #default="{ row }">
+                        <el-button type="danger" size="small" :icon="Delete" circle @click="removeTableRow('headers', row.id)" />
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </div>
+
+                <!-- Cookie表格 -->
+                <div class="table-section">
+                  <div class="table-section-header">
+                    <div class="table-section-title">
+                      <el-icon><InfoFilled /></el-icon>
+                      <span>Cookie配置</span>
+                    </div>
+                    <div class="table-section-actions">
+                      <el-button type="primary" size="small" :icon="Plus" @click="addTableRow('cookies')">添加</el-button>
+                      <el-button type="success" size="small" :icon="Upload" @click="handleImport('cookies')">导入</el-button>
+                    </div>
+                  </div>
+                  <el-table 
+                    :data="cookiesTableData" 
+                    class="config-table" 
+                    empty-text="暂无Cookie配置"
+                    :height="200"
+                    border
+                    stripe>
+                    <el-table-column label="Cookie名称" width="180">
+                      <template #default="{ row }">
+                        <el-input v-model="row.key" placeholder="如：sessionId" size="small" />
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="Cookie值">
+                      <template #default="{ row }">
+                        <el-input v-model="row.value" placeholder="如：abc123def456" size="small" />
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="操作" width="60" align="center">
+                      <template #default="{ row }">
+                        <el-button type="danger" size="small" :icon="Delete" circle @click="removeTableRow('cookies', row.id)" />
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </div>
+              </template>
+            </div>
           </div>
         </div>
       </el-form>
@@ -207,6 +316,40 @@
           <el-button @click="resetColumnSettings">重置</el-button>
           <el-button @click="columnSettingsVisible = false">取消</el-button>
           <el-button type="primary" @click="saveColumnSettings">确认</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <!-- 导入HTTP配置对话框 -->
+    <el-dialog v-model="importDialogVisible" :title="`导入${importType === 'headers' ? '请求头' : 'Cookie'}配置`" width="600px">
+      <div class="import-dialog-content">
+        <div class="import-tip">
+          <el-alert 
+            :title="`请输入${importType === 'headers' ? '请求头' : 'Cookie'}配置，每行一条记录`" 
+            type="info" 
+            show-icon 
+            :closable="false">
+            <template #default>
+              <p>格式示例：</p>
+              <p v-if="importType === 'headers'">User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)</p>
+              <p v-if="importType === 'headers'">Accept: text/html,application/xhtml+xml</p>
+              <p v-if="importType === 'cookies'">sessionId=abc123def456</p>
+              <p v-if="importType === 'cookies'">userId=789</p>
+            </template>
+          </el-alert>
+        </div>
+        <el-input 
+          v-model="importText" 
+          type="textarea" 
+          :rows="12"
+          :placeholder="`请输入${importType === 'headers' ? '请求头' : 'Cookie'}配置`"
+          resize="vertical"
+        />
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="importDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="confirmImport">确认导入</el-button>
         </span>
       </template>
     </el-dialog>
@@ -296,7 +439,7 @@ import { useRouter } from 'vue-router';
 import type { FormInstance } from 'element-plus';
 import { ElMessage, ElMessageBox } from 'element-plus'; // For delete confirmation
 import { onMounted, watch } from 'vue';
-import { InfoFilled } from '@element-plus/icons-vue';
+import { InfoFilled, Setting, Connection, Plus, Upload, Delete } from '@element-plus/icons-vue';
 import { nodeApi } from '../api/node';
 
 const router = useRouter();
@@ -331,6 +474,18 @@ onMounted(() => {
       }
     }
   );
+
+  // Watch table data changes to sync with form data in table mode
+  watch(
+    [() => headersTableData.value, () => cookiesTableData.value],
+    () => {
+      if (httpConfigMode.value === 'table') {
+        websiteForm.headers = tableDataToText(headersTableData.value, ': ');
+        websiteForm.cookies = tableDataToText(cookiesTableData.value, '=');
+      }
+    },
+    { deep: true }
+  );
 });
 
 // --- State ---
@@ -363,6 +518,14 @@ const websiteForm = reactive({
 });
 
 const isDomainAutoFilled = ref(false);
+
+// HTTP配置模式切换
+const httpConfigMode = ref<'text' | 'table'>('text');
+const headersTableData = ref<Array<{key: string, value: string, id: string}>>([]);
+const cookiesTableData = ref<Array<{key: string, value: string, id: string}>>([]);
+const importDialogVisible = ref(false);
+const importType = ref<'headers' | 'cookies'>('headers');
+const importText = ref('');
 
 // 任务选项对话框相关
 const taskOptionsDialogVisible = ref(false);
@@ -438,6 +601,103 @@ const selectedNodes = ref<SpiderNodeWithThread[]>([]);
 
 
 // --- Methods ---
+
+// HTTP配置相关方法
+const switchHttpConfigMode = (mode: 'text' | 'table') => {
+  if (mode === 'table' && httpConfigMode.value === 'text') {
+    // 从文本模式切换到表格模式，转换数据
+    const convertedHeaders = textToTableData(websiteForm.headers, ': ');
+    const convertedCookies = textToTableData(websiteForm.cookies, '=');
+    
+    // 如果没有数据，添加一些示例行
+    headersTableData.value = convertedHeaders.length > 0 ? convertedHeaders : [
+      { id: `${Date.now()}-1`, key: '', value: '' }
+    ];
+    cookiesTableData.value = convertedCookies.length > 0 ? convertedCookies : [
+      { id: `${Date.now()}-2`, key: '', value: '' }
+    ];
+  } else if (mode === 'text' && httpConfigMode.value === 'table') {
+    // 从表格模式切换到文本模式，转换数据
+    websiteForm.headers = tableDataToText(headersTableData.value, ': ');
+    websiteForm.cookies = tableDataToText(cookiesTableData.value, '=');
+  }
+  httpConfigMode.value = mode;
+};
+
+const textToTableData = (text: string, separator: string) => {
+  if (!text) return [];
+  return text.split('\n')
+    .filter(line => line.trim())
+    .map((line, index) => {
+      const separatorIndex = line.indexOf(separator);
+      if (separatorIndex === -1) {
+        return {
+          id: `${Date.now()}-${index}`,
+          key: line.trim(),
+          value: ''
+        };
+      }
+      return {
+        id: `${Date.now()}-${index}`,
+        key: line.substring(0, separatorIndex).trim(),
+        value: line.substring(separatorIndex + separator.length).trim()
+      };
+    });
+};
+
+const tableDataToText = (tableData: Array<{key: string, value: string}>, separator: string) => {
+  return tableData
+    .filter(item => item.key.trim())
+    .map(item => `${item.key}${separator} ${item.value}`)
+    .join('\n');
+};
+
+const addTableRow = (type: 'headers' | 'cookies') => {
+  const newRow = {
+    id: `${Date.now()}-${Math.random()}`,
+    key: '',
+    value: ''
+  };
+  if (type === 'headers') {
+    headersTableData.value.push(newRow);
+  } else {
+    cookiesTableData.value.push(newRow);
+  }
+};
+
+const removeTableRow = (type: 'headers' | 'cookies', id: string) => {
+  if (type === 'headers') {
+    headersTableData.value = headersTableData.value.filter(item => item.id !== id);
+  } else {
+    cookiesTableData.value = cookiesTableData.value.filter(item => item.id !== id);
+  }
+};
+
+const handleImport = (type: 'headers' | 'cookies') => {
+  importType.value = type;
+  importText.value = '';
+  importDialogVisible.value = true;
+};
+
+const confirmImport = () => {
+  if (!importText.value.trim()) {
+    ElMessage.warning('请输入要导入的内容');
+    return;
+  }
+  
+  const separator = importType.value === 'headers' ? ':' : '=';
+  const importedData = textToTableData(importText.value, separator);
+  
+  if (importType.value === 'headers') {
+    headersTableData.value = [...headersTableData.value, ...importedData];
+  } else {
+    cookiesTableData.value = [...cookiesTableData.value, ...importedData];
+  }
+  
+  ElMessage.success(`成功导入 ${importedData.length} 条${importType.value === 'headers' ? '请求头' : 'Cookie'}记录`);
+  importDialogVisible.value = false;
+};
+
 // 工具函数：将字符串格式转换为对象格式
 const convertToObject = (str: string | undefined, separator: string) => {
   if (!str) return '';
@@ -491,6 +751,12 @@ const fetchData = async () => {
 const submitWebsiteForm = async () => {
   if (!websiteFormRef.value) return;
 
+  // 如果是表格模式，先同步数据到表单
+  if (httpConfigMode.value === 'table') {
+    websiteForm.headers = tableDataToText(headersTableData.value, ': ');
+    websiteForm.cookies = tableDataToText(cookiesTableData.value, '=');
+  }
+
   await websiteFormRef.value.validate(async (valid) => {
     if (valid) {
       try {
@@ -524,7 +790,8 @@ const submitWebsiteForm = async () => {
 const handleEdit = async (row: Website) => {
   try {
     loading.value = true;
-    const { data: website } = await websiteApi.getById(row.id);
+    const response = await websiteApi.getById(row.id);
+    const website = response.data || response; // Handle both response formats
     isEditMode.value = true;
     currentWebsiteId.value = row.id;
     Object.assign(websiteForm, {
@@ -533,6 +800,11 @@ const handleEdit = async (row: Website) => {
       headers: convertToString(website.headers, ': '),
       cookies: convertToString(website.cookies, '=')
     });
+    
+    // 同时更新表格数据
+    headersTableData.value = textToTableData(websiteForm.headers, ': ');
+    cookiesTableData.value = textToTableData(websiteForm.cookies, '=');
+    
     dialogVisible.value = true;
   } catch (error) {
     ElMessage.error('获取网站信息失败');
@@ -556,7 +828,19 @@ const handleAddWebsite = () => {
   websiteForm.name = '';
   websiteForm.baseUrl = '';
   websiteForm.domain = '';
+  websiteForm.charset = '';
+  websiteForm.headers = '';
+  websiteForm.cookies = '';
+  websiteForm.timeOut = 3;
+  websiteForm.retryTimes = 0;
+  websiteForm.cycleRetryTimes = 0;
   isDomainAutoFilled.value = false;
+  
+  // 重置HTTP配置
+  httpConfigMode.value = 'text';
+  headersTableData.value = [];
+  cookiesTableData.value = [];
+  
   dialogVisible.value = true;
 };
 const handleTableRefresh = () => {
@@ -911,19 +1195,104 @@ const nodeTableRowClassName = ({ row }: { row: SpiderNodeWithThread }) => {
 .form-container {
   display: flex;
   gap: 30px;
+  min-height: 600px;
 }
 
 .form-left {
-  flex: 3;
+  flex: 5;
   padding-right: 20px;
   border-right: 1px solid #dcdfe6;
-}
-
-.form-right {
-  flex: 7;
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.form-right {
+  flex: 8;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 分组样式 */
+.form-group {
+  background: #fafbfc;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.form-group-title .el-icon {
+  color: #409eff;
+}
+
+.form-group-actions {
+  margin-left: auto;
+}
+
+/* 行内布局 */
+.form-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.form-item-half {
+  flex: 1;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .form-container {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .form-left {
+    border-right: none;
+    border-bottom: 1px solid #dcdfe6;
+    padding-right: 0;
+    padding-bottom: 20px;
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .form-item-half {
+    flex: none;
+  }
+  
+  .table-section-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .table-section-actions {
+    justify-content: center;
+  }
+  
+  .config-table :deep(.el-table) {
+    font-size: 13px;
+  }
 }
 
 .form-right :deep(.el-form-item__content) {
@@ -1009,5 +1378,98 @@ const nodeTableRowClassName = ({ row }: { row: SpiderNodeWithThread }) => {
 
 .node-table-container :deep(.el-table__fixed-right) {
   border-radius: 0 6px 6px 0;
+}
+
+/* HTTP配置表格样式 */
+.table-section {
+  max-width:99%;
+  margin-bottom: 20px;
+}
+
+.table-section:last-child {
+  margin-bottom: 0;
+}
+
+.table-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border: 1px solid #dcdfe6;
+  border-radius: 6px 6px 0 0;
+  border-bottom: none;
+}
+
+.table-section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.table-section-title .el-icon {
+  color: #409eff;
+}
+
+.table-section-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.config-table {
+  width: 100%;
+  border: 1px solid #dcdfe6;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  overflow: hidden;
+}
+
+.config-table :deep(.el-table) {
+  border: none;
+  border-radius: 0 0 6px 6px;
+}
+
+.config-table :deep(.el-table__border-left-patch) {
+  display: none;
+}
+
+.config-table :deep(.el-table__border-right-patch) {
+  display: none;
+}
+
+.config-table :deep(.el-table__empty-text) {
+  color: #909399;
+  font-size: 14px;
+}
+
+/* 导入对话框样式 */
+.import-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.import-tip {
+  margin-bottom: 8px;
+}
+
+.import-tip :deep(.el-alert__content) {
+  line-height: 1.6;
+}
+
+.import-tip p {
+  margin: 4px 0;
+  font-family: monospace;
+  font-size: 13px;
+  color: #666;
+}
+
+.import-tip p:first-child {
+  font-family: inherit;
+  color: #333;
+  font-weight: 500;
 }
 </style>
