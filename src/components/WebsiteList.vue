@@ -197,7 +197,7 @@
         <p class="settings-tip">请选择要显示的列：</p>
         <el-checkbox-group v-model="visibleColumns" class="column-checkbox-group">
           <el-checkbox v-for="option in columnOptions" :key="option.prop" :label="option.prop"
-            @change="val => changeColumnSetting(option.prop, val)">
+            @change="(val: boolean) => changeColumnSetting(option.prop, val)">
             {{ option.label }}
           </el-checkbox>
         </el-checkbox-group>
@@ -224,7 +224,7 @@
               :row-class-name="nodeTableRowClassName"
               :empty-text="nodeLoading ? '加载中...' : '暂无节点'"
               :highlight-current-row="true"
-              :row-key="row => row.nodeId"
+              :row-key="(row: any) => row.nodeId"
               border
             >
             <el-table-column
@@ -237,7 +237,7 @@
                 <el-checkbox
                   :model-value="selectedNodeIds.includes(row.nodeId)"
                   :disabled="row.status !== 1"
-                  @change="val => handleNodeSelectionChange(row, val)"
+                  @change="() => toggleNodeSelection(row)"
                 />
               </template>
             </el-table-column>
@@ -524,8 +524,7 @@ const submitWebsiteForm = async () => {
 const handleEdit = async (row: Website) => {
   try {
     loading.value = true;
-    const websiteRes = await websiteApi.getById(row.id);
-    const website = websiteRes.data;
+    const { data: website } = await websiteApi.getById(row.id);
     isEditMode.value = true;
     currentWebsiteId.value = row.id;
     Object.assign(websiteForm, {
@@ -578,44 +577,7 @@ const columnSettings = ref<Record<string, boolean>>({
   cycleRetryTimes: true
 });
 const visibleColumns = ref<string[]>([]);
-const isUpdatingColumns = ref(false);
-watch(
-  columnSettings,
-  (newSettings) => {
-    if (isUpdatingColumns.value) return;
 
-    isUpdatingColumns.value = true;
-    visibleColumns.value = Object.entries(newSettings)
-      .filter(([_, visible]) => visible)
-      .map(([prop]) => prop);
-
-    setTimeout(() => {
-      isUpdatingColumns.value = false;
-    }, 0);
-  },
-  { immediate: true, deep: true }
-);
-watch(
-  visibleColumns,
-  (newVisibleColumns) => {
-    if (isUpdatingColumns.value) return;
-
-    isUpdatingColumns.value = true;
-    // 先将所有列设置为不可见
-    Object.keys(columnSettings.value).forEach((key: string) => {
-      columnSettings.value[key] = false;
-    });
-    // 再将选中的列设置为可见
-    newVisibleColumns.forEach((prop: string) => {
-      columnSettings.value[prop] = true;
-    });
-
-    setTimeout(() => {
-      isUpdatingColumns.value = false;
-    }, 0);
-  },
-  { deep: true }
-);
 const columnOptions = [
   { label: 'ID', prop: 'id' },
   { label: '网站名称', prop: 'name' },
@@ -639,6 +601,11 @@ const initColumnSettings = () => {
   }
 };
 const saveColumnSettings = () => {
+  // 从 visibleColumns 更新 columnSettings
+  Object.keys(columnSettings.value).forEach(key => {
+    columnSettings.value[key] = visibleColumns.value.includes(key);
+  });
+
   // 先验证设置
   if (!validateColumnSettings()) {
     return;
@@ -654,20 +621,14 @@ const saveColumnSettings = () => {
   }
 };
 const resetColumnSettings = () => {
-  columnOptions.forEach(option => {
-    columnSettings.value[option.prop] = true;
-  });
-  // 更新visibleColumns以匹配重置后的columnSettings
   visibleColumns.value = columnOptions.map(option => option.prop);
   ElMessage.success('已重置为默认设置');
 };
 const validateColumnSettings = () => {
   // 确保至少选择了ID和网站名称列
-  if (!columnSettings.value.id || !columnSettings.value.name) {
+  if (!visibleColumns.value.includes('id') || !visibleColumns.value.includes('name')) {
     ElMessage.warning('ID和网站名称列为必选项，不能隐藏');
-    columnSettings.value.id = true;
-    columnSettings.value.name = true;
-    // 更新visibleColumns
+    // 自动勾选
     if (!visibleColumns.value.includes('id')) {
       visibleColumns.value.push('id');
     }
@@ -679,6 +640,10 @@ const validateColumnSettings = () => {
   return true;
 };
 const handleTableSettings = () => {
+  // 打开对话框时，根据当前的 columnSettings 初始化 visibleColumns
+  visibleColumns.value = Object.entries(columnSettings.value)
+    .filter(([_, visible]) => visible)
+    .map(([prop]) => prop);
   columnSettingsVisible.value = true;
 };
 const handleDelete = (row: Website) => {
@@ -771,7 +736,7 @@ const truncateText = (text: string, maxLength: number) => {
   return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
 };
 
-const toggleExpand = (row: any, field: 'headers' | 'cookies') => {
+const toggleExpand = (row: Website & { isHeadersExpanded?: boolean, isCookiesExpanded?: boolean }, field: 'headers' | 'cookies') => {
   if (field === 'headers') {
     row.isHeadersExpanded = !row.isHeadersExpanded;
   } else {
@@ -785,15 +750,6 @@ const fetchNodeList = async () => {
     const { data } = await nodeApi.getNodeList();
     // 为每个节点添加 threadNum 字段，默认 2
     nodeList.value = data.map((node: any) => ({ ...node, threadNum: 1 }));
-    // 增加一个测试 nodeList
-    nodeList.value.push({
-      nodeId: '1',
-      nodeIp: '127.0.0.1',
-      nodePort: 8080,
-      status: 1,
-      taskCount: 0,
-      threadNum: 1
-    });
 
     // 遍历 nodeList，如果 taskCount 为 null，初始化为 0
     nodeList.value.forEach(node => {
@@ -821,36 +777,42 @@ const handleRefreshNode = async () => {
   }
 };
 
-const changeColumnSetting = (prop: string, val: any) => {
-  (columnSettings.value as Record<string, boolean>)[prop] = val;
+const changeColumnSetting = (prop: string, val: boolean) => {
+  // 这个函数现在可以被简化或移除，因为我们直接操作 visibleColumns
+  const index = visibleColumns.value.indexOf(prop);
+  if (val && index === -1) {
+    visibleColumns.value.push(prop);
+  } else if (!val && index > -1) {
+    visibleColumns.value.splice(index, 1);
+  }
+};
+
+// 统一的节点选择/取消选择处理函数
+const toggleNodeSelection = (node: SpiderNodeWithThread) => {
+  if (node.status !== 1) return; // 离线节点不可选
+
+  const index = selectedNodeIds.value.indexOf(node.nodeId);
+  if (index > -1) {
+    // 如果已选中，则取消选择
+    selectedNodeIds.value.splice(index, 1);
+    selectedNodes.value = selectedNodes.value.filter(n => n.nodeId !== node.nodeId);
+  } else {
+    // 如果未选中，则添加选择
+    selectedNodeIds.value.push(node.nodeId);
+    selectedNodes.value.push(node);
+  }
 };
 
 // 节点表格多选逻辑
 const handleNodeSelectionChange = (node: SpiderNodeWithThread, val: boolean) => {
-  if (val) {
-    if (!selectedNodeIds.value.includes(node.nodeId)) {
-      selectedNodeIds.value.push(node.nodeId);
-      selectedNodes.value.push(node);
-    }
-  } else {
-    selectedNodeIds.value = selectedNodeIds.value.filter(id => id !== node.nodeId);
-    selectedNodes.value = selectedNodes.value.filter(n => n.nodeId !== node.nodeId);
-  }
+  // 此函数保留为空，因为所有逻辑都由 toggleNodeSelection 通过 @change 事件处理
 };
-const handleNodeRowClick = (row: any) => {
-  if (row.status === 1) {
-    const nodeId = row.nodeId;
-    if (selectedNodeIds.value.includes(nodeId)) {
-      selectedNodeIds.value = selectedNodeIds.value.filter(id => id !== nodeId);
-      selectedNodes.value = selectedNodes.value.filter(n => n.nodeId !== nodeId);
-    } else {
-      selectedNodeIds.value.push(nodeId);
-      selectedNodes.value.push(row);
-    }
-  }
+
+const handleNodeRowClick = (row: SpiderNodeWithThread) => {
+  toggleNodeSelection(row);
 };
 // 高亮选中行
-const nodeTableRowClassName = ({ row }: { row: any }) => {
+const nodeTableRowClassName = ({ row }: { row: SpiderNodeWithThread }) => {
   return selectedNodeIds.value.includes(row.nodeId) ? 'selected-node-row' : '';
 };
 
