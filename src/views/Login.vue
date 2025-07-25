@@ -69,6 +69,21 @@ import request from '../utils/request'; // 导入封装的 request 函数
 import { useAuthStore } from '../store/auth'; // 导入 Pinia store
 import { ElMessage } from 'element-plus'; // 导入 ElMessage 用于提示
 
+// 定义形状类型
+interface Shape {
+  type: string
+  x: number
+  y: number
+  size: number
+  color: string
+  rotation: number
+  duration: number
+  delay: number
+  speedX: number
+  speedY: number
+  opacity: number
+}
+
 // 获取路由和认证存储
 const router = useRouter();
 const authStore = useAuthStore();
@@ -77,8 +92,8 @@ const authStore = useAuthStore();
 const username = ref('');
 const password = ref('');
 const showPassword = ref(false);
-const usernameInput = ref(null);
-const passwordInput = ref(null);
+const usernameInput = ref<HTMLInputElement | null>(null);
+const passwordInput = ref<HTMLInputElement | null>(null);
 
 // 聚焦密码输入框
 const focusPassword = () => {
@@ -114,7 +129,7 @@ const login = async () => {
       // 处理后端未返回 token 的情况
       ElMessage.error(response.data.msg || '登录失败，请检查用户名和密码');
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('登录失败:', error);
     // 处理请求错误，例如网络问题或服务器错误
     const errorMessage = error.response?.data?.msg || '登录请求失败，请稍后重试';
@@ -123,8 +138,8 @@ const login = async () => {
 };
 
 // 动态背景形状
-const shapes = ref([]);
-const animationFrameId = ref(null);
+const shapes = ref<Shape[]>([]);
+const animationFrameId = ref<number | null>(null);
 
 // 生成随机形状
 const generateShapes = () => {
@@ -136,7 +151,7 @@ const generateShapes = () => {
     'rgba(253, 186, 116, 0.4)', // 橙色
   ];
 
-  const newShapes = [];
+  const newShapes: Shape[] = [];
 
   // 生成25-30个随机形状，增加形状数量使背景更丰富
   const shapeCount = Math.floor(Math.random() * 6) + 25;
@@ -162,7 +177,7 @@ const generateShapes = () => {
 
 // 动画形状
 const animateShapes = () => {
-  shapes.value.forEach(shape => {
+  shapes.value.forEach((shape: Shape) => {
     // 更新位置
     shape.x += shape.speedX;
     shape.y += shape.speedY;

@@ -233,13 +233,11 @@
 
 <script lang="ts" setup>
 import { ref, reactive, onMounted } from 'vue';
-import type { Task } from '@/types/task';
+import type { Task, SubTask } from '@/types/task';
 
 // 子任务弹窗相关
 const subTaskDialogVisible = ref(false);
 const currentTask = ref<Task | null>(null);
-
-import type { SubTask } from '@/api/task';
 import { taskApi } from '@/api/task';
 import { websiteApi } from '@/api/website';
 import {
@@ -339,7 +337,7 @@ const fetchData = async () => {
       });
       
       // 为每个任务添加websiteName字段
-      tasks.forEach(task => {
+      tasks.forEach((task: Task) => {
         task.websiteName = websiteMap.get(task.websiteId) || `未知网站(ID:${task.websiteId})`;
       });
     }

@@ -39,10 +39,8 @@ export interface PageResult {
 }
 
 export interface TaskResponse {
-  data: {
-    pageResult: PageResult
-    taskStatusCount: TaskStatusCount
-  }
+  pageResult: PageResult
+  taskStatusCount: TaskStatusCount
 }
 
 export const taskApi = {

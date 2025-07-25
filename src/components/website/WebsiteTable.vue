@@ -133,7 +133,7 @@
             v-for="option in columnOptions" 
             :key="option.prop" 
             :label="option.prop"
-            @change="(val) => changeColumnSetting(option.prop, val)"
+            @change="(val: boolean) => changeColumnSetting(option.prop, val)"
           >
             {{ option.label }}
           </el-checkbox>
