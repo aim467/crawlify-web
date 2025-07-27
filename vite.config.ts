@@ -79,8 +79,8 @@ export default defineConfig({
   },
   // 开发服务器配置
   server: {
-    port: 3000,
-    open: true,
+    port: 5173,
+    open: false,
     cors: true,
   },
   // 预览服务器配置

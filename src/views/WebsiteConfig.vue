@@ -81,23 +81,9 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="requestBody" label="请求体" min-width="200" show-overflow-tooltip>
-          <template #default="{ row }">
-            <el-tooltip :content="row.requestBody" placement="top" :hide-after="2000">
-              <span>{{ row.requestBody }}</span>
-            </el-tooltip>
-          </template>
-        </el-table-column>
         <el-table-column prop="pageStart" label="起始页码" width="100" align="center" />
         <el-table-column prop="pageLen" label="最大页数" width="100" align="center" />
         <el-table-column prop="nextPage" label="下一页URL" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="requestHead" label="请求头" min-width="200" show-overflow-tooltip>
-          <template #default="{ row }">
-            <el-tooltip :content="row.requestHead" placement="top" :hide-after="2000">
-              <span>{{ row.requestHead }}</span>
-            </el-tooltip>
-          </template>
-        </el-table-column>
         <el-table-column prop="resultType" label="结果类型" width="100" align="center">
           <template #default="{ row }">
             <el-tag :type="row.resultType === 'json' ? 'primary' : 'info'">
@@ -244,7 +230,7 @@ import ConfigForm from '../components/website/ConfigForm.vue';
 import { parseCommand } from '../utils/commandParser';
 import { TEST_EXAMPLES } from '../constants/configFormConstants';
 
-const websiteId = ref();
+const websiteId = ref<number>();
 const route = useRoute();
 
 // 定义配置类型接口
@@ -293,7 +279,7 @@ const loading = ref(false);
 const dialogVisible = ref(false);
 const importCommand = ref('');
 const isEditMode = ref(false);
-const configFormRef = ref<FormInstance>();
+const configFormRef = ref();
 const currentConfigId = ref<string | number | null>(null);
 
 // 配置测试相关
@@ -536,6 +522,10 @@ const fetchData = async () => {
       page: pagination.currentPage,
       size: pagination.pageSize,
       websiteId: Number(websiteId.value),
+      configId: searchForm.configId || undefined,
+      configName: searchForm.configName || undefined,
+      columnUrl: searchForm.columnUrl || undefined,
+      requestType: searchForm.requestType || undefined,
     });
     if (data?.records) {
       tableData.value = data.records;
@@ -612,30 +602,6 @@ const fetchData = async () => {
 
 .el-select {
   min-width: 180px;
-}
-
-/* 抽屉样式 */
-.config-drawer :deep(.el-drawer__header) {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 20px 24px;
-  margin-bottom: 0;
-}
-
-.config-drawer :deep(.el-drawer__title) {
-  font-size: 18px;
-  font-weight: 600;
-  color: white;
-}
-
-.config-drawer :deep(.el-drawer__close-btn) {
-  color: white;
-  font-size: 18px;
-}
-
-.config-drawer :deep(.el-drawer__body) {
-  padding: 0;
-  background: #fafbfc;
 }
 
 .drawer-content {

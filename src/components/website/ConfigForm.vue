@@ -21,8 +21,11 @@
       <el-form-item label="基础URL" prop="columnUrl" class="url-input">
         <el-input v-model="form.columnUrl" placeholder="输入目标网页的基础URL，例如：https://example.com/list" />
       </el-form-item>
+      <el-form-item label="请求头" prop="requestHead">
+        <el-input v-model="form.requestHead" type="textarea" :rows="8" placeholder="请求头信息，JSON格式，可包含User-Agent、Cookie等" />
+      </el-form-item>
       <el-form-item label="请求体" prop="requestBody">
-        <el-input v-model="form.requestBody" type="textarea" :rows="4" placeholder="POST请求时的请求体模板，可包含占位符<pageNum>" />
+        <el-input v-model="form.requestBody" type="textarea" :rows="6" placeholder="POST请求时的请求体模板，可包含占位符<pageNum>" />
       </el-form-item>
     </div>
 
@@ -43,9 +46,6 @@
       </el-row>
       <el-form-item label="下一页URL" prop="nextPage" class="url-input">
         <el-input v-model="form.nextPage" placeholder="下一页的URL模板，使用<pageNum>作为页码占位符，例如：page=<pageNum>" />
-      </el-form-item>
-      <el-form-item label="请求头" prop="requestHead">
-        <el-input v-model="form.requestHead" type="textarea" :rows="5" placeholder="请求头信息，JSON格式，可包含User-Agent、Cookie等" />
       </el-form-item>
     </div>
 
@@ -94,7 +94,10 @@ const rules = CONFIG_FORM_RULES;
 
 // 暴露验证方法给父组件
 defineExpose({
-  validate: () => formRef.value?.validate(),
+  validate: (callback?: (valid: boolean) => void) => {
+    if (!formRef.value) return Promise.reject('Form instance not found');
+    return formRef.value.validate(callback);
+  },
   resetFields: () => formRef.value?.resetFields()
 });
 </script>
