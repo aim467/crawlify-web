@@ -24,7 +24,7 @@
     />
 
     <!-- 新增/编辑网站对话框 -->
-    <el-dialog v-model="dialogVisible" :title="isEditMode ? '编辑网站' : '新增网站'" width="90%" class="website-dialog">
+    <el-dialog v-model="dialogVisible" :title="isEditMode ? '编辑网站' : '新增网站'" width="95%">
       <el-form :model="websiteForm" ref="websiteFormRef" label-width="120px" :rules="formRules" class="website-form">
         <div class="form-container">
           <!-- 左侧配置信息 -->
@@ -357,8 +357,11 @@ onMounted(() => {
   flex-direction: column;
 }
 
-.website-dialog {
-  max-height: 90vh;
+:deep(.el-dialog) {
+  margin: 0 !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
 }
 
 .website-form {
