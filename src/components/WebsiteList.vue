@@ -364,10 +364,10 @@ onMounted(() => {
   transform: translate(-50%, -50%) !important;
 }
 
-.website-form {
+/* .website-form {
   max-height: 70vh;
   overflow-y: auto;
-}
+} */
 
 .form-container {
   display: flex;
