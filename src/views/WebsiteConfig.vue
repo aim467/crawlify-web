@@ -81,23 +81,9 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="requestBody" label="请求体" min-width="200" show-overflow-tooltip>
-          <template #default="{ row }">
-            <el-tooltip :content="row.requestBody" placement="top" :hide-after="2000">
-              <span>{{ row.requestBody }}</span>
-            </el-tooltip>
-          </template>
-        </el-table-column>
         <el-table-column prop="pageStart" label="起始页码" width="100" align="center" />
         <el-table-column prop="pageLen" label="最大页数" width="100" align="center" />
         <el-table-column prop="nextPage" label="下一页URL" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="requestHead" label="请求头" min-width="200" show-overflow-tooltip>
-          <template #default="{ row }">
-            <el-tooltip :content="row.requestHead" placement="top" :hide-after="2000">
-              <span>{{ row.requestHead }}</span>
-            </el-tooltip>
-          </template>
-        </el-table-column>
         <el-table-column prop="resultType" label="结果类型" width="100" align="center">
           <template #default="{ row }">
             <el-tag :type="row.resultType === 'json' ? 'primary' : 'info'">
@@ -141,84 +127,43 @@
       v-model:expressionData="testForm.expressionData"
     />
 
-    <!-- 添加/编辑配置弹窗 -->
-    <el-dialog v-model="dialogVisible" :title="isEditMode ? '编辑配置' : '新增配置'" width="1000px" style="overflow:visible;">
-      <el-form :model="configForm" ref="configFormRef" label-width="100px" :rules="formRules">
-        <!-- 导入命令输入区，集成到表单顶部 -->
-        <el-form-item label="导入命令:" style="margin-bottom: 24px;">
-          <el-input v-model="importCommand" type="textarea" :rows="4" placeholder="请输入curl或fetch命令，例如: curl -X GET 'https://example.com/api' -H 'Content-Type: application/json'" />
-          <el-button type="primary" style="margin-top:8px;" @click="handleImport">导入</el-button>
-        </el-form-item>
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="配置名称:" prop="configName">
-              <el-input v-model="configForm.configName" placeholder="请输入配置名称，用于标识和区分不同的爬虫配置" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="请求类型:" prop="requestType">
-              <el-select v-model="configForm.requestType" placeholder="选择请求方式，GET用于直接获取数据，POST用于提交表单数据" style="width: 100%">
-                <el-option label="GET" value="GET" />
-                <el-option label="POST" value="POST" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="24">
-            <el-form-item label="基础URL:" prop="columnUrl">
-              <el-input v-model="configForm.columnUrl" placeholder="输入目标网页的基础URL，例如：https://example.com/list" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-form-item label="请求体:" prop="requestBody">
-          <el-input v-model="configForm.requestBody" type="textarea" :rows="3" placeholder="POST请求时的请求体模板，可包含占位符<pageNum>" />
-        </el-form-item>
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="起始页码:" prop="pageStart">
-              <el-input-number v-model="configForm.pageStart" :min="0" placeholder="请输入起始页码" style="width: 100%" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="最大页数:" prop="pageLen">
-              <el-input-number v-model="configForm.pageLen" :min="1" placeholder="请输入最大页数" style="width: 100%" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-form-item label="下一页URL:" prop="nextPage">
-          <el-input v-model="configForm.nextPage" placeholder="下一页的URL模板，使用<pageNum>作为页码占位符，例如：page=<pageNum>" />
-        </el-form-item>
-        <el-form-item label="请求头:" prop="requestHead">
-          <el-input v-model="configForm.requestHead" type="textarea" :rows="3" placeholder="请求头信息，JSON格式，可包含User-Agent、Cookie等" />
-        </el-form-item>
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="结果类型:" prop="resultType">
-              <el-select v-model="configForm.resultType" placeholder="选择返回数据的格式类型，支持JSON或XML解析" style="width: 100%">
-                <el-option label="JSON" value="json" />
-                <el-option label="XML" value="xml" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="列表规则:" prop="resultListRule">
-              <el-input v-model="configForm.resultListRule" placeholder="数据提取规则，JSON使用JSONPath，XML使用XPath表达式" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-form-item label="结果清洗:" prop="resultClean">
-          <el-input v-model="configForm.resultClean" type="textarea" :rows="2" placeholder="使用正则表达式清洗和格式化提取到的数据" />
-        </el-form-item>
-        <el-form-item label="详情链接:" prop="detailUrlRule">
-          <el-input v-model="configForm.detailUrlRule" placeholder="提取详情页URL的规则，支持JSONPath或XPath表达式" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <span class="dialog-footer">
+            <!-- 配置表单抽屉 -->
+    <el-drawer
+      v-model="dialogVisible"
+      :title="isEditMode ? '编辑配置' : '新增配置'"
+      direction="rtl"
+      size="80%"
+      class="config-drawer"
+      :close-on-click-modal="false"
+    >
+      <div class="drawer-content">
+        <!-- 导入命令区域 -->
+        <div class="import-section">
+          <h3>快速导入</h3>
+          <p class="section-desc">支持 curl 或 fetch 命令一键导入配置</p>
+          <el-input
+            v-model="importCommand"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入curl或fetch命令，例如: curl -X GET 'https://example.com/api' -H 'Content-Type: application/json'"
+            class="import-input"
+          />
+          <el-button type="primary" class="import-btn" @click="handleImport">
+            <el-icon><Upload /></el-icon>
+            导入配置
+          </el-button>
+        </div>
+
+        <!-- 表单区域 -->
+        <ConfigForm :form="configForm" ref="configFormRef" />
+
+        <!-- 操作按钮 -->
+        <div class="drawer-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
           <el-button type="primary" @click="submitConfigForm">确认</el-button>
-        </span>
-      </template>
-    </el-dialog>
+        </div>
+      </div>
+    </el-drawer>
     <!-- 配置测试弹窗 -->
     <el-dialog v-model="configTestDialogVisible" title="配置测试结果" width="900px">
       <div v-if="configTestResults.length === 0" class="empty-result">
@@ -268,34 +213,24 @@
       </template>
     </el-dialog>
 
-    <!-- 导入命令弹窗 -->
-    <el-dialog v-model="importDialogVisible" title="导入配置" width="600px">
-      <el-form label-width="80px">
-        <el-form-item label="命令:">
-          <el-input v-model="importCommand" type="textarea" :rows="5"
-            placeholder="请输入curl或fetch命令，例如: curl -X GET 'https://example.com/api' -H 'Content-Type: application/json'" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="importDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleImport">导入</el-button>
-        </span>
-      </template>
-    </el-dialog>
+
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue';
-import type { FormRules, FormInstance } from 'element-plus';
+import type { FormInstance } from 'element-plus';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import { Upload } from '@element-plus/icons-vue';
 import { dynamicConfigApi } from '../api/dynamicConfig';
 import type { DynamicConfig } from '../types/dynamicConfig';
 import { useRoute } from "vue-router";
 import TestDialog, { TestType } from '../components';
+import ConfigForm from '../components/website/ConfigForm.vue';
+import { parseCommand } from '../utils/commandParser';
+import { TEST_EXAMPLES } from '../constants/configFormConstants';
 
-const websiteId = ref();
+const websiteId = ref<number>();
 const route = useRoute();
 
 // 定义配置类型接口
@@ -342,10 +277,9 @@ const testForm = reactive({
 
 const loading = ref(false);
 const dialogVisible = ref(false);
-const importDialogVisible = ref(false);
 const importCommand = ref('');
 const isEditMode = ref(false);
-const configFormRef = ref<FormInstance>();
+const configFormRef = ref();
 const currentConfigId = ref<string | number | null>(null);
 
 // 配置测试相关
@@ -380,38 +314,6 @@ const configForm = reactive<WebsiteConfig>({
   detailUrlRule: ''
 });
 
-const formRules = reactive<FormRules>({
-  configName: [
-    { required: true, message: '请输入配置名称', trigger: 'blur' },
-    { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
-  ],
-  columnUrl: [
-    { required: true, message: '请输入基础URL', trigger: 'blur' },
-    { pattern: /^https?:\/\/.+/, message: '请输入有效的URL', trigger: 'blur' }
-  ],
-  requestType: [
-    { required: true, message: '请选择请求类型', trigger: 'change' },
-  ],
-  pageStart: [
-    { required: true, message: '请输入起始页码', trigger: 'blur' },
-    { type: 'number', message: '页码必须为数字', trigger: 'blur' }
-  ],
-  pageLen: [
-    { required: true, message: '请输入最大页数', trigger: 'blur' },
-    { type: 'number', message: '页数必须为数字', trigger: 'blur' }
-  ],
-  resultType: [
-    { required: true, message: '请选择结果类型', trigger: 'change' },
-  ],
-  resultListRule: [
-    { required: true, message: '请输入列表获取表达式', trigger: 'blur' },
-  ],
-  detailUrlRule: [
-    { required: true, message: '请输入详情页链接规则', trigger: 'blur' },
-  ]
-});
-
-
 // 表格数据
 const tableData = ref<WebsiteConfig[]>([
 ]);
@@ -436,7 +338,7 @@ const handleReset = () => {
 const handleAddConfig = () => {
   isEditMode.value = false;
   currentConfigId.value = null;
-  configForm.websiteId = 0;
+  configForm.websiteId = Number(websiteId.value);
   dialogVisible.value = true;
 };
 
@@ -444,73 +346,18 @@ const handleTableRefresh = () => {
   fetchData();
 };
 
-
-
 // 测试相关方法
-const handleJsonPathTest = () => {
-  // 设置测试类型
-  currentTestType.value = TestType.JSON;
-
-  // 提供一个示例JSON数据
-  testForm.inputData = JSON.stringify({
-    "store": {
-      "book": [
-        {
-          "category": "reference",
-          "author": "Nigel Rees",
-          "title": "Sayings of the Century",
-          "price": 8.95
-        },
-        {
-          "category": "fiction",
-          "author": "Evelyn Waugh",
-          "title": "Sword of Honour",
-          "price": 12.99
-        }
-      ],
-      "bicycle": {
-        "color": "red",
-        "price": 19.95
-      }
-    }
-  }, null, 2);
-  testForm.expressionData = '$.store.book[0].title';
+const openTestDialog = (type: TestType) => {
+  currentTestType.value = type;
+  const example = TEST_EXAMPLES[type];
+  testForm.inputData = example.inputData;
+  testForm.expressionData = example.expressionData;
   testDialogVisible.value = true;
 };
 
-const handleXmlTest = () => {
-  // 设置测试类型
-  currentTestType.value = TestType.XML;
-
-  // 提供一个示例XML数据
-  testForm.inputData = `<?xml version="1.0" encoding="UTF-8"?>
-<bookstore>
-  <book category="reference">
-    <title>XML开发指南</title>
-    <author>张三</author>
-    <year>2020</year>
-    <price>29.99</price>
-  </book>
-  <book category="fiction">
-    <title>小说集</title>
-    <author>李四</author>
-    <year>2021</year>
-    <price>39.95</price>
-  </book>
-</bookstore>`;
-  testForm.expressionData = '//book[1]/title';
-  testDialogVisible.value = true;
-};
-
-const handleRegexTest = () => {
-  // 设置测试类型
-  currentTestType.value = TestType.REGEX;
-
-  // 提供一个示例文本和正则表达式
-  testForm.inputData = 'test@example.com\ncontact@domain.com\ninvalid.email\nsupport@company.net';
-  testForm.expressionData = '\\b\\w+@\\w+\\.\\w+\\b';
-  testDialogVisible.value = true;
-};
+const handleJsonPathTest = () => openTestDialog(TestType.JSON);
+const handleXmlTest = () => openTestDialog(TestType.XML);
+const handleRegexTest = () => openTestDialog(TestType.REGEX);
 
 const handleEdit = async (row: DynamicConfig) => {
   try {
@@ -562,193 +409,38 @@ const handleDelete = (row: DynamicConfig) => {
   }).catch(() => { });
 };
 
-/**
- * 解析 curl 命令，提取 { url, method, headers, body }
- */
- const parseCurlCommand = (command: string) => {
-  // 1. 按空白切块，但保留单/双引号里的整段内容
-  const tokens = command.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) || [];
-
-  let url = '';
-  let method = '';           // 先不默认 GET，方便后面根据 hasData 决定
-  let body = '';
-  let hasData = false;       // 遇到任何 data 参数就标记
-  const headers: Record<string, string> = {};
-
-  // 去除两端引号的 helper
-  const strip = (s: string) => s.replace(/^["']|["']$/g, '');
-
-  for (let i = 0; i < tokens.length; i++) {
-    const t = tokens[i];
-
-    // --request 或 -X
-    if (t === '-X' || t === '--request') {
-      method = strip(tokens[++i]).toUpperCase();
-      continue;
-    }
-
-    // headers
-    if (t === '-H' || t === '--header') {
-      const hdr = strip(tokens[++i]);
-      const idx = hdr.indexOf(':');
-      if (idx > -1) {
-        const key = hdr.slice(0, idx).trim();
-        const val = hdr.slice(idx + 1).trim();
-        headers[key] = val;
-      }
-      continue;
-    }
-
-    // 各种 data 参数
-    if (['-d','--data','--data-raw','--data-binary','--data-urlencode'].includes(t)) {
-      hasData = true;
-      body = strip(tokens[++i]);
-      continue;
-    }
-
-    // --url 明确指定
-    if (t === '--url') {
-      url = strip(tokens[++i]);
-      continue;
-    }
-
-    // 也可能直接出现一个 http(s):// 开头的 token
-    if (!t.startsWith('-') && /^https?:\/\//.test(strip(t))) {
-      url = strip(t);
-      continue;
-    }
-  }
-
-  // 如果没通过 -X 指定，就根据有没有 data 自动选 GET/POST
-  if (!method) {
-    method = hasData ? 'POST' : 'GET';
-  }
-
-  return { url, method, headers, body };
-};
-
-
-
-function parseFetchCommand(command: string) {
-  // 1. 提取 URL——匹配 fetch( '...' 或 "..." 或 `...`
-  const urlMatch = command.match(/fetch\s*\(\s*(['"`])([\s\S]*?)\1/);
-  if (!urlMatch) {
-    throw new Error('无法解析 URL');
-  }
-  const url = urlMatch[2];
-
-  // 2. 提取 options 对象字面量
-  const optsMatch = command.match(/fetch\s*\(\s*['"`][\s\S]*?['"`]\s*,\s*({[\s\S]*})\s*\)/);
-  // 初始化默认值
-  let method = 'GET';
-  let headers: Record<string, string> = {};
-  let body;
-
-  if (optsMatch) {
-    const optsLiteral = optsMatch[1];
-    let opts;
-    try {
-      // 用 eval 将纯对象字面量变为 JS 对象
-      /* eslint-disable no-eval */
-      opts = eval('(' + optsLiteral + ')');
-      /* eslint-enable no-eval */
-    } catch (e) {
-      console.warn('eval 解析 options 失败，将跳过详细解析：', e);
-    }
-
-    if (opts && typeof opts === 'object') {
-      // method
-      if (opts.method) {
-        method = String(opts.method).toUpperCase();
-      }
-      // headers
-      if (opts.headers) {
-        // 如果是浏览器的 Headers 实例
-        if (typeof Headers !== 'undefined' && opts.headers instanceof Headers) {
-          opts.headers.forEach((val: string, key: string) => {
-            headers[key] = val;
-          });
-        }
-        // 也支持字面量对象
-        else if (typeof opts.headers === 'object') {
-          headers = { ...opts.headers as Record<string, string> };
-        }
-      }
-      // body
-      if (opts.body != null) {
-        body = opts.body;
-      }
-    }
-  }
-  return { url, method, headers, body };
-}
-
-const importLoading = ref(false);
-
 const handleImport = async () => {
   if (!importCommand.value.trim()) {
     ElMessage.warning('请输入curl或fetch命令');
     return;
   }
 
-  importLoading.value = true;
-
   try {
-    let result;
-    const command = importCommand.value.trim();
-    if (command.startsWith('curl')) {
-      result = parseCurlCommand(command);
-    } else if (command.startsWith('fetch')) {
-      result = parseFetchCommand(command);
-    } else {
-      ElMessage.warning('仅支持curl或fetch命令');
-      return;
-    }
-
-    if (!result) {
-      throw new Error('无法解析命令');
-    }
-
-    // Update form fields
+    const result = parseCommand(importCommand.value);
+    
+    // 更新表单字段
     configForm.columnUrl = result.url;
     configForm.nextPage = result.url;
     configForm.requestType = result.method;
 
-    if (result.headers) {
-      configForm.requestHead = JSON.stringify(result.headers, null, 2);
-      // 将 headers 转换为 a: b 的形式
-      const headers = Object.entries(result.headers).map(([key, value]) => `${key}: ${value}`).join('\n');
+    // 处理请求头
+    if (result.headers && Object.keys(result.headers).length > 0) {
+      const headers = Object.entries(result.headers)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join('\n');
       configForm.requestHead = headers;
     } else {
       configForm.requestHead = '';
     }
 
-    if (result.body) {
-      configForm.requestBody = typeof result.body === 'string' ?
-        result.body :
-        JSON.stringify(result.body, null, 2);
-    } else {
-      configForm.requestBody = '';
-    }
+    // 处理请求体
+    configForm.requestBody = typeof result.body === 'string' 
+      ? result.body 
+      : JSON.stringify(result.body, null, 2);
 
-    ElMessage.success({
-      message: '导入成功',
-      duration: 2000
-    });
-
-    // Close dialog after short delay
-    setTimeout(() => {
-      importDialogVisible.value = false;
-    }, 500);
-
+    ElMessage.success('导入成功');
   } catch (error) {
-    console.error('Import error:', error);
-    ElMessage.error({
-      message: `导入失败: ${(error as Error).message}`,
-      duration: 3000
-    });
-  } finally {
-    importLoading.value = false;
+    ElMessage.error(`导入失败: ${(error as Error).message}`);
   }
 };
 
@@ -830,6 +522,10 @@ const fetchData = async () => {
       page: pagination.currentPage,
       size: pagination.pageSize,
       websiteId: Number(websiteId.value),
+      configId: searchForm.configId || undefined,
+      configName: searchForm.configName || undefined,
+      columnUrl: searchForm.columnUrl || undefined,
+      requestType: searchForm.requestType || undefined,
     });
     if (data?.records) {
       tableData.value = data.records;
@@ -906,6 +602,153 @@ const fetchData = async () => {
 
 .el-select {
   min-width: 180px;
+}
+
+.drawer-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 导入区域 */
+.import-section {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(255, 255, 255, 0.95) 100%);
+  padding: 24px;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.15);
+  position: relative;
+  z-index: 2;
+}
+
+.import-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, transparent 100%);
+  border-radius: 0 0 2px 2px;
+}
+
+.import-section h3 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.import-section h3::before {
+  content: '';
+  width: 4px;
+  height: 18px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 2px;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.section-desc {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0 0 16px 0;
+  font-weight: 500;
+}
+
+.import-input {
+  margin-bottom: 12px;
+}
+
+.import-input :deep(.el-textarea__inner) {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+  border-radius: 6px;
+}
+
+.import-btn {
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+
+
+/* 底部按钮 */
+.drawer-footer {
+  padding: 20px 24px;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.drawer-footer .el-button {
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-weight: 500;
+}
+
+/* 表格现代化样式优化 */
+.table-card :deep(.el-card__body) {
+  padding: 24px;
+}
+
+.table-header {
+  background: white;
+  padding: 20px 0;
+  border-radius: 12px 12px 0 0;
+}
+
+.table-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+}
+
+.table-title::before {
+  content: '';
+  width: 4px;
+  height: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 2px;
+  margin-right: 12px;
+}
+
+.table-actions .el-button {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.table-actions .el-button:hover {
+  transform: translateY(-1px);
+}
+
+.table-card :deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table-card :deep(.el-table th.el-table__cell) {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+/* 搜索卡片样式优化 */
+.search-card {
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.search-card :deep(.el-card__body) {
+  padding: 20px 24px;
 }
 
 /* 测试工具的样式已移至TestDialog.vue组件中 */

@@ -1,8 +1,8 @@
-import service from '../utils/request';
-import type { DynamicConfig, TestConfigResponse } from '../types/dynamicConfig';
+import service from '@/utils/request';
+import type { DynamicConfig, TestConfigResponse } from '@/types/dynamicConfig';
 
 export const dynamicConfigApi = {
-  list: (params?: { page?: number; size?: number, websiteId?: number, configName?: string, columnUrl?: string, requestType?: string }) => {
+  list: (params?: { page?: number; size?: number, websiteId?: number, configId?: string, configName?: string, columnUrl?: string, requestType?: string }) => {
     return service.get<{
       records: DynamicConfig[];
       total: number;

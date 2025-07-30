@@ -34,10 +34,10 @@ service.interceptors.response.use(
       const authStore = useAuthStore();
       authStore.clearToken();
       router.push('/login');
-      return Promise.reject(new Error(res.message || 'Error'));
+      return Promise.reject(new Error(res.msg || 'Error'));
     } else if (res.code !== 200) {
       // 处理业务错误
-      return Promise.reject(new Error(res.message || 'Error'));
+      return Promise.reject(new Error(res.msg || 'Error'));
     }
     return res;
   },

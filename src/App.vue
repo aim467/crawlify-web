@@ -3,8 +3,15 @@ import Sidebar from '@/components/Sidebar.vue'
 import Header from '@/components/Header.vue'
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { StagewiseToolbar } from '@stagewise/toolbar-vue'
+import VuePlugin from '@stagewise-plugins/vue'
 
 const router = useRouter()
+
+// Stagewise configuration
+const stagewise_config = {
+  plugins: [VuePlugin]
+}
 
 // 页面标题
 const pageTitle = computed(() => {
@@ -43,6 +50,7 @@ onMounted(() => {
 </script>
 
 <template>
+  <StagewiseToolbar :config="stagewise_config" />
   <router-view v-slot="{ Component }">
     <template v-if="$route.path === '/login'">
       <component :is="Component" />
@@ -444,6 +452,363 @@ html.loading .v-modal {
 
 .el-dialog .el-button--primary:hover {
   background: linear-gradient(to right, var(--el-color-primary-dark-2), var(--el-color-primary)) !important;
+}
+
+/* ========== El-Drawer 全局样式美化 ========== */
+:deep(.el-drawer) {
+  border-radius: 8px 0 0 8px !important;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.08) !important;
+  border: none !important;
+  background-color: #ffffff !important;
+  overflow: hidden !important;
+  transform: translateZ(0) !important; /* 启用GPU加速 */
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+
+/* 右侧抽屉样式 */
+:deep(.el-drawer.rtl) {
+  border-radius: 0 8px 8px 0 !important;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* 抽屉遮罩层 */
+:deep(.el-overlay) {
+  backdrop-filter: blur(3px) !important;
+  background-color: rgba(0, 0, 0, 0.4) !important;
+  transition: backdrop-filter 0.3s ease, background-color 0.3s ease !important;
+}
+
+/* 抽屉头部 */
+:deep(.el-drawer__header) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  margin: 0 !important;
+  padding: 0 20px !important;
+  border-bottom: none !important;
+  height: 56px !important;
+  display: flex !important;
+  align-items: center !important;
+  position: relative !important;
+  box-shadow: 0 2px 12px rgba(102, 126, 234, 0.15) !important;
+}
+
+/* 抽屉标题 */
+:deep(.el-drawer__title) {
+  font-weight: 600 !important;
+  color: #ffffff !important;
+  font-size: 16px !important;
+  letter-spacing: 0.3px !important;
+  line-height: 1.3 !important;
+  margin: 0 !important;
+  flex: 1 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+  position: relative !important;
+}
+
+/* 抽屉标题装饰 */
+:deep(.el-drawer__title::before) {
+  content: '' !important;
+  position: absolute !important;
+  left: -12px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 3px !important;
+  height: 18px !important;
+  background: rgba(255, 255, 255, 0.8) !important;
+  border-radius: 2px !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* 抽屉内容区域 */
+:deep(.el-drawer__body) {
+  padding: 0 !important;
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%) !important;
+  color: #333 !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  height: calc(100% - 56px) !important;
+  scrollbar-width: thin !important;
+  position: relative !important;
+}
+
+/* 抽屉内容区域顶部装饰 */
+:deep(.el-drawer__body::before) {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 4px !important;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, transparent 100%) !important;
+  z-index: 1 !important;
+}
+
+/* 自定义滚动条样式 */
+:deep(.el-drawer__body::-webkit-scrollbar) {
+  width: 6px !important;
+  height: 6px !important;
+}
+
+:deep(.el-drawer__body::-webkit-scrollbar-thumb) {
+  background-color: rgba(144, 147, 153, 0.3) !important;
+  border-radius: 6px !important;
+  transition: background-color 0.2s ease !important;
+}
+
+:deep(.el-drawer__body::-webkit-scrollbar-thumb:hover) {
+  background-color: rgba(144, 147, 153, 0.5) !important;
+}
+
+:deep(.el-drawer__body::-webkit-scrollbar-track) {
+  background-color: transparent !important;
+}
+
+/* 关闭按钮 */
+:deep(.el-drawer__close-btn) {
+  position: absolute !important;
+  top: 50% !important;
+  right: 20px !important;
+  transform: translateY(-50%) !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  cursor: pointer !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  z-index: 10 !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+:deep(.el-drawer__close-btn:hover) {
+  background-color: rgba(255, 255, 255, 0.25) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  transform: translateY(-50%) scale(1.1) rotate(90deg) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+:deep(.el-drawer__close-btn .el-icon) {
+  color: #ffffff !important;
+  font-size: 18px !important;
+  transition: all 0.3s ease !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2)) !important;
+}
+
+:deep(.el-drawer__close-btn:hover .el-icon) {
+  color: #ffffff !important;
+  transform: scale(1.1) !important;
+}
+
+/* 抽屉动画效果 */
+:deep(.el-drawer.ltr) {
+  transform: translateX(0) !important;
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+:deep(.el-drawer.rtl) {
+  transform: translateX(0) !important;
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+/* 抽屉进入和离开动画 */
+:deep(.el-drawer-fade-enter-from .el-drawer.ltr) {
+  transform: translateX(-100%) !important;
+}
+
+:deep(.el-drawer-fade-enter-from .el-drawer.rtl) {
+  transform: translateX(100%) !important;
+}
+
+:deep(.el-drawer-fade-leave-to .el-drawer.ltr) {
+  transform: translateX(-100%) !important;
+}
+
+:deep(.el-drawer-fade-leave-to .el-drawer.rtl) {
+  transform: translateX(100%) !important;
+}
+
+/* 抽屉内表单元素样式优化 */
+:deep(.el-drawer .el-form-item) {
+  margin-bottom: 20px !important;
+}
+
+:deep(.el-drawer .el-form-item__label) {
+  font-weight: 500 !important;
+  color: #333 !important;
+}
+
+:deep(.el-drawer .el-input__wrapper),
+:deep(.el-drawer .el-textarea__wrapper),
+:deep(.el-drawer .el-select .el-input__wrapper) {
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1) inset !important;
+  border-radius: 6px !important;
+  transition: box-shadow 0.2s ease-in-out !important;
+  background-color: #fafafa !important;
+}
+
+:deep(.el-drawer .el-input__wrapper:hover),
+:deep(.el-drawer .el-textarea__wrapper:hover),
+:deep(.el-drawer .el-select .el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px var(--el-color-primary-light-5) inset !important;
+  background-color: #ffffff !important;
+}
+
+:deep(.el-drawer .el-input__wrapper.is-focus),
+:deep(.el-drawer .el-textarea__wrapper.is-focus),
+:deep(.el-drawer .el-select .el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px var(--el-color-primary) inset !important;
+  background-color: #ffffff !important;
+}
+
+/* 抽屉内按钮样式 */
+:deep(.el-drawer .el-button) {
+  border-radius: 6px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+  letter-spacing: 0.3px !important;
+}
+
+:deep(.el-drawer .el-button:hover) {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
+}
+
+:deep(.el-drawer .el-button--primary) {
+  background: linear-gradient(135deg, var(--el-color-primary), var(--el-color-primary-light-3)) !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3) !important;
+}
+
+:deep(.el-drawer .el-button--primary:hover) {
+  background: linear-gradient(135deg, var(--el-color-primary-dark-2), var(--el-color-primary)) !important;
+  box-shadow: 0 4px 16px rgba(64, 158, 255, 0.4) !important;
+}
+
+:deep(.el-drawer .el-button--default) {
+  background-color: #ffffff !important;
+  border: 1px solid #e4e7ed !important;
+  color: #606266 !important;
+}
+
+:deep(.el-drawer .el-button--default:hover) {
+  background-color: #f5f7fa !important;
+  border-color: var(--el-color-primary-light-5) !important;
+  color: var(--el-color-primary) !important;
+}
+
+/* 抽屉底部操作区域样式 */
+:deep(.el-drawer .drawer-footer) {
+  position: sticky !important;
+  bottom: 0 !important;
+  background: linear-gradient(to top, #ffffff 0%, rgba(248, 250, 252, 0.95) 100%) !important;
+  padding: 20px 24px !important;
+  margin-top: 24px !important;
+  border-top: 1px solid rgba(102, 126, 234, 0.1) !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 12px !important;
+  backdrop-filter: blur(10px) !important;
+  box-shadow: 0 -2px 12px rgba(102, 126, 234, 0.08) !important;
+}
+
+/* 抽屉底部装饰线 */
+:deep(.el-drawer .drawer-footer::before) {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 24px !important;
+  right: 24px !important;
+  height: 2px !important;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, transparent 100%) !important;
+  border-radius: 1px !important;
+}
+
+/* 抽屉内分割线样式 */
+:deep(.el-drawer .el-divider) {
+  margin: 24px 0 !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+:deep(.el-drawer .el-divider--horizontal) {
+  border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+/* 抽屉内卡片样式 */
+:deep(.el-drawer .el-card) {
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+  margin-bottom: 16px !important;
+}
+
+:deep(.el-drawer .el-card__header) {
+  background-color: #fafafa !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+  padding: 16px 20px !important;
+}
+
+:deep(.el-drawer .el-card__body) {
+  padding: 20px !important;
+}
+
+/* 抽屉内表格样式 */
+:deep(.el-drawer .el-table) {
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+}
+
+:deep(.el-drawer .el-table th.el-table__cell) {
+  background-color: #fafafa !important;
+  color: #333 !important;
+  font-weight: 600 !important;
+}
+
+/* 不同尺寸的抽屉 */
+:deep(.el-drawer.drawer-small) {
+  width: 350px !important;
+}
+
+:deep(.el-drawer.drawer-medium) {
+  width: 500px !important;
+}
+
+:deep(.el-drawer.drawer-large) {
+  width: 700px !important;
+}
+
+:deep(.el-drawer.drawer-extra-large) {
+  width: 900px !important;
+}
+
+/* 响应式调整 */
+@media screen and (max-width: 768px) {
+  :deep(.el-drawer) {
+    width: 85vw !important;
+    border-radius: 0 !important;
+  }
+
+  :deep(.el-drawer.rtl) {
+    border-radius: 0 !important;
+  }
+
+  :deep(.el-drawer__body) {
+    padding: 16px !important;
+  }
+
+  :deep(.el-drawer .el-form-item) {
+    margin-bottom: 16px !important;
+  }
+
+  :deep(.el-drawer .drawer-footer) {
+    padding: 12px 0 !important;
+    margin-top: 16px !important;
+  }
 }
 
 /* 响应式调整 */

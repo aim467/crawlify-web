@@ -51,7 +51,7 @@
       <el-card v-for="(stat, index) in taskStats" :key="index" shadow="hover" :class="['stat-card', stat.className]">
         <div class="stat-content">
           <div class="stat-icon">
-            <el-icon :size="36" :color="stat.color">
+            <el-icon :size="24" :color="stat.color">
               <component :is="stat.icon" />
             </el-icon>
           </div>
@@ -129,77 +129,59 @@
           <div v-if="currentTask.subTasks && currentTask.subTasks.length > 0">
             <!-- 子任务统计卡片 -->
             <div class="subtask-stats-container">
-              <el-card shadow="hover" class="subtask-stat-card">
+              <el-card shadow="hover" class="subtask-stat-card subtask-init-stat">
                 <div class="subtask-stat-content">
-                  <div class="subtask-stat-title">子任务总数</div>
-                  <div class="subtask-stat-count">{{ currentTask.subTasks.length }}</div>
+                  <div class="subtask-stat-icon">
+                    <el-icon :size="20" color="#909399"><loading /></el-icon>
+                  </div>
+                  <div class="subtask-stat-info">
+                    <div class="subtask-stat-title">初始化</div>
+                    <div class="subtask-stat-count">{{ currentTask.subTasks.filter(task => task.status === 1).length }}</div>
+                  </div>
                 </div>
               </el-card>
-              <el-card shadow="hover" class="subtask-stat-card success-stat">
+              <el-card shadow="hover" class="subtask-stat-card subtask-warning-stat">
                 <div class="subtask-stat-content">
-                  <div class="subtask-stat-title">已完成</div>
-                  <div class="subtask-stat-count">{{ currentTask.subTasks.filter(task => task.status === 3).length }}</div>
+                  <div class="subtask-stat-icon">
+                    <el-icon :size="20" color="#E6A23C"><video-play /></el-icon>
+                  </div>
+                  <div class="subtask-stat-info">
+                    <div class="subtask-stat-title">运行中</div>
+                    <div class="subtask-stat-count">{{ currentTask.subTasks.filter(task => task.status === 2).length }}</div>
+                  </div>
                 </div>
               </el-card>
-              <el-card shadow="hover" class="subtask-stat-card warning-stat">
+              <el-card shadow="hover" class="subtask-stat-card subtask-success-stat">
                 <div class="subtask-stat-content">
-                  <div class="subtask-stat-title">运行中</div>
-                  <div class="subtask-stat-count">{{ currentTask.subTasks.filter(task => task.status === 2).length }}</div>
+                  <div class="subtask-stat-icon">
+                    <el-icon :size="20" color="#67C23A"><circle-check /></el-icon>
+                  </div>
+                  <div class="subtask-stat-info">
+                    <div class="subtask-stat-title">已完成</div>
+                    <div class="subtask-stat-count">{{ currentTask.subTasks.filter(task => task.status === 3).length }}</div>
+                  </div>
                 </div>
               </el-card>
-              <el-card shadow="hover" class="subtask-stat-card danger-stat">
+              <el-card shadow="hover" class="subtask-stat-card subtask-danger-stat">
                 <div class="subtask-stat-content">
-                  <div class="subtask-stat-title">已停止</div>
-                  <div class="subtask-stat-count">{{ currentTask.subTasks.filter(task => task.status === 4).length }}</div>
+                  <div class="subtask-stat-icon">
+                    <el-icon :size="20" color="#909399"><video-pause /></el-icon>
+                  </div>
+                  <div class="subtask-stat-info">
+                    <div class="subtask-stat-title">已停止</div>
+                    <div class="subtask-stat-count">{{ currentTask.subTasks.filter(task => task.status === 4).length }}</div>
+                  </div>
                 </div>
               </el-card>
-              <el-card shadow="hover" class="subtask-stat-card error-stat">
+              <el-card shadow="hover" class="subtask-stat-card subtask-error-stat">
                 <div class="subtask-stat-content">
-                  <div class="subtask-stat-title">异常</div>
-                  <div class="subtask-stat-count">{{ currentTask.subTasks.filter(task => task.status === 5).length }}</div>
-                </div>
-              </el-card>
-            </div>
-            
-            <!-- 子任务进度图表 -->
-            <div class="subtask-charts-container">
-              <el-card shadow="hover" class="chart-card">
-                <template #header>
-                  <div class="chart-header">子任务状态分布</div>
-                </template>
-                <div class="chart-content">
-                  <el-progress type="dashboard" :percentage="getSubtaskCompletionRate(currentTask.subTasks)" :color="getProgressColor" :stroke-width="10">
-                    <template #default="{ percentage }">
-                      <span class="progress-value">{{ percentage.toFixed(0) }}%</span>
-                      <span class="progress-label">完成率</span>
-                    </template>
-                  </el-progress>
-                </div>
-              </el-card>
-              
-              <el-card shadow="hover" class="chart-card timeline-card">
-                <template #header>
-                  <div class="chart-header">最近更新的子任务</div>
-                </template>
-                <div class="timeline-content">
-                  <el-timeline>
-                    <el-timeline-item
-                      v-for="(subTask, index) in getRecentSubTasks(currentTask.subTasks)"
-                      :key="index"
-                      :type="getStatusType(subTask.status)"
-                      :timestamp="formatDateTime(subTask.updatedAt || subTask.createdAt)"
-                      :hollow="subTask.status !== 3"
-                    >
-                      <div class="timeline-task-info">
-                        <div class="timeline-task-url">{{ subTask.nodeId }}</div>
-                        <div class="timeline-task-status">
-                          <el-tag size="small" :type="getStatusType(subTask.status)">
-                            {{ getStatusText(subTask.status) }}
-                          </el-tag>
-                        </div>
-                      </div>
-                    </el-timeline-item>
-                  </el-timeline>
+                  <div class="subtask-stat-icon">
+                    <el-icon :size="20" color="#F56C6C"><warning /></el-icon>
+                  </div>
+                  <div class="subtask-stat-info">
+                    <div class="subtask-stat-title">异常</div>
+                    <div class="subtask-stat-count">{{ currentTask.subTasks.filter(task => task.status === 5).length }}</div>
+                  </div>
                 </div>
               </el-card>
             </div>
@@ -251,20 +233,32 @@
 
 <script lang="ts" setup>
 import { ref, reactive, onMounted } from 'vue';
-import type { Task } from '@/types/task';
+import type { Task, SubTask } from '@/types/task';
 
 // 子任务弹窗相关
 const subTaskDialogVisible = ref(false);
 const currentTask = ref<Task | null>(null);
-
-import type { SubTask } from '@/api/task';
 import { taskApi } from '@/api/task';
 import { websiteApi } from '@/api/website';
 import {
   VideoPlay,
-  Check,
-  Warning
+  VideoPause,
+  CircleCheck,
+  Warning,
+  Loading,
+  PartlyCloudy
 } from '@element-plus/icons-vue';
+
+// Task statistics
+const taskStats = ref([
+  { title: '初始化', count: 0, icon: Loading, className: 'init-stat', color: '#909399' },
+  { title: '运行中', count: 0, icon: VideoPlay, className: 'running-stat', color: '#E6A23C' },
+  { title: '已完成', count: 0, icon: CircleCheck, className: 'completed-stat', color: '#67C23A' },
+  { title: '已停止', count: 0, icon: VideoPause, className: 'stopped-stat', color: '#909399' },
+  { title: '部分完成', count: 0, icon: PartlyCloudy, className: 'partial-stat', color: '#409EFF' },
+  { title: '异常', count: 0, icon: Warning, className: 'error-stat', color: '#F56C6C' }
+]);
+
 import type { FormInstance } from 'element-plus';
 import { ElMessage, ElMessageBox } from 'element-plus';
 
@@ -288,18 +282,10 @@ const pagination = reactive({
   pages: 0
 });
 
-// Task statistics
-const taskStats = ref([
-  { title: '运行中任务', count: 0, icon: VideoPlay, className: 'completed-stat', color: '#409EFF' },
-  { title: '已完成任务', count: 0, icon: Check, className: 'running-stat', color: '#67C23A' },
-  { title: '异常任务', count: 0, icon: Warning, className: 'error-stat', color: '#F56C6C' }
-]);
-
 // --- Lifecycle Hooks ---
 onMounted(() => {
   loadWebsiteOptions();
   fetchData();
-  updateTaskStats();
 });
 
 // 加载网站选项列表
@@ -337,11 +323,10 @@ const fetchData = async () => {
     });
     
     // Handle the API response format
-    const data = response.data;
+    const { pageResult, taskStatusCount } = response.data;
     
     // 处理数据，确保websiteName字段存在
-    // 后端可能已经返回了websiteName字段，如果没有，我们需要根据websiteId查找对应的网站名称
-    const tasks = data.records;
+    const tasks = pageResult.records;
     if (tasks && tasks.length > 0 && !tasks[0].websiteName) {
       // 如果没有websiteName字段，则需要根据websiteId查找对应的网站名称
       const websiteMap = new Map();
@@ -352,36 +337,31 @@ const fetchData = async () => {
       });
       
       // 为每个任务添加websiteName字段
-      tasks.forEach(task => {
+      tasks.forEach((task: Task) => {
         task.websiteName = websiteMap.get(task.websiteId) || `未知网站(ID:${task.websiteId})`;
       });
     }
     
+    // 更新表格数据和分页信息
     tableData.value = tasks;
-    pagination.total = data.total;
-    pagination.currentPage = data.current;
-    pagination.pages = data.pages;
-    pagination.pageSize = data.size;
+    pagination.total = pageResult.total;
+    pagination.currentPage = pageResult.current;
+    pagination.pages = pageResult.pages;
+    pagination.pageSize = pageResult.size;
     
-    // Update task statistics after fetching data
-    updateTaskStats();
+    // 直接使用返回的任务统计数据
+    taskStats.value[0].count = taskStatusCount.initCount;
+    taskStats.value[1].count = taskStatusCount.runningCount;
+    taskStats.value[2].count = taskStatusCount.completedCount;
+    taskStats.value[3].count = taskStatusCount.stoppedCount;
+    taskStats.value[4].count = taskStatusCount.partialCount;
+    taskStats.value[5].count = taskStatusCount.failedCount;
   } catch (error) {
     console.error('Failed to fetch task list:', error);
     ElMessage.error('获取任务列表失败');
   } finally {
     loading.value = false;
   }
-};
-
-const updateTaskStats = () => {
-  // Calculate stats based on the numeric status values
-  const runningTasks = tableData.value.filter(task => task.status === 1 || task.status === 2).length;
-  const completedTasks = tableData.value.filter(task => task.status === 3).length;
-  const errorTasks = tableData.value.filter(task => task.status === 4 || task.status === 5).length;
-  
-  taskStats.value[0].count = runningTasks;
-  taskStats.value[1].count = completedTasks;
-  taskStats.value[2].count = errorTasks;
 };
 
 // Format date time string
@@ -585,8 +565,9 @@ const handleCurrentChange = (val: number) => {
 
 .stats-container {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 16px;
+  margin-bottom: 16px;
 }
 
 .stat-card {
@@ -595,59 +576,89 @@ const handleCurrentChange = (val: number) => {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
   overflow: hidden;
+  cursor: pointer;
 }
 
 .stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .stat-content {
   display: flex;
   align-items: center;
   padding: 20px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.6) 100%);
+  gap: 16px;
 }
 
 .stat-icon {
-  margin-right: 20px;
-  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
 }
 
 .stat-info {
-  display: flex;
-  flex-direction: column;
+  flex: 1;
 }
 
 .stat-title {
-  font-size: 15px;
+  font-size: 14px;
   color: #606266;
-  margin-bottom: 6px;
-  font-weight: 500;
+  margin-bottom: 8px;
 }
 
 .stat-count {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 600;
-  line-height: 1.2;
-  background: linear-gradient(45deg, var(--el-color-primary) 0%, var(--el-color-primary-light-3) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  line-height: 1;
 }
 
-.running-stat {
-  background: linear-gradient(135deg, #f0f9eb 0%, #e1f3d8 100%);
+/* 状态卡片特定样式 */
+.init-stat .stat-icon {
+  background-color: rgba(144, 147, 153, 0.1);
 }
 
-.completed-stat {
-  background: linear-gradient(135deg, #ecf5ff 0%, #d9ecff 100%);
+.running-stat .stat-icon {
+  background-color: rgba(230, 162, 60, 0.1);
 }
 
-.error-stat {
-  background: linear-gradient(135deg, #fef0f0 0%, #f56c6c 100%);
+.completed-stat .stat-icon {
+  background-color: rgba(103, 194, 58, 0.1);
+}
+
+.partial-stat .stat-icon {
+  background-color: rgba(64, 158, 255, 0.1);
+}
+
+.stopped-stat .stat-icon {
+  background-color: rgba(144, 147, 153, 0.1);
+}
+
+.error-stat .stat-icon {
+  background-color: rgba(245, 108, 108, 0.1);
+}
+
+/* 响应式布局 */
+@media (max-width: 1400px) {
+  .stats-container {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-container {
+    grid-template-columns: 1fr;
+  }
 }
 
 .table-card {
@@ -721,143 +732,125 @@ const handleCurrentChange = (val: number) => {
 .subtask-stats-container {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
-  margin-bottom: 24px;
-}
-
-.primary-stat {
-  background: linear-gradient(135deg, #f0f4ff 0%, #d9e1ff 100%);
-}
-
-.subtask-stat-card {
-  border: none;
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
-  overflow: hidden;
-}
-
-.subtask-stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-}
-
-.subtask-stat-content {
-  padding: 20px;
-  text-align: center;
-  background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.6) 100%);
-}
-
-.subtask-stat-title {
-  font-size: 15px;
-  color: #606266;
-  margin-bottom: 8px;
-  font-weight: 500;
-}
-
-.subtask-stat-count {
-  font-size: 28px;
-  font-weight: 600;
-  line-height: 1.2;
-  background: linear-gradient(45deg, var(--el-color-primary) 0%, var(--el-color-primary-light-3) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.success-stat {
-  background: linear-gradient(135deg, #f0f9eb 0%, #e1f3d8 100%);
-}
-
-.warning-stat {
-  background: linear-gradient(135deg, #fdf6ec 0%, #faecd8 100%);
-}
-
-.danger-stat {
-  background: linear-gradient(135deg, #fef0f0 0%, #fde2e2 100%);
-}
-
-.error-stat {
-  background: linear-gradient(135deg, #fef0f0 0%, #e39f9f 100%);
-}
-
-/* 图表容器样式 */
-.subtask-charts-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Responsive columns */
   gap: 16px;
   margin-bottom: 24px;
 }
 
-.chart-card {
-  border-radius: 10px;
-  background-color: #fff;
-  border: 1px solid #e9eef3;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+.subtask-stat-card {
+  border: none;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
 }
 
-.chart-header {
-  font-size: 15px;
-  font-weight: 600;
-  color: #303133;
-  padding: 12px 16px;
-  border-bottom: 1px solid #f0f2f5;
+.subtask-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
-.chart-content {
+.subtask-stat-content {
   display: flex;
-  justify-content: center;
   align-items: center;
-  padding: 20px;
-  min-height: 200px; /* Use min-height */
-}
-
-.progress-value {
-  font-size: 26px;
-  font-weight: 600;
-  display: block;
-  margin-bottom: 4px;
-  color: #303133;
-}
-
-.progress-label {
-  font-size: 13px;
-  color: #767d86;
-}
-
-/* 时间轴样式 */
-.timeline-content {
   padding: 16px;
-  min-height: 200px; /* Use min-height */
-  max-height: 240px; /* Add max-height for very long lists */
-  overflow-y: auto;
+  gap: 12px;
 }
 
-.timeline-content .el-timeline-item__timestamp {
-  font-size: 12px; /* Smaller timestamp */
-}
-
-.timeline-content .el-timeline-item__content {
-  font-size: 13px; /* Adjust content font size */
-}
-
-.timeline-task-info {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.timeline-task-url {
-  font-size: 13px;
-  color: #303133;
-  word-break: break-all;
-  font-weight: 500;
-  margin-bottom: 4px;
-}
-
-.timeline-task-status {
+.subtask-stat-icon {
   display: flex;
   align-items: center;
-  gap: 8px; /* Add gap between tag and progress */
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.subtask-stat-info {
+  flex: 1;
+}
+
+.subtask-stat-title {
+  font-size: 13px;
+  color: #909399;
+  margin-bottom: 6px;
+}
+
+.subtask-stat-count {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* 子任务状态卡片特定样式 */
+.subtask-init-stat {
+  border-left: 3px solid #909399;
+}
+.subtask-init-stat .subtask-stat-icon {
+  background-color: rgba(144, 147, 153, 0.1);
+}
+.subtask-init-stat .subtask-stat-count {
+  color: #909399;
+}
+
+.subtask-warning-stat {
+  border-left: 3px solid #E6A23C;
+}
+.subtask-warning-stat .subtask-stat-icon {
+  background-color: rgba(230, 162, 60, 0.1);
+}
+.subtask-warning-stat .subtask-stat-count {
+  color: #E6A23C;
+}
+
+.subtask-success-stat {
+  border-left: 3px solid #67C23A;
+}
+.subtask-success-stat .subtask-stat-icon {
+  background-color: rgba(103, 194, 58, 0.1);
+}
+.subtask-success-stat .subtask-stat-count {
+  color: #67C23A;
+}
+
+.subtask-danger-stat {
+  border-left: 3px solid #909399;
+}
+.subtask-danger-stat .subtask-stat-icon {
+  background-color: rgba(144, 147, 153, 0.1);
+}
+.subtask-danger-stat .subtask-stat-count {
+  color: #909399;
+}
+
+.subtask-error-stat {
+  border-left: 3px solid #F56C6C;
+}
+.subtask-error-stat .subtask-stat-icon {
+  background-color: rgba(245, 108, 108, 0.1);
+}
+.subtask-error-stat .subtask-stat-count {
+  color: #F56C6C;
+}
+
+/* 响应式布局 */
+@media (max-width: 1200px) {
+  .subtask-stats-container {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .subtask-stats-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .subtask-stats-container {
+    grid-template-columns: 1fr;
+  }
 }
 
 .el-table .el-table__expanded-cell {
