@@ -612,22 +612,49 @@ const fetchData = async () => {
 
 /* 导入区域 */
 .import-section {
-  background: white;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(255, 255, 255, 0.95) 100%);
   padding: 24px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.15);
+  position: relative;
+  z-index: 2;
+}
+
+.import-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, transparent 100%);
+  border-radius: 0 0 2px 2px;
 }
 
 .import-section h3 {
   margin: 0 0 8px 0;
   font-size: 16px;
   font-weight: 600;
-  color: #1f2937;
+  color: #1e293b;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.import-section h3::before {
+  content: '';
+  width: 4px;
+  height: 18px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 2px;
+  margin-right: 10px;
+  flex-shrink: 0;
 }
 
 .section-desc {
   font-size: 14px;
-  color: #6b7280;
+  color: #64748b;
   margin: 0 0 16px 0;
+  font-weight: 500;
 }
 
 .import-input {

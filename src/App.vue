@@ -481,38 +481,68 @@ html.loading .v-modal {
 
 /* 抽屉头部 */
 :deep(.el-drawer__header) {
-  background: linear-gradient(to right, #f8f9fa, #f0f2f5) !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
   margin: 0 !important;
-  padding: 0 24px !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
-  height: 60px !important;
+  padding: 0 20px !important;
+  border-bottom: none !important;
+  height: 56px !important;
   display: flex !important;
   align-items: center !important;
   position: relative !important;
+  box-shadow: 0 2px 12px rgba(102, 126, 234, 0.15) !important;
 }
 
 /* 抽屉标题 */
 :deep(.el-drawer__title) {
   font-weight: 600 !important;
-  color: #1a1a1a !important;
+  color: #ffffff !important;
   font-size: 16px !important;
   letter-spacing: 0.3px !important;
-  line-height: 1.4 !important;
+  line-height: 1.3 !important;
   margin: 0 !important;
   flex: 1 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+  position: relative !important;
+}
+
+/* 抽屉标题装饰 */
+:deep(.el-drawer__title::before) {
+  content: '' !important;
+  position: absolute !important;
+  left: -12px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 3px !important;
+  height: 18px !important;
+  background: rgba(255, 255, 255, 0.8) !important;
+  border-radius: 2px !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* 抽屉内容区域 */
 :deep(.el-drawer__body) {
-  padding: 24px !important;
-  background-color: #ffffff !important;
+  padding: 0 !important;
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%) !important;
   color: #333 !important;
   font-size: 14px !important;
   line-height: 1.6 !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
-  height: calc(100% - 60px) !important;
+  height: calc(100% - 56px) !important;
   scrollbar-width: thin !important;
+  position: relative !important;
+}
+
+/* 抽屉内容区域顶部装饰 */
+:deep(.el-drawer__body::before) {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 4px !important;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, transparent 100%) !important;
+  z-index: 1 !important;
 }
 
 /* 自定义滚动条样式 */
@@ -547,26 +577,31 @@ html.loading .v-modal {
   align-items: center !important;
   justify-content: center !important;
   border-radius: 50% !important;
-  background-color: transparent !important;
-  border: none !important;
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
   cursor: pointer !important;
-  transition: all 0.2s ease !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   z-index: 10 !important;
+  backdrop-filter: blur(10px) !important;
 }
 
 :deep(.el-drawer__close-btn:hover) {
-  background-color: rgba(0, 0, 0, 0.06) !important;
-  transform: translateY(-50%) rotate(90deg) !important;
+  background-color: rgba(255, 255, 255, 0.25) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  transform: translateY(-50%) scale(1.1) rotate(90deg) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
 }
 
 :deep(.el-drawer__close-btn .el-icon) {
-  color: #909399 !important;
-  font-size: 16px !important;
-  transition: color 0.2s ease !important;
+  color: #ffffff !important;
+  font-size: 18px !important;
+  transition: all 0.3s ease !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2)) !important;
 }
 
 :deep(.el-drawer__close-btn:hover .el-icon) {
-  color: var(--el-color-primary) !important;
+  color: #ffffff !important;
+  transform: scale(1.1) !important;
 }
 
 /* 抽屉动画效果 */
@@ -670,13 +705,27 @@ html.loading .v-modal {
 :deep(.el-drawer .drawer-footer) {
   position: sticky !important;
   bottom: 0 !important;
-  background: linear-gradient(to top, #ffffff, rgba(255, 255, 255, 0.95)) !important;
-  padding: 16px 0 !important;
+  background: linear-gradient(to top, #ffffff 0%, rgba(248, 250, 252, 0.95) 100%) !important;
+  padding: 20px 24px !important;
   margin-top: 24px !important;
-  border-top: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border-top: 1px solid rgba(102, 126, 234, 0.1) !important;
   display: flex !important;
   justify-content: flex-end !important;
   gap: 12px !important;
+  backdrop-filter: blur(10px) !important;
+  box-shadow: 0 -2px 12px rgba(102, 126, 234, 0.08) !important;
+}
+
+/* 抽屉底部装饰线 */
+:deep(.el-drawer .drawer-footer::before) {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 24px !important;
+  right: 24px !important;
+  height: 2px !important;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, transparent 100%) !important;
+  border-radius: 1px !important;
 }
 
 /* 抽屉内分割线样式 */

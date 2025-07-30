@@ -107,33 +107,120 @@ defineExpose({
   flex: 1;
   padding: 24px;
   overflow-y: auto;
+  background: transparent;
+  position: relative;
+  z-index: 2;
 }
 
 .form-group {
-  margin-bottom: 32px;
+  background: #ffffff;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.form-group:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  border-color: #cbd5e1;
 }
 
 .form-group h3 {
-  margin: 0 0 20px 0;
+  margin: 0 0 24px 0;
   font-size: 16px;
   font-weight: 600;
-  color: #1f2937;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #e5e7eb;
+  color: #1e293b;
+  padding: 0 0 12px 0;
+  border-bottom: 2px solid transparent;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.form-group h3::before {
+  content: '';
+  width: 4px;
+  height: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 2px;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.form-group h3::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, transparent 100%);
+  border-radius: 1px;
 }
 
 .config-form :deep(.el-form-item) {
-  margin-bottom: 20px;
+  margin-bottom: 24px !important;
+}
+
+.config-form :deep(.el-form-item:last-child) {
+  margin-bottom: 0;
 }
 
 .config-form :deep(.el-form-item__label) {
   font-weight: 500;
-  color: #374151;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
-.config-form :deep(.el-input__wrapper),
+.config-form :deep(.el-input__wrapper) {
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.config-form :deep(.el-input__wrapper:hover) {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.config-form :deep(.el-input__wrapper.is-focus) {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
 .config-form :deep(.el-textarea__inner) {
-  border-radius: 6px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.config-form :deep(.el-textarea__inner:hover) {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.config-form :deep(.el-textarea__inner:focus) {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.config-form :deep(.el-select .el-input__wrapper) {
+  border-radius: 8px;
 }
 
 /* 小尺寸字段优化 */
@@ -147,24 +234,68 @@ defineExpose({
 }
 
 .config-form :deep(.el-input-number .el-input__wrapper) {
-  padding: 0 8px;
+  padding: 0 12px;
+  border-radius: 8px;
 }
 
-/* 文本域样式优化 */
-.config-form :deep(.el-textarea) {
-  width: 100%;
-}
-
-.config-form :deep(.el-textarea__inner) {
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 13px;
-  line-height: 1.5;
-  resize: vertical;
+.config-form :deep(.el-input-number .el-input__inner) {
+  text-align: center;
+  font-weight: 500;
 }
 
 /* URL输入框特殊样式 */
 .config-form .url-input :deep(.el-input__inner) {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 13px;
+  color: #475569;
 }
-</style> 
+
+.config-form .url-input :deep(.el-input__wrapper) {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.config-form .url-input :deep(.el-input__wrapper:focus-within) {
+  background: #ffffff;
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+  .form-group {
+    margin-bottom: 16px;
+    padding: 20px;
+    border-radius: 8px;
+  }
+  
+  .form-group h3 {
+    font-size: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .config-form :deep(.el-form-item) {
+    margin-bottom: 20px;
+  }
+}
+
+/* 滚动条优化 */
+.config-form::-webkit-scrollbar {
+  width: 6px;
+}
+
+.config-form::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.config-form::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+.config-form::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+:deep(.el-form-item__label) {
+  align-items: center;
+}
+</style>
