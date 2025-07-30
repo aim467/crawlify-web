@@ -63,6 +63,14 @@
               align="center"
               fixed="left"
             >
+              <template #header>
+                <el-checkbox
+                  :model-value="isAllSelected"
+                  :indeterminate="isIndeterminate"
+                  @change="handleSelectAll"
+                  size="large"
+                />
+              </template>
               <template #default="{ row }">
                 <el-checkbox
                   :model-value="selectedNodeIds.includes(row.nodeId)"
@@ -129,7 +137,7 @@
                     class="thread-input"
                     controls-position="right"
                   />
-                  <span class="thread-unit">线程</span>
+                  <span class="thread-unit"></span>
                 </div>
               </template>
             </el-table-column>
@@ -204,6 +212,17 @@ const selectedNodeIds = ref<string[]>([]);
 // 计算属性
 const currentWebsite = computed(() => props.currentWebsite);
 
+// 计算是否全选
+const isAllSelected = computed(() => {
+  const onlineNodes = nodeList.value.filter(node => node.status === 1);
+  return onlineNodes.length > 0 && selectedNodeIds.value.length === onlineNodes.length;
+});
+
+// 计算是否部分选择
+const isIndeterminate = computed(() => {
+  return selectedNodeIds.value.length > 0 && !isAllSelected.value;
+});
+
 // 获取行键
 const getRowKey = (row: SpiderNodeWithThread) => row.nodeId;
 
@@ -227,6 +246,18 @@ const toggleNodeSelection = (node: SpiderNodeWithThread) => {
 // 点击行选择节点
 const handleNodeRowClick = (row: SpiderNodeWithThread) => {
   toggleNodeSelection(row);
+};
+
+// 全选/取消全选
+const handleSelectAll = (checked: boolean) => {
+  if (checked) {
+    // 选择所有在线节点
+    const onlineNodes = nodeList.value.filter(node => node.status === 1);
+    selectedNodeIds.value = onlineNodes.map(node => node.nodeId);
+  } else {
+    // 取消选择所有节点
+    selectedNodeIds.value = [];
+  }
 };
 
 // 获取节点列表
