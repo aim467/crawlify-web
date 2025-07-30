@@ -9,19 +9,24 @@
     />
 
     <!-- 表格 -->
-    <WebsiteTable 
-      :table-data="tableData" 
-      :loading="loading" 
-      :pagination="pagination"
-      @add="handleAddWebsite"
-      @edit="handleEdit"
-      @delete="handleDelete"
-      @start-crawl="handleStartCrawl"
-      @config="handleConfig"
-      @refresh="fetchData"
-      @size-change="handleSizeChange"
-      @current-change="handleCurrentChange"
-    />
+    <template v-if="!loading">
+      <WebsiteTable 
+        :table-data="tableData" 
+        :loading="loading" 
+        :pagination="pagination"
+        @add="handleAddWebsite"
+        @edit="handleEdit"
+        @delete="handleDelete"
+        @start-crawl="handleStartCrawl"
+        @config="handleConfig"
+        @refresh="fetchData"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      />
+    </template>
+    <template v-else>
+      <el-skeleton :rows="5" animated />
+    </template>
 
     <!-- 新增/编辑网站对话框 -->
     <el-dialog v-model="dialogVisible" :title="isEditMode ? '编辑网站' : '新增网站'" width="95%">
@@ -123,13 +128,14 @@ import { websiteApi } from '../api/website';
 import { taskApi } from '../api/task';
 import { convertToString, convertToObject } from '../utils/httpConfigUtils';
 import { useWebsiteList } from '../composables/useWebsiteList';
-
 import WebsiteSearchForm from '@/components/website/WebsiteSearchForm.vue';
 import WebsiteTable from './website/WebsiteTable.vue';
 import HttpConfigPanel from './website/HttpConfigPanel.vue';
 import TaskOptionsDialog from '@/components/website/TaskOptionsDialog.vue';
 
 const router = useRouter();
+
+
 
 // 使用composable管理列表相关逻辑
 const {
