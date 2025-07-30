@@ -101,6 +101,9 @@
             <el-tooltip content="编辑" placement="top">
               <el-button link type="primary" icon="edit" @click="handleEdit(row)" />
             </el-tooltip>
+            <el-tooltip content="复制" placement="top">
+              <el-button link type="success" icon="copy-document" @click="handleCopy(row)" />
+            </el-tooltip>
             <el-tooltip content="删除" placement="top">
               <el-button link type="danger" icon="delete" @click="handleDelete(row)" />
             </el-tooltip>
@@ -369,6 +372,24 @@ const handleEdit = async (row: DynamicConfig) => {
   } catch (error) {
     ElMessage.error('获取配置详情失败');
   }
+};
+
+const handleCopy = (row: DynamicConfig) => {
+  // 复制配置数据到表单
+  Object.assign(configForm, { ...row, configId: '' }); // 清空配置ID以创建新配置
+  isEditMode.value = false; // 设置为新增模式
+  // 清空configForm.configName
+  configForm.configName = '';
+  currentConfigId.value = null;
+  dialogVisible.value = true;
+  
+  // 显示醒目的提示信息
+  ElMessage({
+    message: '您正在复制配置，请修改必要信息后保存',
+    type: 'warning',
+    duration: 5000,
+    showClose: true
+  });
 };
 
 const submitConfigForm = async () => {
