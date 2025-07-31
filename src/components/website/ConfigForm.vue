@@ -105,7 +105,7 @@ defineExpose({
 <style scoped>
 .config-form {
   flex: 1;
-  padding: 24px;
+  padding: 10px;
   overflow-y: auto;
   background: transparent;
   position: relative;

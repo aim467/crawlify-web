@@ -169,7 +169,6 @@
 import { watch } from 'vue';
 import { InfoFilled, Connection, Plus, Upload, Delete } from '@element-plus/icons-vue';
 import { useHttpConfig } from '../../composables/useHttpConfig';
-import type { HttpConfigItem } from '../../utils/httpConfigUtils';
 
 interface Props {
   headers: string;

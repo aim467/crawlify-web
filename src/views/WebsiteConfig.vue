@@ -232,6 +232,7 @@ import TestDialog, { TestType } from '../components';
 import ConfigForm from '../components/website/ConfigForm.vue';
 import { parseCommand } from '../utils/commandParser';
 import { TEST_EXAMPLES } from '../constants/configFormConstants';
+import { convertToObject, convertToString } from '@/utils/httpConfigUtils';
 
 const websiteId = ref<number>();
 const route = useRoute();
@@ -366,6 +367,9 @@ const handleEdit = async (row: DynamicConfig) => {
   try {
     const { data } = await dynamicConfigApi.getById(row.configId!);
     Object.assign(configForm, data);
+    // 处理 requestHead 字段，将逗号分隔的格式替换为换行符
+    configForm.requestHead = convertToString(data.requestHead, ': ');
+
     isEditMode.value = true;
     currentConfigId.value = row.configId;
     dialogVisible.value = true;
@@ -398,6 +402,8 @@ const submitConfigForm = async () => {
     if (valid) {
       try {
         configForm.websiteId = Number(websiteId.value);
+        // requestHead 字段处理，将换行符替换为逗号分隔的格式
+        configForm.requestHead = convertToObject(configForm.requestHead, ':');
         if (isEditMode.value && currentConfigId.value) {
           await dynamicConfigApi.update(configForm);
           ElMessage.success('更新成功');
