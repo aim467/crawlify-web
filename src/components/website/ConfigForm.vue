@@ -18,6 +18,9 @@
           </el-form-item>
         </el-col>
       </el-row>
+      <el-form-item label="父页面链接" prop="parentLink" class="url-input">
+        <el-input v-model="form.parentLink" placeholder="请输入父页面链接" />
+      </el-form-item>
       <el-form-item label="基础URL" prop="columnUrl" class="url-input">
         <el-input v-model="form.columnUrl" placeholder="输入目标网页的基础URL，例如：https://example.com/list" />
       </el-form-item>

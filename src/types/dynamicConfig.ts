@@ -16,6 +16,7 @@ export interface DynamicConfig {
   detailUrlRule: string;
   createdAt?: string;
   updatedAt?: string;
+  parentLink?: string;
 }
 
 export interface TestConfigResponse {

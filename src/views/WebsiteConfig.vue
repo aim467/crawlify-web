@@ -27,6 +27,15 @@
             @keyup.enter="handleSearch"
           />
         </el-form-item>
+        <!-- 父页面链接 -->
+         <el-form-item label="父页面链接:" prop="parentLink">
+          <el-input
+            v-model="searchForm.parentLink"
+            placeholder="请输入父页面链接"
+            clearable
+            @keyup.enter="handleSearch"
+          />  
+         </el-form-item>
         <el-form-item label="请求类型:" prop="requestType">
           <el-select
             v-model="searchForm.requestType"
@@ -71,8 +80,14 @@
 
       <!-- Table -->
       <el-table :data="tableData" style="width: 100%" v-loading="loading" border height="calc(100vh - 280px)">
-        <el-table-column prop="configId" label="配置ID" width="120" align="center" fixed />
+        <el-table-column prop="configId" label="配置ID" width="200" align="center" fixed />
         <el-table-column prop="configName" label="配置名称" min-width="150" fixed />
+        <!-- 设置父页面能打开 -->
+        <el-table-column prop="parentLink" label="父页面链接" min-width="200" show-overflow-tooltip>
+          <template #default="{ row }">
+            <a :href="row.parentLink" target="_blank">{{ row.parentLink }}</a>
+          </template>
+        </el-table-column>
         <el-table-column prop="columnUrl" label="基础URL" min-width="200" show-overflow-tooltip />
         <el-table-column prop="requestType" label="请求类型" width="100" align="center">
           <template #default="{ row }">
@@ -255,6 +270,7 @@ interface WebsiteConfig {
   detailUrlRule: string;
   createdAt?: string;
   updatedAt?: string;
+  parentLink?: string;
 }
 
 onMounted(() => {
@@ -269,6 +285,7 @@ const searchForm = reactive({
   configName: '',
   columnUrl: '',
   requestType: '',
+  parentLink: '',
 });
 
 // 统一测试弹窗相关
@@ -315,7 +332,8 @@ const configForm = reactive<WebsiteConfig>({
   resultType: 'json',
   resultClean: '',
   resultListRule: '',
-  detailUrlRule: ''
+  detailUrlRule: '',
+  parentLink: '',
 });
 
 // 表格数据
@@ -384,6 +402,7 @@ const handleCopy = (row: DynamicConfig) => {
   isEditMode.value = false; // 设置为新增模式
   // 清空configForm.configName
   configForm.configName = '';
+  configForm.requestHead = convertToString(configForm.requestHead, ': ');
   currentConfigId.value = null;
   dialogVisible.value = true;
   
