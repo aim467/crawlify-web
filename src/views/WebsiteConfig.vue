@@ -252,26 +252,7 @@ import { convertToObject, convertToString } from '@/utils/httpConfigUtils';
 const websiteId = ref<number>();
 const route = useRoute();
 
-// 定义配置类型接口
-interface WebsiteConfig {
-  websiteId: number;
-  configId: string;
-  configName: string;
-  columnUrl: string;
-  requestType: string;
-  requestBody?: string;
-  pageStart: number;
-  pageLen: number;
-  nextPage?: string;
-  requestHead?: string;
-  resultType: string;
-  resultClean?: string;
-  resultListRule: string;
-  detailUrlRule: string;
-  createdAt?: string;
-  updatedAt?: string;
-  parentLink?: string;
-}
+
 
 onMounted(() => {
   websiteId.value = Number(route.query.websiteId);
@@ -318,7 +299,7 @@ const paginatedTestResults = computed(() => {
   return configTestResults.value.slice(start, end);
 });
 
-const configForm = reactive<WebsiteConfig>({
+const configForm = reactive<DynamicConfig>({
   configId: '',
   websiteId: Number(websiteId),
   configName: '',
@@ -337,7 +318,7 @@ const configForm = reactive<WebsiteConfig>({
 });
 
 // 表格数据
-const tableData = ref<WebsiteConfig[]>([
+const tableData = ref<DynamicConfig[]>([
 ]);
 
 const pagination = reactive({
