@@ -189,7 +189,7 @@
             <!-- 子任务表格 -->
             <el-divider content-position="center">详细子任务列表</el-divider>
             <el-table :data="currentTask.subTasks" border style="width: 100%">
-              <el-table-column prop="nodeId" label="子任务ID" min-width="280" align="center" />
+              <el-table-column prop="taskNodeId" label="子任务ID" min-width="280" align="center" />
               <el-table-column prop="nodeUrl" label="节点URL" min-width="200" align="center" />
               <el-table-column prop="threadNum" label="线程数" width="100" align="center" />
               <el-table-column label="状态" width="120" align="center">

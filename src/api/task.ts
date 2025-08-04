@@ -11,6 +11,7 @@ export interface TaskQuery {
 }
 
 export interface SubTask {
+  taskNodeId: string,
   nodeId: string
   taskId: string
   status: number

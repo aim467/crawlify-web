@@ -10,6 +10,8 @@ export interface Task {
 }
 
 export interface SubTask {
+  nodeId: String
+  taskNodeId: string
   taskId: string
   websiteId: number
   status: number
