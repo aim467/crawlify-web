@@ -29,6 +29,11 @@ service.interceptors.request.use(
 service.interceptors.response.use(
   (response) => {
     const res = response.data;
+    // 放行二进制流的处理
+    if (response.config.responseType === 'blob') {
+      return res;
+    }
+    
     if (res.code === 401) {
       // 处理未授权错误，例如跳转到登录页
       const authStore = useAuthStore();

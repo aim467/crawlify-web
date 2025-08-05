@@ -317,10 +317,6 @@
 <script lang="ts" setup>
 import { ref, onMounted, computed, nextTick } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { 
-  Link, 
-  DataBoard
-} from '@element-plus/icons-vue';
 import { websiteApi } from '../api/website';
 import { websiteLinkApi } from '../api/websiteLink';
 import VueEasyLightbox from 'vue-easy-lightbox';
@@ -613,11 +609,11 @@ const handleExport = async () => {
     };
     
     // 调用导出API
-    const response = await websiteLinkApi.export(exportParams);
+    const response = await websiteLinkApi.export(exportParams) as unknown as Blob;
     
     // 创建下载链接
-    const blob = new Blob([response.data], { 
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    const blob = new Blob([response], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
