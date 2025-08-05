@@ -86,7 +86,7 @@
                 icon="download" 
                 circle 
                 @click="handleExport"
-                :disabled="!selectedWebsite || linkList.length === 0"
+                :disabled="!selectedWebsite"
               />
             </el-tooltip>
           </div>
@@ -584,8 +584,8 @@ const copyUrl = async (url: string) => {
 
 // 导出功能
 const handleExport = async () => {
-  if (!selectedWebsite.value || linkList.value.length === 0) {
-    ElMessage.warning('没有可导出的数据');
+  if (!selectedWebsite.value) {
+    ElMessage.warning('请先选择网站');
     return;
   }
 
@@ -600,15 +600,45 @@ const handleExport = async () => {
       }
     );
     
-    // 这里可以调用导出API
-    emit('export', {
-      websiteId: selectedWebsite.value.id,
-      links: selectedLinks.value.length > 0 ? selectedLinks.value : linkList.value
-    });
+    ElMessage.info('正在导出数据，请稍候...');
     
-    ElMessage.success('导出请求已发送');
+    // 构建导出参数
+    const exportParams = {
+      websiteId: selectedWebsite.value.id,
+      url: searchForm.value.url,
+      extLink: searchForm.value.extLink,
+      urlType: searchForm.value.urlType,
+      startTime: searchForm.value.timeRange[0],
+      endTime: searchForm.value.timeRange[1]
+    };
+    
+    // 调用导出API
+    const response = await websiteLinkApi.export(exportParams);
+    
+    // 创建下载链接
+    const blob = new Blob([response.data], { 
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    
+    // 生成文件名
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
+    link.download = `${selectedWebsite.value.name}_链接数据_${timestamp}.xlsx`;
+    
+    // 触发下载
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    
+    ElMessage.success('导出成功');
   } catch (error) {
-    // 用户取消
+    console.error('Export failed:', error);
+    if (error !== 'cancel') {
+      ElMessage.error('导出失败，请稍后重试');
+    }
   }
 };
 

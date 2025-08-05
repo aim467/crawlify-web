@@ -16,6 +16,9 @@ export interface WebsiteLinkQuery {
   websiteId: number
   url?: string
   urlType?: number
+  extLink?: boolean
+  startTime?: string
+  endTime?: string
 }
 
 export interface WebsiteLinkResponse {
@@ -42,5 +45,11 @@ export const websiteLinkApi = {
 
   delete(id: number) {
     return request.delete(`/websiteLink/${id}`)
+  },
+
+  export(query: Omit<WebsiteLinkQuery, 'page' | 'size'>) {
+    return request.post('/websiteLink/export', query, {
+      responseType: 'blob'
+    })
   }
 }

@@ -3,15 +3,7 @@ import Sidebar from '@/components/Sidebar.vue'
 import Header from '@/components/Header.vue'
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { StagewiseToolbar } from '@stagewise/toolbar-vue'
-import VuePlugin from '@stagewise-plugins/vue'
-
 const router = useRouter()
-
-// Stagewise configuration
-const stagewise_config = {
-  plugins: [VuePlugin]
-}
 
 // 页面标题
 const pageTitle = computed(() => {
@@ -50,7 +42,6 @@ onMounted(() => {
 </script>
 
 <template>
-  <StagewiseToolbar :config="stagewise_config" />
   <router-view v-slot="{ Component }">
     <template v-if="$route.path === '/login'">
       <component :is="Component" />
