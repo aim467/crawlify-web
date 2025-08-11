@@ -9,7 +9,7 @@ export interface DynamicConfig {
   pageStart: number;
   pageLen: number;
   nextPage?: string;
-  requestHead?: string;
+  requestHead?: Record<string, string>;
   resultType: string;
   resultClean?: string;
   resultListRule: string;
@@ -17,6 +17,7 @@ export interface DynamicConfig {
   createdAt?: string;
   updatedAt?: string;
   parentLink?: string;
+  requestHeadStr: string;
 }
 
 export interface TestConfigResponse {

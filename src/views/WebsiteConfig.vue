@@ -309,12 +309,13 @@ const configForm = reactive<DynamicConfig>({
   pageStart: 1,
   pageLen: 10,
   nextPage: '',
-  requestHead: '',
+  requestHead: {} as Record<string, string>,
   resultType: 'json',
   resultClean: '',
   resultListRule: '',
   detailUrlRule: '',
   parentLink: '',
+  requestHeadStr: '',
 });
 
 // 表格数据
@@ -367,8 +368,7 @@ const handleEdit = async (row: DynamicConfig) => {
     const { data } = await dynamicConfigApi.getById(row.configId!);
     Object.assign(configForm, data);
     // 处理 requestHead 字段，将逗号分隔的格式替换为换行符
-    configForm.requestHead = convertToString(data.requestHead, ': ');
-
+    configForm.requestHeadStr = convertToString(data.requestHead, ': ');
     isEditMode.value = true;
     currentConfigId.value = row.configId;
     dialogVisible.value = true;
@@ -383,7 +383,7 @@ const handleCopy = (row: DynamicConfig) => {
   isEditMode.value = false; // 设置为新增模式
   // 清空configForm.configName
   configForm.configName = '';
-  configForm.requestHead = convertToString(configForm.requestHead, ': ');
+  configForm.requestHeadStr = convertToString(configForm.requestHead, ': ');
   currentConfigId.value = null;
   dialogVisible.value = true;
   
@@ -403,7 +403,7 @@ const submitConfigForm = async () => {
       try {
         configForm.websiteId = Number(websiteId.value);
         // requestHead 字段处理，将换行符替换为逗号分隔的格式
-        configForm.requestHead = convertToObject(configForm.requestHead, ':');
+        configForm.requestHead = convertToObject(configForm.requestHeadStr, ':');
         if (isEditMode.value && currentConfigId.value) {
           await dynamicConfigApi.update(configForm);
           ElMessage.success('更新成功');
@@ -455,9 +455,9 @@ const handleImport = async () => {
       const headers = Object.entries(result.headers)
         .map(([key, value]) => `${key}: ${value}`)
         .join('\n');
-      configForm.requestHead = headers;
+      configForm.requestHeadStr = headers;
     } else {
-      configForm.requestHead = '';
+      configForm.requestHeadStr = '';
     }
 
     // 处理请求体

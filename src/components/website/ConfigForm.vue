@@ -24,8 +24,8 @@
       <el-form-item label="基础URL" prop="columnUrl" class="url-input">
         <el-input v-model="form.columnUrl" placeholder="输入目标网页的基础URL，例如：https://example.com/list" />
       </el-form-item>
-      <el-form-item label="请求头" prop="requestHead">
-        <el-input v-model="form.requestHead" type="textarea" :rows="8" placeholder="请求头信息，JSON格式，可包含User-Agent、Cookie等" />
+      <el-form-item label="请求头" prop="requestHeadStr">
+        <el-input v-model="form.requestHeadStr" type="textarea" :rows="8" placeholder="请求头信息，JSON格式，可包含User-Agent、Cookie等" />
       </el-form-item>
       <el-form-item label="请求体" prop="requestBody">
         <el-input v-model="form.requestBody" type="textarea" :rows="6" placeholder="POST请求时的请求体模板，可包含占位符<pageNum>" />
