@@ -35,16 +35,12 @@ export const websiteLinkApi = {
     return request.get<WebsiteLink>(`/websiteLink/${id}`)
   },
 
-  create(link: Omit<WebsiteLink, 'id' | 'createdTime' | 'updatedTime'>) {
-    return request.post<WebsiteLink>('/websiteLink', link)
-  },
-
-  update(link: Partial<WebsiteLink> & { id: number }) {
-    return request.put<WebsiteLink>('/websiteLink', link)
-  },
-
   delete(id: number) {
     return request.delete(`/websiteLink/${id}`)
+  },
+
+  clear(websiteId: number) {
+    return request.delete(`/websiteLink/clear/${websiteId}`)
   },
 
   export(query: Omit<WebsiteLinkQuery, 'page' | 'size'>) {

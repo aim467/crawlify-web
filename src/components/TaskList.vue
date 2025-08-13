@@ -86,13 +86,13 @@
           </template>
         </el-table-column>
         <el-table-column prop="taskId" label="任务ID" min-width="280" align="center" />
-        <el-table-column prop="websiteName" label="关联网站" width="120" align="center" />
-        <el-table-column label="开始时间" width="180">
+        <el-table-column prop="websiteName" label="关联网站" width="220" align="center" />
+        <el-table-column label="开始时间" width="200">
           <template #default="{ row }">
             {{ formatDateTime(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="更新时间" width="180">
+        <el-table-column label="更新时间" width="200">
           <template #default="{ row }">
             {{ formatDateTime(row.updatedAt) }}
           </template>

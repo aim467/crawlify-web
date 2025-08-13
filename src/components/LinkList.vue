@@ -40,6 +40,7 @@
                </div>
             </template>
           </el-table-column>
+
         </el-table>
         
         <!-- 空状态 -->
@@ -73,6 +74,16 @@
             <span v-if="selectedWebsite" class="link-count">(共 {{ total }} 条)</span>
           </div>
           <div class="table-actions">
+            <el-tooltip content="清空当前网站所有链接" placement="top">
+              <el-button 
+                type="danger"
+                icon="delete"
+                circle 
+                @click="handleClearWebsiteLinks(selectedWebsite?.id)"
+                :disabled="!selectedWebsite"
+                plain
+              />
+            </el-tooltip>
             <el-tooltip content="刷新数据" placement="top">
               <el-button 
                 icon="refresh" 
@@ -247,6 +258,30 @@
             </template>
           </el-table-column>
           <el-table-column label="所属网站" prop="website" width="180" />
+          <el-table-column label="操作" width="120" fixed="right">
+            <template #default="{ row }">
+              <el-dropdown trigger="click" placement="bottom-end">
+                <el-button 
+                  type="primary" 
+                  size="small" 
+                  icon="more"
+                  circle
+                  plain
+                />
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item 
+                      icon="delete" 
+                      @click="handleDeleteLink(row.id)"
+                      class="danger-item"
+                    >
+                      删除链接
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </template>
+          </el-table-column>
         </el-table>
 
         <!-- 空状态 -->
@@ -331,6 +366,7 @@ interface WebsiteBasic {
 }
 
 interface WebsiteLink {
+  id: number;
   url: string;
   website: string;
   crawlTime: string;
@@ -473,6 +509,7 @@ const loadLinks = async () => {
     
     const response = await websiteLinkApi.list(params);
     linkList.value = response.data.records.map(link => ({
+      id: link.id,
       url: link.url,
       website: selectedWebsite.value!.name,
       crawlTime: link.createdAt,
@@ -578,6 +615,77 @@ const copyUrl = async (url: string) => {
   }
 };
 
+// 删除单条链接
+const handleDeleteLink = async (id: number) => {
+  try {
+    await ElMessageBox.confirm(
+      '此操作将永久删除该网站的链接，是否继续？',
+      '删除链接',
+      {
+        confirmButtonText: '确认删除',
+        cancelButtonText: '取消',
+        type: 'warning',
+        dangerouslyUseHTMLString: false,
+        showClose: false,
+        closeOnClickModal: false,
+        customClass: 'delete-confirm-dialog'
+      }
+    );
+    
+    await websiteLinkApi.delete(id);
+    ElMessage({
+      message: '链接删除成功',
+      type: 'success',
+      duration: 2000
+    });
+    
+    // 重新加载当前页数据
+    await loadLinks();
+  } catch (error) {
+    console.error('Failed to delete link:', error);
+    if (error !== 'cancel') {
+      ElMessage.error('删除失败，请稍后重试');
+    }
+  }
+};
+
+// 清空网站链接
+const handleClearWebsiteLinks = async (websiteId: number) => {
+  if (!websiteId || !selectedWebsite.value) return;
+  
+  try {
+    await ElMessageBox.confirm(
+      `即将清空「${selectedWebsite.value.name}」的所有链接数据，此操作不可恢复！请确保当前网站无任务在运行！`,
+      '清空网站链接',
+      {
+        confirmButtonText: '确认清空',
+        cancelButtonText: '取消',
+        type: 'error',
+        dangerouslyUseHTMLString: false,
+        showClose: false,
+        closeOnClickModal: false,
+        customClass: 'clear-confirm-dialog',
+        distinguishCancelAndClose: true
+      }
+    );
+    
+    await websiteLinkApi.clear(websiteId);
+    ElMessage({
+      message: `「${selectedWebsite.value.name}」的链接已全部清空`,
+      type: 'success',
+      duration: 3000
+    });
+    
+    // 重新加载数据
+    await loadLinks();
+  } catch (error) {
+    console.error('Failed to clear website links:', error);
+    if (error !== 'cancel') {
+      ElMessage.error('清空失败，请稍后重试');
+    }
+  }
+};
+
 // 导出功能
 const handleExport = async () => {
   if (!selectedWebsite.value) {
@@ -649,6 +757,108 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* 危险操作项样式 */
+.danger-item {
+  color: #f56c6c !important;
+}
+
+.danger-item:hover {
+  background-color: #fef0f0 !important;
+  color: #f56c6c !important;
+}
+
+/* 操作按钮组样式 */
+.table-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.table-actions .el-button {
+  transition: all 0.3s ease;
+}
+
+.table-actions .el-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 删除按钮特殊样式 */
+.table-actions .el-button--danger.is-plain:hover {
+  background-color: #f56c6c;
+  border-color: #f56c6c;
+  color: #fff;
+}
+
+/* 下拉菜单按钮样式 */
+.el-dropdown .el-button--primary.is-plain {
+  border-color: #dcdfe6;
+  color: #606266;
+}
+
+.el-dropdown .el-button--primary.is-plain:hover {
+  background-color: #ecf5ff;
+  border-color: #409eff;
+  color: #409eff;
+}
+
+/* 确认对话框样式 */
+:deep(.delete-confirm-dialog) {
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+}
+
+:deep(.delete-confirm-dialog .el-message-box__header) {
+  padding: 24px 24px 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+:deep(.delete-confirm-dialog .el-message-box__title) {
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+}
+
+:deep(.delete-confirm-dialog .el-message-box__content) {
+  padding: 20px 24px;
+  color: #606266;
+  line-height: 1.6;
+}
+
+:deep(.delete-confirm-dialog .el-message-box__btns) {
+  padding: 12px 24px 24px;
+  border-top: 1px solid #f0f0f0;
+}
+
+:deep(.clear-confirm-dialog) {
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(245, 108, 108, 0.15);
+}
+
+:deep(.clear-confirm-dialog .el-message-box__header) {
+  padding: 24px 24px 12px;
+  border-bottom: 1px solid #fef0f0;
+  background: linear-gradient(135deg, #fef0f0 0%, #ffffff 100%);
+}
+
+:deep(.clear-confirm-dialog .el-message-box__title) {
+  font-size: 18px;
+  font-weight: 600;
+  color: #f56c6c;
+}
+
+:deep(.clear-confirm-dialog .el-message-box__content) {
+  padding: 20px 24px;
+  color: #606266;
+  line-height: 1.6;
+  background: #ffffff;
+}
+
+:deep(.clear-confirm-dialog .el-message-box__btns) {
+  padding: 12px 24px 24px;
+  border-top: 1px solid #fef0f0;
+  background: #ffffff;
+}
 .link-list-container {
   padding: 12px;
   background: #f0f2f5;
