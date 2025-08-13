@@ -1,8 +1,6 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/auth';
-import { useRouter } from 'vue-router';
-
-const router = useRouter();
+import router from '../router';
 
 // 创建 axios 实例
 const service = axios.create({
