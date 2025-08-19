@@ -48,6 +48,10 @@ const toggleLogoHover = (isHovered: boolean) => {
       <el-icon><Link /></el-icon>
       <span>链接管理</span>
     </el-menu-item>
+    <el-menu-item index="/template-management">
+      <el-icon><Document /></el-icon>
+      <span>模板管理</span>
+    </el-menu-item>
   </el-menu>
   </div>
 </template>

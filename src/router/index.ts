@@ -3,6 +3,7 @@ import WebsiteList from '../components/WebsiteList.vue'
 import TaskList from '../components/TaskList.vue'
 import WebsiteLinkList from '../components/LinkList.vue'
 import WebsiteConfig from '../views/WebsiteConfig.vue'
+import TemplateManagement from '../views/TemplateManagement.vue'
 import { useAuthStore } from '../store/auth'; // 导入 Pinia store
 import Login  from "../views/Login.vue";
 
@@ -37,6 +38,12 @@ const router = createRouter({
       path: '/website-config',
       name: 'website-config',
       component: WebsiteConfig,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/template-management',
+      name: 'template-management',
+      component: TemplateManagement,
       meta: { requiresAuth: true }
     }
   ]
