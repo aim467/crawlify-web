@@ -109,7 +109,27 @@
       class="template-drawer"
       destroy-on-close
     >
-      <el-form :model="templateForm" :rules="formRules" ref="templateFormRef" label-width="120px">
+      <div class="drawer-content">
+        <!-- 导入命令区域 -->
+        <div class="import-section" v-if="!isEditMode">
+          <h3>快速导入</h3>
+          <p class="section-desc">支持 curl 或 fetch 命令一键导入配置</p>
+          <el-input
+            v-model="importCommand"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入curl或fetch命令，例如: curl -X GET 'https://example.com/api' -H 'Content-Type: application/json'"
+            class="import-input"
+          />
+          <el-button type="primary" class="import-btn" @click="handleImport">
+            <el-icon><Upload /></el-icon>
+            导入配置
+          </el-button>
+        </div>
+
+        <!-- 表单区域 -->
+        <div class="form-content">
+          <el-form :model="templateForm" :rules="formRules" ref="templateFormRef" label-width="120px">
         <!-- 基础配置区域 -->
         <el-card shadow="never" class="form-section-card">
           <template #header>
@@ -368,14 +388,16 @@
             </div>
           </div>
         </el-card>
-      </el-form>
-      
-      <!-- 抽屉底部操作栏 -->
-      <div class="drawer-footer">
-        <el-button @click="dialogVisible = false" size="large">取消</el-button>
-        <el-button type="primary" @click="submitTemplateForm" :loading="submitLoading" size="large">
-          {{ isEditMode ? '更新' : '创建' }}
-        </el-button>
+          </el-form>
+        </div>
+        
+        <!-- 抽屉底部操作栏 -->
+        <div class="drawer-footer">
+          <el-button @click="dialogVisible = false" size="large">取消</el-button>
+          <el-button type="primary" @click="submitTemplateForm" :loading="submitLoading" size="large">
+            {{ isEditMode ? '更新' : '创建' }}
+          </el-button>
+        </div>
       </div>
     </el-drawer>
 
@@ -383,72 +405,147 @@
     <el-dialog 
       v-model="viewDialogVisible" 
       title="查看模板配置详情" 
-      width="1000px"
+      width="1200px"
+      class="template-view-dialog"
     >
       <div class="template-view-container">
-        <el-descriptions :column="3" border>
-          <el-descriptions-item label="配置ID">{{ viewTemplate.configId }}</el-descriptions-item>
-          <el-descriptions-item label="配置名称">{{ viewTemplate.configName }}</el-descriptions-item>
-          <el-descriptions-item label="基础URL">{{ viewTemplate.columnUrl }}</el-descriptions-item>
-          <el-descriptions-item label="请求类型">
-            <el-tag :type="getRequestTypeTag(viewTemplate.requestType)">
-              {{ viewTemplate.requestType || '未知' }}
-            </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="结果类型">
-            <el-tag :type="getResultTypeTag(viewTemplate.resultType)">
-              {{ viewTemplate.resultType || '未知' }}
-            </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="分页配置">
-            {{ viewTemplate.pageStart }} - {{ viewTemplate.pageLen }}
-          </el-descriptions-item>
-          <el-descriptions-item label="创建时间">{{ viewTemplate.createdAt }}</el-descriptions-item>
-          <el-descriptions-item label="更新时间">{{ viewTemplate.updatedAt }}</el-descriptions-item>
-          <el-descriptions-item label="下一页URL">{{ viewTemplate.nextPage || '无' }}</el-descriptions-item>
-        </el-descriptions>
+        <!-- 基础信息卡片 -->
+        <el-card shadow="never" class="view-info-card">
+          <template #header>
+            <div class="card-header">
+              <i class="el-icon-info-filled"></i>
+              <span>基础信息</span>
+            </div>
+          </template>
+          <el-descriptions :column="2" border size="default">
+            <el-descriptions-item label="配置ID" label-align="right">
+              <el-tag type="info">{{ viewTemplate.configId }}</el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item label="配置名称" label-align="right">
+              <span class="config-name">{{ viewTemplate.configName }}</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="基础URL" label-align="right" :span="2">
+              <a :href="viewTemplate.columnUrl" target="_blank" class="url-link">
+                {{ viewTemplate.columnUrl }}
+              </a>
+            </el-descriptions-item>
+            <el-descriptions-item label="请求类型" label-align="right">
+              <el-tag :type="getRequestTypeTag(viewTemplate.requestType)" size="default">
+                {{ viewTemplate.requestType || '未知' }}
+              </el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item label="结果类型" label-align="right">
+              <el-tag :type="getResultTypeTag(viewTemplate.resultType)" size="default">
+                {{ viewTemplate.resultType || '未知' }}
+              </el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item label="分页配置" label-align="right">
+              <span class="pagination-info">
+                起始页: <strong>{{ viewTemplate.pageStart }}</strong> | 
+                最大页数: <strong>{{ viewTemplate.pageLen }}</strong>
+              </span>
+            </el-descriptions-item>
+            <el-descriptions-item label="下一页URL" label-align="right">
+              <span class="next-page-url">{{ viewTemplate.nextPage || '无' }}</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="创建时间" label-align="right">
+              <span class="time-info">{{ viewTemplate.createdAt }}</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="更新时间" label-align="right">
+              <span class="time-info">{{ viewTemplate.updatedAt }}</span>
+            </el-descriptions-item>
+          </el-descriptions>
+        </el-card>
         
-        <div class="view-section" v-if="viewTemplate.requestBody">
-          <h4>请求体模板</h4>
-          <el-input 
-            :model-value="viewTemplate.requestBody" 
-            type="textarea" 
-            :rows="4"
-            readonly
-            class="code-display"
-          />
-        </div>
-
-        <div class="view-section" v-if="viewTemplate.requestHead && Object.keys(viewTemplate.requestHead).length > 0">
-          <h4>请求头配置</h4>
-          <div class="headers-preview">
-            <el-tag 
-              v-for="(value, key) in viewTemplate.requestHead" 
-              :key="key" 
-              class="header-tag"
-            >
-              {{ key }}: {{ value }}
-            </el-tag>
+        <!-- 请求配置卡片 -->
+        <el-card shadow="never" class="view-info-card" v-if="viewTemplate.requestBody || (viewTemplate.requestHead && Object.keys(viewTemplate.requestHead).length > 0)">
+          <template #header>
+            <div class="card-header">
+              <i class="el-icon-connection"></i>
+              <span>请求配置</span>
+            </div>
+          </template>
+          
+          <div v-if="viewTemplate.requestHead && Object.keys(viewTemplate.requestHead).length > 0" class="config-section">
+            <h5 class="section-title">请求头配置</h5>
+            <div class="headers-preview-enhanced">
+              <el-tag 
+                v-for="(value, key) in viewTemplate.requestHead" 
+                :key="key" 
+                class="header-tag-enhanced"
+                size="default"
+              >
+                <strong>{{ key }}</strong>: {{ value }}
+              </el-tag>
+            </div>
           </div>
-        </div>
 
-        <div class="view-section" v-if="viewTemplate.resultListRule">
-          <h4>列表获取表达式</h4>
-          <el-input 
-            :model-value="viewTemplate.resultListRule" 
-            readonly
-            class="code-display"
-          />
-        </div>
+          <div v-if="viewTemplate.requestBody" class="config-section">
+            <h5 class="section-title">请求体模板</h5>
+            <el-input 
+              :model-value="viewTemplate.requestBody" 
+              type="textarea" 
+              :rows="6"
+              readonly
+              class="code-display-enhanced"
+            />
+          </div>
+        </el-card>
 
-        <div class="view-section" v-if="viewTemplate.fieldRules && viewTemplate.fieldRules.length > 0">
-          <h4>字段提取规则</h4>
-          <el-table :data="viewTemplate.fieldRules" border>
-            <el-table-column prop="name" label="字段名称" />
-            <el-table-column prop="desc" label="字段描述" />
-            <el-table-column prop="rule" label="提取规则" show-overflow-tooltip />
+        <!-- 结果处理配置卡片 -->
+        <el-card shadow="never" class="view-info-card" v-if="viewTemplate.resultListRule || viewTemplate.resultClean">
+          <template #header>
+            <div class="card-header">
+              <i class="el-icon-document"></i>
+              <span>结果处理配置</span>
+            </div>
+          </template>
+          
+          <div v-if="viewTemplate.resultClean" class="config-section">
+            <h5 class="section-title">结果清洗正则</h5>
+            <el-input 
+              :model-value="viewTemplate.resultClean" 
+              readonly
+              class="code-display-enhanced"
+            />
+          </div>
+
+          <div v-if="viewTemplate.resultListRule" class="config-section">
+            <h5 class="section-title">列表获取表达式</h5>
+            <el-input 
+              :model-value="viewTemplate.resultListRule" 
+              readonly
+              class="code-display-enhanced"
+            />
+          </div>
+        </el-card>
+
+        <!-- 字段提取规则卡片 -->
+        <el-card shadow="never" class="view-info-card" v-if="viewTemplate.fieldRules && viewTemplate.fieldRules.length > 0">
+          <template #header>
+            <div class="card-header">
+              <i class="el-icon-menu"></i>
+              <span>字段提取规则</span>
+              <el-tag type="info" size="small" style="margin-left: auto;">
+                共 {{ viewTemplate.fieldRules.length }} 条规则
+              </el-tag>
+            </div>
+          </template>
+          
+          <el-table :data="viewTemplate.fieldRules" border stripe class="rules-table">
+            <el-table-column prop="name" label="字段名称" width="150" align="center">
+              <template #default="{ row }">
+                <el-tag type="primary" size="small">{{ row.name }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="desc" label="字段描述" min-width="200" />
+            <el-table-column prop="rule" label="提取规则" min-width="250" show-overflow-tooltip>
+              <template #default="{ row }">
+                <code class="rule-code">{{ row.rule }}</code>
+              </template>
+            </el-table-column>
           </el-table>
-        </div>
+        </el-card>
       </div>
     </el-dialog>
   </div>
@@ -458,9 +555,11 @@
 import { ref, reactive, onMounted, computed } from 'vue';
 import type { FormInstance, FormRules } from 'element-plus';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import { Upload } from '@element-plus/icons-vue';
 import { templateConfigApi } from '../api/templateConfig';
 import type { TemplateConfig, FieldRule } from '../types/templateConfig';
 import { REQUEST_TYPES, RESULT_TYPES } from '../types/templateConfig';
+import { parseCommand } from '../utils/commandParser';
 
 // 响应式数据
 const loading = ref(false);
@@ -471,6 +570,7 @@ const isEditMode = ref(false);
 const searchFormRef = ref<FormInstance>();
 const templateFormRef = ref<FormInstance>();
 const requestHeadersText = ref('');
+const importCommand = ref('');
 
 // 响应式抽屉大小
 const drawerSize = computed(() => {
@@ -678,6 +778,7 @@ const resetTemplateForm = () => {
 const handleAdd = () => {
   isEditMode.value = false;
   resetTemplateForm();
+  importCommand.value = '';
   dialogVisible.value = true;
 };
 
@@ -758,6 +859,41 @@ const handleDelete = (row: TemplateConfig) => {
       ElMessage.error('删除失败');
     }
   }).catch(() => {});
+};
+
+// 导入命令
+const handleImport = async () => {
+  if (!importCommand.value.trim()) {
+    ElMessage.warning('请输入curl或fetch命令');
+    return;
+  }
+
+  try {
+    const result = parseCommand(importCommand.value);
+    
+    // 更新表单字段
+    templateForm.columnUrl = result.url;
+    templateForm.nextPage = result.url;
+    templateForm.requestType = result.method;
+
+    // 处理请求头
+    if (result.headers && Object.keys(result.headers).length > 0) {
+      templateForm.requestHead = result.headers;
+      requestHeadersText.value = JSON.stringify(result.headers, null, 2);
+    } else {
+      templateForm.requestHead = {};
+      requestHeadersText.value = '';
+    }
+
+    // 处理请求体
+    templateForm.requestBody = typeof result.body === 'string' 
+      ? result.body 
+      : JSON.stringify(result.body, null, 2);
+
+    ElMessage.success('导入成功');
+  } catch (error) {
+    ElMessage.error(`导入失败: ${(error as Error).message}`);
+  }
 };
 
 // 提交表单
@@ -868,10 +1004,16 @@ onMounted(() => {
 
 /* 抽屉表单样式 */
 .template-drawer :deep(.el-drawer__body) {
-  padding: 20px;
+  padding: 0;
   display: flex;
   flex-direction: column;
   height: 100%;
+}
+
+.drawer-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .template-drawer :deep(.el-drawer__header) {
@@ -896,7 +1038,75 @@ onMounted(() => {
   color: rgba(255, 255, 255, 0.8);
 }
 
-.template-drawer .el-form {
+/* 导入区域 */
+.import-section {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(255, 255, 255, 0.95) 100%);
+  padding: 24px;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.15);
+  position: relative;
+  z-index: 2;
+}
+
+.import-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, transparent 100%);
+  border-radius: 0 0 2px 2px;
+}
+
+.import-section h3 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.import-section h3::before {
+  content: '';
+  width: 4px;
+  height: 18px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 2px;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.section-desc {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0 0 16px 0;
+  font-weight: 500;
+}
+
+.import-input {
+  margin-bottom: 12px;
+}
+
+.import-input :deep(.el-textarea__inner) {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+  border-radius: 6px;
+}
+
+.import-btn {
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.form-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.template-drawer .form-content .el-form {
   flex: 1;
   overflow-y: auto;
   padding-right: 10px;
@@ -906,7 +1116,7 @@ onMounted(() => {
   background: #f8f9fa;
   border-top: 1px solid #e4e7ed;
   padding: 20px;
-  margin: 0 -20px -20px;
+  margin: 0;
   display: flex;
   justify-content: flex-end;
   gap: 15px;
@@ -1014,28 +1224,202 @@ onMounted(() => {
 }
 
 /* 查看详情样式 */
+.template-view-dialog :deep(.el-dialog__body) {
+  padding: 20px;
+  background: #f8fafc;
+}
+
 .template-view-container {
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.view-section {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid #e4e7ed;
+/* 查看详情卡片样式 */
+.view-info-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
 }
 
-.view-section h4 {
-  margin-bottom: 10px;
+.view-info-card :deep(.el-card__header) {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-bottom: 1px solid #e5e7eb;
+  padding: 16px 20px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  color: #374151;
+  font-size: 15px;
+}
+
+.card-header i {
+  margin-right: 8px;
+  color: #6366f1;
+  font-size: 16px;
+}
+
+.view-info-card :deep(.el-card__body) {
+  padding: 20px;
+}
+
+/* 基础信息样式 */
+.config-name {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 15px;
+}
+
+.url-link {
+  color: #3b82f6;
+  text-decoration: none;
+  word-break: break-all;
+  transition: color 0.3s ease;
+}
+
+.url-link:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+.pagination-info {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.pagination-info strong {
+  color: #374151;
+  font-weight: 600;
+}
+
+.next-page-url {
+  color: #6b7280;
+  font-size: 14px;
+  word-break: break-all;
+}
+
+.time-info {
+  color: #6b7280;
+  font-size: 13px;
+  font-family: 'Monaco', monospace;
+}
+
+/* 配置区域样式 */
+.config-section {
+  margin-bottom: 20px;
+}
+
+.config-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-title {
+  margin: 0 0 12px 0;
   font-size: 14px;
   font-weight: 600;
-  color: #333;
+  color: #374151;
+  display: flex;
+  align-items: center;
 }
 
-.code-display :deep(.el-textarea__inner) {
-  font-family: 'Courier New', monospace;
+.section-title::before {
+  content: '';
+  width: 3px;
+  height: 16px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border-radius: 2px;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+/* 请求头样式优化 */
+.headers-preview-enhanced {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.header-tag-enhanced {
+  background: white;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  padding: 6px 12px;
+  border-radius: 6px;
   font-size: 13px;
-  line-height: 1.5;
-  background-color: #f8f9fa;
+  max-width: 100%;
+  word-break: break-all;
+}
+
+.header-tag-enhanced strong {
+  color: #1f2937;
+}
+
+/* 代码显示样式优化 */
+.code-display-enhanced :deep(.el-textarea__inner) {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  background-color: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: #374151;
+  padding: 16px;
+}
+
+/* 规则表格样式 */
+.rules-table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.rules-table :deep(.el-table__header) {
+  background: #f8fafc;
+}
+
+.rules-table :deep(.el-table th) {
+  background: #f8fafc;
+  color: #374151;
+  font-weight: 600;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.rule-code {
+  background: #f1f5f9;
+  color: #475569;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .template-view-dialog :deep(.el-dialog) {
+    width: 95% !important;
+    margin: 20px auto;
+  }
+  
+  .view-info-card :deep(.el-descriptions) {
+    font-size: 13px;
+  }
+  
+  .view-info-card :deep(.el-card__body) {
+    padding: 15px;
+  }
+  
+  .config-section {
+    margin-bottom: 15px;
+  }
 }
 
 
