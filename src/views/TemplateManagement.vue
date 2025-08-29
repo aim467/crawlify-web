@@ -605,7 +605,7 @@ import { templateConfigApi } from '../api/templateConfig';
 import type { TemplateConfig, FieldRule } from '../types/templateConfig';
 import { REQUEST_TYPES, RESULT_TYPES } from '../types/templateConfig';
 import { parseCommand } from '../utils/commandParser';
-import CodeEditor from '../components/CodeEditor.vue';
+import { CodeEditor } from '../components';
 
 // 响应式数据
 const loading = ref(false);
@@ -1005,17 +1005,30 @@ const handleCurrentChange = (val: number) => {
 // 代码编辑相关函数
 const handleCodeEdit = async (row: TemplateConfig) => {
   try {
-    const { data } = await templateConfigApi.getById(row.configId!);
-    currentTemplate.value = data;
+    loading.value = true;
     
-    // 生成基于模板配置的示例代码
-    codeContent.value = generateTemplateCode(data);
+    // 获取模板配置基础信息
+    const { data: templateData } = await templateConfigApi.getById(row.configId!);
+    currentTemplate.value = templateData;
+    
+    try {
+      // 尝试获取已保存的脚本内容
+      const { data: scriptContent } = await templateConfigApi.getScript(row.configId!);
+      codeContent.value = scriptContent || generateTemplateCode(templateData);
+    } catch (scriptError) {
+      // 如果没有保存的脚本，则生成基于模板配置的示例代码
+      console.log('未找到已保存的脚本，生成示例代码');
+      codeContent.value = generateTemplateCode(templateData);
+    }
+    
     codeLanguage.value = 'javascript'; // 默认JavaScript，可以根据需要修改
     codeTheme.value = 'light';
-    
     codeEditorVisible.value = true;
+    
   } catch (error) {
     ElMessage.error('获取模板配置失败');
+  } finally {
+    loading.value = false;
   }
 };
 
@@ -1205,19 +1218,31 @@ const handleCodeChange = (content: string) => {
 
 // 保存代码
 const saveCode = async () => {
+  if (!currentTemplate.value) {
+    ElMessage.error('模板信息不存在');
+    return;
+  }
+  
+  if (!codeContent.value.trim()) {
+    ElMessage.warning('请输入脚本内容');
+    return;
+  }
+
   try {
     saveCodeLoading.value = true;
     
-    // 这里可以实现将代码保存到后端的逻辑
-    // 例如：await templateConfigApi.saveCode(currentTemplate.value?.configId, codeContent.value);
+    // 调用保存脚本接口
+    await templateConfigApi.saveScript({
+      configId: currentTemplate.value.configId!,
+      configName: currentTemplate.value.configName,
+      scriptContent: codeContent.value
+    });
     
-    // 模拟保存延迟
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    ElMessage.success('代码保存成功');
+    ElMessage.success('脚本保存成功');
     codeEditorVisible.value = false;
   } catch (error) {
-    ElMessage.error('代码保存失败');
+    console.error('保存脚本失败:', error);
+    ElMessage.error(`脚本保存失败: ${(error as Error).message || '未知错误'}`);
   } finally {
     saveCodeLoading.value = false;
   }

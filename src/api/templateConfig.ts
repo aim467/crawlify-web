@@ -29,5 +29,15 @@ export const templateConfigApi = {
   // 删除模板配置
   delete: (configId: string) => {
     return service.delete<boolean>(`/templateconfig/${configId}`);
+  },
+
+  // 保存脚本
+  saveScript: (data: { configId: string; configName: string; scriptContent: string }) => {
+    return service.post<boolean>('/template/config/save/script', data);
+  },
+
+  // 获取脚本
+  getScript: (configId: string) => {
+    return service.get<string>(`/template/config/get/script?configId=${configId}`);
   }
 };
