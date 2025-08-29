@@ -79,7 +79,7 @@
                 type="danger"
                 icon="delete"
                 circle 
-                @click="handleClearWebsiteLinks(selectedWebsite?.id)"
+                @click="handleClearWebsiteLinks(selectedWebsite?.id || 0)"
                 :disabled="!selectedWebsite"
                 plain
               />

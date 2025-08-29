@@ -67,10 +67,13 @@
         <el-table-column prop="pageLen" label="最大页数" width="100" align="center" />
         <el-table-column prop="createdAt" label="创建时间" min-width="180" />
         <el-table-column prop="updatedAt" label="更新时间" min-width="180" />
-        <el-table-column label="操作" width="200" align="center" fixed="right">
+        <el-table-column label="操作" width="250" align="center" fixed="right">
           <template #default="{ row }">
             <el-tooltip content="编辑" placement="top">
               <el-button link type="primary" icon="Edit" @click="handleEdit(row)" />
+            </el-tooltip>
+            <el-tooltip content="代码编辑" placement="top">
+              <el-button link type="warning" icon="DocumentCopy" @click="handleCodeEdit(row)" />
             </el-tooltip>
             <el-tooltip content="复制" placement="top">
               <el-button link type="success" icon="CopyDocument" @click="handleCopy(row)" />
@@ -548,6 +551,48 @@
         </el-card>
       </div>
     </el-dialog>
+
+    <!-- 代码编辑抽屉 -->
+    <el-drawer
+      v-model="codeEditorVisible"
+      title="代码编辑器"
+      direction="rtl"
+      :size="codeEditorSize"
+      :close-on-click-modal="false"
+      class="code-editor-drawer"
+      destroy-on-close
+    >
+      <template #header>
+        <div class="code-editor-header">
+          <div class="header-title">
+            <el-icon><DocumentCopy /></el-icon>
+            <span>代码编辑器</span>
+          </div>
+          <div class="header-info" v-if="currentTemplate">
+            <el-tag type="info" size="small">{{ currentTemplate.configName }}</el-tag>
+          </div>
+        </div>
+      </template>
+      
+      <div class="code-editor-content">
+        <CodeEditor 
+          v-model="codeContent"
+          :language="codeLanguage"
+          :theme="codeTheme"
+          placeholder="开始编写或上传代码文件..."
+          @change="handleCodeChange"
+        />
+      </div>
+      
+      <template #footer>
+        <div class="code-editor-footer">
+          <el-button @click="codeEditorVisible = false">取消</el-button>
+          <el-button type="primary" @click="saveCode" :loading="saveCodeLoading">
+            保存代码
+          </el-button>
+        </div>
+      </template>
+    </el-drawer>
   </div>
 </template>
 
@@ -555,11 +600,12 @@
 import { ref, reactive, onMounted, computed } from 'vue';
 import type { FormInstance, FormRules } from 'element-plus';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { Upload } from '@element-plus/icons-vue';
+import { Upload, DocumentCopy } from '@element-plus/icons-vue';
 import { templateConfigApi } from '../api/templateConfig';
 import type { TemplateConfig, FieldRule } from '../types/templateConfig';
 import { REQUEST_TYPES, RESULT_TYPES } from '../types/templateConfig';
 import { parseCommand } from '../utils/commandParser';
+import CodeEditor from '../components/CodeEditor.vue';
 
 // 响应式数据
 const loading = ref(false);
@@ -572,6 +618,14 @@ const templateFormRef = ref<FormInstance>();
 const requestHeadersText = ref('');
 const importCommand = ref('');
 
+// 代码编辑器相关
+const codeEditorVisible = ref(false);
+const saveCodeLoading = ref(false);
+const codeContent = ref('');
+const codeLanguage = ref('javascript');
+const codeTheme = ref('light');
+const currentTemplate = ref<TemplateConfig | null>(null);
+
 // 响应式抽屉大小
 const drawerSize = computed(() => {
   if (typeof window !== 'undefined') {
@@ -580,6 +634,17 @@ const drawerSize = computed(() => {
     if (width < 1200) return '85%';     // 平板端
     if (width < 1600) return '75%';     // 小桌面
     return '65%';                       // 大桌面
+  }
+  return '80%';
+});
+
+// 代码编辑器抽屉大小
+const codeEditorSize = computed(() => {
+  if (typeof window !== 'undefined') {
+    const width = window.innerWidth;
+    if (width < 768) return '100%';     // 手机端全屏
+    if (width < 1200) return '90%';     // 平板端
+    return '80%';                       // 桌面端
   }
   return '80%';
 });
@@ -935,6 +1000,227 @@ const handleSizeChange = (val: number) => {
 const handleCurrentChange = (val: number) => {
   pagination.currentPage = val;
   fetchData();
+};
+
+// 代码编辑相关函数
+const handleCodeEdit = async (row: TemplateConfig) => {
+  try {
+    const { data } = await templateConfigApi.getById(row.configId!);
+    currentTemplate.value = data;
+    
+    // 生成基于模板配置的示例代码
+    codeContent.value = generateTemplateCode(data);
+    codeLanguage.value = 'javascript'; // 默认JavaScript，可以根据需要修改
+    codeTheme.value = 'light';
+    
+    codeEditorVisible.value = true;
+  } catch (error) {
+    ElMessage.error('获取模板配置失败');
+  }
+};
+
+// 生成基于模板配置的示例代码
+const generateTemplateCode = (template: TemplateConfig): string => {
+  return `// 模板配置: ${template.configName}
+// 基础URL: ${template.columnUrl}
+// 请求类型: ${template.requestType}
+// 结果类型: ${template.resultType}
+
+class TemplateProcessor {
+  constructor() {
+    this.config = {
+      name: '${template.configName}',
+      baseUrl: '${template.columnUrl}',
+      requestType: '${template.requestType}',
+      resultType: '${template.resultType}',
+      pageStart: ${template.pageStart || 1},
+      pageLen: ${template.pageLen || 1},
+      nextPage: '${template.nextPage || ''}',
+      requestHeaders: ${JSON.stringify(template.requestHead || {}, null, 2)},
+      requestBody: '${template.requestBody || ''}',
+      resultListRule: '${template.resultListRule || ''}',
+      resultClean: '${template.resultClean || ''}'
+    };
+  }
+
+  // 处理请求数据
+  processRequest(requestData) {
+    const result = {
+      url: this.config.baseUrl,
+      method: this.config.requestType,
+      headers: this.config.requestHeaders || {}
+    };
+
+    // 处理分页
+    if (requestData.pageNum && this.config.nextPage) {
+      result.url = this.config.nextPage.replace('<pageNum>', requestData.pageNum.toString());
+    }
+
+    // 处理请求体
+    if (this.config.requestType === 'POST' && this.config.requestBody) {
+      let body = this.config.requestBody;
+      if (requestData.pageNum) {
+        body = body.replace('<pageNum>', requestData.pageNum.toString());
+      }
+      try {
+        result.body = JSON.parse(body);
+      } catch (e) {
+        result.body = body;
+      }
+    }
+
+    return result;
+  }
+
+  // 处理响应数据
+  processResponse(responseData) {
+    let result = responseData;
+
+    // 结果清洗
+    if (this.config.resultClean) {
+      try {
+        const regex = new RegExp(this.config.resultClean);
+        const match = responseData.match(regex);
+        if (match && match[1]) {
+          result = match[1];
+        }
+      } catch (e) {
+        console.warn('结果清洗正则表达式无效:', e.message);
+      }
+    }
+
+    // 根据结果类型处理数据
+    if (this.config.resultType === 'json') {
+      try {
+        result = typeof result === 'string' ? JSON.parse(result) : result;
+      } catch (e) {
+        console.error('JSON解析失败:', e.message);
+        return { error: 'JSON解析失败' };
+      }
+    }
+
+    // 提取列表数据
+    if (this.config.resultListRule && result) {
+      try {
+        // 简单的JSONPath支持
+        if (this.config.resultListRule.startsWith('$.')) {
+          const path = this.config.resultListRule.substring(2).split('.');
+          let data = result;
+          for (const key of path) {
+            data = data[key];
+            if (!data) break;
+          }
+          result = data || [];
+        }
+      } catch (e) {
+        console.error('列表提取失败:', e.message);
+      }
+    }
+
+    // 字段规则处理
+    if (Array.isArray(result) && this.config.fieldRules && this.config.fieldRules.length > 0) {
+      result = result.map(item => {
+        const processedItem = {};
+        this.config.fieldRules.forEach(rule => {
+          try {
+            // 简单的字段提取支持
+            if (rule.rule.startsWith('$.')) {
+              const path = rule.rule.substring(2).split('.');
+              let value = item;
+              for (const key of path) {
+                value = value[key];
+                if (value === undefined) break;
+              }
+              processedItem[rule.name] = value;
+            } else {
+              processedItem[rule.name] = item[rule.rule] || null;
+            }
+          } catch (e) {
+            console.error(\`字段 \${rule.name} 提取失败:\`, e.message);
+            processedItem[rule.name] = null;
+          }
+        });
+        return processedItem;
+      });
+    }
+
+    return result;
+  }
+
+  // 执行完整的处理流程
+  async execute(requestData = {}) {
+    try {
+      // 1. 准备请求
+      const requestConfig = this.processRequest(requestData);
+      console.log('请求配置:', requestConfig);
+
+      // 2. 发送请求 (这里需要根据实际情况实现)
+      // const response = await fetch(requestConfig.url, {
+      //   method: requestConfig.method,
+      //   headers: requestConfig.headers,
+      //   body: requestConfig.body ? JSON.stringify(requestConfig.body) : undefined
+      // });
+      // const responseData = await response.text();
+
+      // 3. 模拟响应数据
+      const mockResponse = \`{
+        "data": {
+          "list": [
+            {"title": "示例标题1", "url": "http://example.com/1"},
+            {"title": "示例标题2", "url": "http://example.com/2"}
+          ]
+        }
+      }\`;
+
+      // 4. 处理响应
+      const result = this.processResponse(mockResponse);
+      console.log('处理结果:', result);
+
+      return result;
+    } catch (error) {
+      console.error('执行失败:', error.message);
+      return { error: error.message };
+    }
+  }
+}
+
+// 使用示例
+const processor = new TemplateProcessor();
+
+// 处理请求
+const requestData = { pageNum: 1 };
+const request = processor.processRequest(requestData);
+console.log('请求配置:', request);
+
+// 执行完整流程
+processor.execute({ pageNum: 1 }).then(result => {
+  console.log('最终结果:', result);
+});`;
+};
+
+// 代码变更处理
+const handleCodeChange = (content: string) => {
+  codeContent.value = content;
+};
+
+// 保存代码
+const saveCode = async () => {
+  try {
+    saveCodeLoading.value = true;
+    
+    // 这里可以实现将代码保存到后端的逻辑
+    // 例如：await templateConfigApi.saveCode(currentTemplate.value?.configId, codeContent.value);
+    
+    // 模拟保存延迟
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    ElMessage.success('代码保存成功');
+    codeEditorVisible.value = false;
+  } catch (error) {
+    ElMessage.error('代码保存失败');
+  } finally {
+    saveCodeLoading.value = false;
+  }
 };
 
 // 初始化
@@ -1550,5 +1836,99 @@ onMounted(() => {
   .template-drawer :deep(.el-form-item__label) {
     font-size: 14px;
   }
+}
+
+/* 代码编辑器抽屉样式 */
+.code-editor-drawer :deep(.el-drawer__body) {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.code-editor-drawer :deep(.el-drawer__header) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  margin-bottom: 0;
+}
+
+.code-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+}
+
+.header-title .el-icon {
+  margin-right: 8px;
+  font-size: 20px;
+}
+
+.header-info {
+  display: flex;
+  align-items: center;
+}
+
+.code-editor-content {
+  flex: 1;
+  padding: 20px;
+  background: #f8f9fa;
+  overflow: hidden;
+}
+
+.code-editor-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px;
+  background: #ffffff;
+  border-top: 1px solid #e4e7ed;
+}
+
+.code-editor-drawer :deep(.el-drawer__close-btn) {
+  color: white;
+  font-size: 20px;
+}
+
+.code-editor-drawer :deep(.el-drawer__close-btn):hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 代码编辑器响应式设计 */
+@media (max-width: 768px) {
+  .code-editor-header {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+  
+  .code-editor-content {
+    padding: 10px;
+  }
+  
+  .code-editor-footer {
+    padding: 15px;
+    gap: 8px;
+  }
+  
+  .code-editor-drawer :deep(.el-drawer__header) {
+    padding: 15px;
+  }
+}
+
+/* 代码编辑器内容区域 */
+.code-editor-content :deep(.code-editor-container) {
+  height: 100%;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
 </style>
