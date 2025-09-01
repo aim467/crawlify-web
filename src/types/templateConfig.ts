@@ -23,6 +23,7 @@ export interface TemplateConfig {
   fieldRules?: FieldRule[];                       // 字段规则数组
   createdAt?: string;                             // 创建时间
   updatedAt?: string;                             // 更新时间
+  useScript?: number;                               // 是否使用脚本
 }
 
 // 分页查询参数接口

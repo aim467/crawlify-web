@@ -65,6 +65,13 @@
         </el-table-column>
         <el-table-column prop="pageStart" label="起始页" width="100" align="center" />
         <el-table-column prop="pageLen" label="最大页数" width="100" align="center" />
+        <el-table-column prop="useScript" label="使用脚本" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag :type="row.useScript === 1 ? 'success' : 'info'" size="small">
+              {{ row.useScript === 1 ? '是' : '否' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="createdAt" label="创建时间" min-width="180" />
         <el-table-column prop="updatedAt" label="更新时间" min-width="180" />
         <el-table-column label="操作" width="250" align="center" fixed="right">
@@ -217,6 +224,17 @@
                   v-model="templateForm.parentLink" 
                   placeholder="请输入父页面链接"
                 />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <!-- 增加一个，useScript 0/否 1/是 下拉框 -->
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="是否使用脚本" prop="useScript">
+                <el-select v-model="templateForm.useScript" placeholder="请选择是否使用脚本">
+                  <el-option label="否" :value="0" />
+                  <el-option label="是" :value="1" />
+                </el-select>
               </el-form-item>
             </el-col>
           </el-row>
@@ -451,6 +469,11 @@
             <el-descriptions-item label="下一页URL" label-align="right">
               <span class="next-page-url">{{ viewTemplate.nextPage || '无' }}</span>
             </el-descriptions-item>
+            <el-descriptions-item label="使用脚本" label-align="right">
+              <el-tag :type="viewTemplate.useScript === 1 ? 'success' : 'info'" size="default">
+                {{ viewTemplate.useScript === 1 ? '是' : '否' }}
+              </el-tag>
+            </el-descriptions-item>
             <el-descriptions-item label="创建时间" label-align="right">
               <span class="time-info">{{ viewTemplate.createdAt }}</span>
             </el-descriptions-item>
@@ -602,7 +625,7 @@ import type { FormInstance, FormRules } from 'element-plus';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Upload, DocumentCopy } from '@element-plus/icons-vue';
 import { templateConfigApi } from '../api/templateConfig';
-import type { TemplateConfig, FieldRule } from '../types/templateConfig';
+import type { TemplateConfig } from '../types/templateConfig';
 import { REQUEST_TYPES, RESULT_TYPES } from '../types/templateConfig';
 import { parseCommand } from '../utils/commandParser';
 import { CodeEditor } from '../components';
@@ -679,6 +702,7 @@ const templateForm = reactive<TemplateConfig>({
   resultListRule: '',
   parentLink: '',
   fieldRules: [],
+  useScript: 0,
 });
 
 // 查看模板数据
@@ -689,6 +713,7 @@ const viewTemplate = ref<TemplateConfig>({
   pageStart: 0,
   pageLen: 0,
   resultType: '',
+  useScript: 0
 });
 
 // 表单验证规则
@@ -714,6 +739,9 @@ const formRules: FormRules = {
   ],
   resultType: [
     { required: true, message: '请选择结果类型', trigger: 'change' }
+  ],
+  useScript: [
+    { required: true, message: '请选择是否使用脚本', trigger: 'change' }
   ]
 };
 
@@ -835,6 +863,7 @@ const resetTemplateForm = () => {
     resultListRule: '',
     parentLink: '',
     fieldRules: [],
+    useScript: 0,
   });
   requestHeadersText.value = '';
 };
@@ -1014,7 +1043,7 @@ const handleCodeEdit = async (row: TemplateConfig) => {
     try {
       // 尝试获取已保存的脚本内容
       const { data: scriptContent } = await templateConfigApi.getScript(row.configId!);
-      codeContent.value = scriptContent || generateTemplateCode(templateData);
+      codeContent.value = (scriptContent && typeof scriptContent === 'string' ? scriptContent : '') || generateTemplateCode(templateData);
     } catch (scriptError) {
       // 如果没有保存的脚本，则生成基于模板配置的示例代码
       console.log('未找到已保存的脚本，生成示例代码');
@@ -1213,7 +1242,7 @@ processor.execute({ pageNum: 1 }).then(result => {
 
 // 代码变更处理
 const handleCodeChange = (content: string) => {
-  codeContent.value = content;
+  codeContent.value = typeof content === 'string' ? content : '';
 };
 
 // 保存代码

@@ -38,6 +38,6 @@ export const templateConfigApi = {
 
   // 获取脚本
   getScript: (configId: string) => {
-    return service.get<string>(`/template/config/get/script?configId=${configId}`);
+    return service.get<String>(`/template/config/get/script?configId=${configId}`);
   }
 };

@@ -100,12 +100,59 @@ import { Upload, MagicStick, CopyDocument, Download } from '@element-plus/icons-
 import { EditorView, basicSetup } from 'codemirror';
 import { EditorState, Extension } from '@codemirror/state';
 import { oneDark } from '@codemirror/theme-one-dark';
-import { javascript } from '@codemirror/lang-javascript';
-import { json } from '@codemirror/lang-json';
-import { xml } from '@codemirror/lang-xml';
-import { html } from '@codemirror/lang-html';
-import { css } from '@codemirror/lang-css';
-import { python } from '@codemirror/lang-python';
+
+// 动态导入语言包以避免初始化错误
+let languageExtensions: Record<string, () => Promise<Extension[]>> = {};
+
+// 懒加载语言扩展
+const loadLanguageExtension = async (language: string): Promise<Extension[]> => {
+  try {
+    switch (language) {
+      case 'javascript':
+      case 'typescript':
+        if (!languageExtensions.javascript) {
+          const { javascript } = await import('@codemirror/lang-javascript');
+          languageExtensions.javascript = () => Promise.resolve([javascript()]);
+        }
+        return await languageExtensions.javascript();
+      case 'json':
+        if (!languageExtensions.json) {
+          const { json } = await import('@codemirror/lang-json');
+          languageExtensions.json = () => Promise.resolve([json()]);
+        }
+        return await languageExtensions.json();
+      case 'xml':
+        if (!languageExtensions.xml) {
+          const { xml } = await import('@codemirror/lang-xml');
+          languageExtensions.xml = () => Promise.resolve([xml()]);
+        }
+        return await languageExtensions.xml();
+      case 'html':
+        if (!languageExtensions.html) {
+          const { html } = await import('@codemirror/lang-html');
+          languageExtensions.html = () => Promise.resolve([html()]);
+        }
+        return await languageExtensions.html();
+      case 'css':
+        if (!languageExtensions.css) {
+          const { css } = await import('@codemirror/lang-css');
+          languageExtensions.css = () => Promise.resolve([css()]);
+        }
+        return await languageExtensions.css();
+      case 'python':
+        if (!languageExtensions.python) {
+          const { python } = await import('@codemirror/lang-python');
+          languageExtensions.python = () => Promise.resolve([python()]);
+        }
+        return await languageExtensions.python();
+      default:
+        return [];
+    }
+  } catch (error) {
+    console.warn(`Failed to load language extension for ${language}:`, error);
+    return [];
+  }
+};
 
 // Props
 interface Props {
@@ -163,25 +210,10 @@ const canFormat = computed(() => {
   return formatableLanguages.includes(selectedLanguage.value);
 });
 
-// 获取语言扩展
+// 获取语言扩展（同步版本，用于基本初始化）
 const getLanguageExtension = (language: string): Extension[] => {
-  switch (language) {
-    case 'javascript':
-    case 'typescript':
-      return [javascript()];
-    case 'json':
-      return [json()];
-    case 'xml':
-      return [xml()];
-    case 'html':
-      return [html()];
-    case 'css':
-      return [css()];
-    case 'python':
-      return [python()];
-    default:
-      return [];
-  }
+  // 初始化时不加载语言扩展，避免tags3错误
+  return [];
 };
 
 // 获取主题扩展
@@ -191,10 +223,8 @@ const getThemeExtension = (theme: string): Extension[] => {
 
 // 创建编辑器扩展
 const createExtensions = (): Extension[] => {
-  const extensions = [
+  const extensions: Extension[] = [
     basicSetup,
-    ...getLanguageExtension(selectedLanguage.value),
-    ...getThemeExtension(selectedTheme.value),
     EditorView.updateListener.of((update) => {
       if (update.docChanged) {
         const content = update.state.doc.toString();
@@ -209,26 +239,119 @@ const createExtensions = (): Extension[] => {
     })
   ];
 
+  // 安全地添加语言扩展
+  try {
+    const languageExtensions = getLanguageExtension(selectedLanguage.value);
+    extensions.push(...languageExtensions);
+  } catch (error) {
+    console.warn('Language extension error:', error);
+  }
+
+  // 安全地添加主题扩展
+  try {
+    const themeExtensions = getThemeExtension(selectedTheme.value);
+    extensions.push(...themeExtensions);
+  } catch (error) {
+    console.warn('Theme extension error:', error);
+  }
+
   return extensions;
 };
 
 // 初始化编辑器
-const initEditor = () => {
+const initEditor = async () => {
   if (!editorElement.value) return;
 
-  const startState = EditorState.create({
-    doc: props.modelValue,
-    extensions: createExtensions()
-  });
+  try {
+    // 首先创建基本编辑器
+    const startState = EditorState.create({
+      doc: props.modelValue || '',
+      extensions: createExtensions()
+    });
 
-  editorView.value = new EditorView({
-    state: startState,
-    parent: editorElement.value
-  });
+    editorView.value = new EditorView({
+      state: startState,
+      parent: editorElement.value
+    });
 
-  // 初始化统计信息
-  updateStatistics(props.modelValue);
-  updateCursorPosition(startState);
+    // 初始化统计信息
+    updateStatistics(props.modelValue || '');
+    updateCursorPosition(startState);
+
+    // 异步加载语言扩展
+    await loadLanguageForEditor(selectedLanguage.value);
+    
+  } catch (error) {
+    console.error('Failed to initialize CodeMirror editor:', error);
+    ElMessage.error('代码编辑器初始化失败，请刷新页面重试');
+    
+    // 降级处理：创建一个基本的文本区域
+    createFallbackEditor();
+  }
+};
+
+// 为编辑器加载语言扩展
+const loadLanguageForEditor = async (language: string) => {
+  if (!editorView.value) return;
+
+  try {
+    const languageExtensions = await loadLanguageExtension(language);
+    if (languageExtensions.length > 0) {
+      const currentContent = editorView.value.state.doc.toString();
+      const newExtensions = [
+        basicSetup,
+        EditorView.updateListener.of((update) => {
+          if (update.docChanged) {
+            const content = update.state.doc.toString();
+            emit('update:modelValue', content);
+            emit('change', content);
+            updateStatistics(content);
+          }
+          
+          if (update.selectionSet) {
+            updateCursorPosition(update.state);
+          }
+        }),
+        ...languageExtensions,
+        ...getThemeExtension(selectedTheme.value)
+      ];
+
+      const newState = EditorState.create({
+        doc: currentContent,
+        extensions: newExtensions
+      });
+
+      editorView.value.setState(newState);
+    }
+  } catch (error) {
+    console.warn('Failed to load language extensions:', error);
+  }
+};
+
+// 降级编辑器
+const createFallbackEditor = () => {
+  if (!editorElement.value) return;
+  
+  const textarea = document.createElement('textarea');
+  textarea.value = props.modelValue || '';
+  textarea.style.width = '100%';
+  textarea.style.height = '100%';
+  textarea.style.resize = 'none';
+  textarea.style.border = 'none';
+  textarea.style.outline = 'none';
+  textarea.style.fontFamily = 'Monaco, Menlo, Ubuntu Mono, monospace';
+  textarea.style.fontSize = '14px';
+  textarea.style.padding = '10px';
+  
+  textarea.addEventListener('input', (e) => {
+    const target = e.target as HTMLTextAreaElement;
+    emit('update:modelValue', target.value);
+    emit('change', target.value);
+    updateStatistics(target.value);
+  });
+  
+  editorElement.value.innerHTML = '';
+  editorElement.value.appendChild(textarea);
 };
 
 // 更新统计信息
@@ -246,18 +369,10 @@ const updateCursorPosition = (state: EditorState) => {
 };
 
 // 切换语言
-const changeLanguage = () => {
+const changeLanguage = async () => {
   if (!editorView.value) return;
   
-  const currentContent = editorView.value.state.doc.toString();
-  
-  // 重新创建编辑器状态
-  const newState = EditorState.create({
-    doc: currentContent,
-    extensions: createExtensions()
-  });
-  
-  editorView.value.setState(newState);
+  await loadLanguageForEditor(selectedLanguage.value);
 };
 
 // 切换主题
@@ -455,8 +570,8 @@ const getValue = (): string => {
 
 // 监听 props 变化
 watch(() => props.modelValue, (newValue) => {
-  if (editorView.value && newValue !== getValue()) {
-    setValue(newValue);
+  if (editorView.value && (newValue || '') !== getValue()) {
+    setValue(newValue || '');
   }
 });
 
