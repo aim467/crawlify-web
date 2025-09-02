@@ -1,7 +1,31 @@
 <template>
   <div class="template-management-container">
-    <!-- 搜索表单 -->
-    <el-card shadow="never" class="search-card">
+    <!-- Tab 导航 -->
+    <el-card shadow="never" class="tab-card">
+      <el-tabs v-model="activeTab" class="template-tabs" @tab-change="handleTabChange">
+        <el-tab-pane label="模板配置" name="config">
+          <template #label>
+            <div class="tab-label">
+              <el-icon><Setting /></el-icon>
+              <span>模板配置</span>
+            </div>
+          </template>
+        </el-tab-pane>
+        <el-tab-pane label="模板任务" name="task">
+          <template #label>
+            <div class="tab-label">
+              <el-icon><Timer /></el-icon>
+              <span>模板任务</span>
+            </div>
+          </template>
+        </el-tab-pane>
+      </el-tabs>
+    </el-card>
+
+    <!-- 模板配置页面 -->
+    <div v-show="activeTab === 'config'" class="tab-content">
+      <!-- 搜索表单 -->
+      <el-card shadow="never" class="search-card">
       <el-form :model="searchForm" ref="searchFormRef" inline label-position="left" label-width="auto">
         <el-form-item label="配置名称:" prop="configName">
           <el-input
@@ -39,13 +63,13 @@
       </div>
 
       <!-- 表格 -->
-      <el-table 
-        :data="tableData" 
-        style="width: 100%" 
-        v-loading="loading" 
-        border 
-        height="calc(100vh - 280px)"
-      >
+              <el-table 
+          :data="tableData" 
+          style="width: 100%" 
+          v-loading="loading" 
+          border 
+          :height="configTableHeight"
+        >
         <el-table-column prop="configId" label="配置ID" width="200" align="center" fixed />
         <el-table-column prop="configName" label="配置名称" min-width="180" fixed />
         <el-table-column prop="columnUrl" label="基础URL" min-width="250" show-overflow-tooltip />
@@ -616,21 +640,296 @@
         </div>
       </template>
     </el-drawer>
+    </div>
+
+    <!-- 模板任务页面 -->
+    <div v-show="activeTab === 'task'" class="tab-content">
+      <!-- 任务搜索表单 -->
+      <el-card shadow="never" class="search-card">
+        <el-form :model="taskSearchForm" ref="taskSearchFormRef" inline label-position="left" label-width="auto">
+          <el-form-item label="任务ID:" prop="taskId">
+            <el-input
+              v-model="taskSearchForm.taskId"
+              placeholder="请输入任务ID"
+              clearable
+              @keyup.enter="handleTaskSearch"
+            />
+          </el-form-item>
+          <el-form-item label="配置ID:" prop="configId">
+            <el-input
+              v-model="taskSearchForm.configId"
+              placeholder="请输入配置ID"
+              clearable
+              @keyup.enter="handleTaskSearch"
+            />
+          </el-form-item>
+          <el-form-item label="任务状态:" prop="status">
+            <el-select v-model="taskSearchForm.status" placeholder="请选择状态" clearable style="width: 160px">
+              <el-option 
+                v-for="item in TASK_STATUS_OPTIONS" 
+                :key="item.value" 
+                :label="item.label" 
+                :value="item.value" 
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button @click="handleTaskReset">重置</el-button>
+            <el-button
+              type="primary"
+              icon="Search"
+              @click="handleTaskSearch"
+              :loading="taskLoading"
+            >
+              查询
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </el-card>
+
+      <!-- 任务表格区域 -->
+      <el-card shadow="never" class="table-card">
+        <!-- 表格操作头部 -->
+        <div class="table-header">
+          <div class="table-title">
+            模板任务列表
+          </div>
+          <div class="table-actions">
+            <el-button type="primary" icon="Plus" @click="handleTaskAdd">新增任务</el-button>
+            <el-button icon="Refresh" circle @click="handleTaskRefresh" />
+          </div>
+        </div>
+
+        <!-- 任务表格 -->
+        <el-table 
+          :data="taskTableData" 
+          style="width: 100%" 
+          v-loading="taskLoading" 
+          border 
+          :height="taskTableHeight"
+        >
+          <el-table-column prop="taskId" label="任务ID" width="280" align="center" fixed />
+          <el-table-column prop="configId" label="配置ID" width="280" align="center" />
+          <el-table-column prop="configName" label="配置名称" min-width="180" show-overflow-tooltip />
+          <el-table-column prop="status" label="任务状态" width="120" align="center">
+            <template #default="{ row }">
+              <el-tag :type="getTaskStatusTag(row.status)" size="default">
+                {{ getTaskStatusLabel(row.status) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="pid" label="线程ID" width="120" align="center">
+            <template #default="{ row }">
+              <span>{{ row.pid || '-' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="createdAt" label="创建时间" min-width="180" />
+          <el-table-column prop="updatedAt" label="更新时间" min-width="180" />
+          <el-table-column label="操作" width="280" align="center" fixed="right">
+            <template #default="{ row }">
+              <!-- 运行中任务 -->
+              <template v-if="row.status === '1'">
+                <el-tooltip content="停止任务" placement="top">
+                  <el-button link type="warning" icon="VideoPause" @click="handleTaskStop(row)" />
+                </el-tooltip>
+              </template>
+              <!-- 已停止/失败任务 -->
+              <template v-else-if="row.status === '2' || row.status === '4'">
+                <el-tooltip content="启动任务" placement="top">
+                  <el-button link type="success" icon="VideoPlay" @click="handleTaskStart(row)" />
+                </el-tooltip>
+                <el-tooltip content="重新启动" placement="top">
+                  <el-button link type="primary" icon="RefreshRight" @click="handleTaskRestart(row)" />
+                </el-tooltip>
+              </template>
+              <!-- 已完成任务 -->
+              <template v-else-if="row.status === '3'">
+                <el-tooltip content="重新启动" placement="top">
+                  <el-button link type="primary" icon="RefreshRight" @click="handleTaskRestart(row)" />
+                </el-tooltip>
+              </template>
+              
+              <!-- 通用操作 -->
+              <el-tooltip content="编辑" placement="top">
+                <el-button link type="primary" icon="Edit" @click="handleTaskEdit(row)" />
+              </el-tooltip>
+              <el-tooltip content="查看" placement="top">
+                <el-button link type="info" icon="View" @click="handleTaskView(row)" />
+              </el-tooltip>
+              <el-tooltip content="删除" placement="top">
+                <el-button 
+                  link 
+                  type="danger" 
+                  icon="Delete" 
+                  @click="handleTaskDelete(row)"
+                  :disabled="row.status === '1'"
+                />
+              </el-tooltip>
+            </template>
+          </el-table-column>
+        </el-table>
+
+        <!-- 分页 -->
+        <div class="pagination-container">
+          <el-pagination 
+            :current-page="taskPagination.currentPage" 
+            :page-size="taskPagination.pageSize"
+            :page-sizes="[10, 20, 50, 100]" 
+            :total="taskPagination.total" 
+            layout="total, sizes, prev, pager, next, jumper"
+            @size-change="handleTaskSizeChange" 
+            @current-change="handleTaskCurrentChange" 
+          />
+        </div>
+      </el-card>
+
+      <!-- 任务表单抽屉 -->
+      <el-drawer
+        v-model="taskDialogVisible"
+        :title="isTaskEditMode ? '编辑模板任务' : '新增模板任务'"
+        direction="rtl"
+        :size="taskDrawerSize"
+        :close-on-click-modal="false"
+        class="task-drawer"
+        destroy-on-close
+      >
+        <div class="drawer-content">
+          <!-- 表单区域 -->
+          <div class="form-content">
+            <el-form :model="taskForm" :rules="taskFormRules" ref="taskFormRef" label-width="120px">
+              <!-- 基础配置区域 -->
+              <el-card shadow="never" class="form-section-card">
+                <template #header>
+                  <div class="section-header">
+                    <i class="el-icon-setting"></i>
+                    <span>任务配置</span>
+                  </div>
+                </template>
+                
+                <el-row :gutter="24">
+                  <el-col :span="24">
+                    <el-form-item label="关联配置" prop="configId">
+                      <el-select 
+                        v-model="taskForm.configId" 
+                        placeholder="请选择模板配置" 
+                        style="width: 100%"
+                        filterable
+                      >
+                        <el-option 
+                          v-for="config in configOptions" 
+                          :key="config.configId" 
+                          :label="`${config.configName} (${config.configId})`" 
+                          :value="config.configId" 
+                        />
+                      </el-select>
+                    </el-form-item>
+                  </el-col>
+                </el-row>
+
+                <el-row :gutter="24">
+                  <el-col :span="12">
+                    <el-form-item label="父任务ID" prop="pid">
+                      <el-input-number 
+                        v-model="taskForm.pid" 
+                        :min="0" 
+                        style="width: 100%"
+                        placeholder="可选，用于任务层级管理"
+                      />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :span="12">
+                    <el-form-item label="任务状态" prop="status">
+                      <el-select v-model="taskForm.status" placeholder="请选择状态" style="width: 100%">
+                        <el-option 
+                          v-for="item in TASK_STATUS_OPTIONS" 
+                          :key="item.value" 
+                          :label="item.label" 
+                          :value="item.value" 
+                        />
+                      </el-select>
+                    </el-form-item>
+                  </el-col>
+                </el-row>
+              </el-card>
+            </el-form>
+          </div>
+          
+          <!-- 抽屉底部操作栏 -->
+          <div class="drawer-footer">
+            <el-button @click="taskDialogVisible = false" size="large">取消</el-button>
+            <el-button type="primary" @click="submitTaskForm" :loading="taskSubmitLoading" size="large">
+              {{ isTaskEditMode ? '更新' : '创建' }}
+            </el-button>
+          </div>
+        </div>
+      </el-drawer>
+
+      <!-- 查看任务详情弹窗 -->
+      <el-dialog 
+        v-model="taskViewDialogVisible" 
+        title="查看任务详情" 
+        width="800px"
+        class="task-view-dialog"
+      >
+        <div class="task-view-container">
+          <!-- 任务信息卡片 -->
+          <el-card shadow="never" class="view-info-card">
+            <template #header>
+              <div class="card-header">
+                <i class="el-icon-info-filled"></i>
+                <span>任务信息</span>
+              </div>
+            </template>
+            <el-descriptions :column="2" border size="default">
+              <el-descriptions-item label="任务ID" label-align="right">
+                <el-tag type="info">{{ viewTask.taskId }}</el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="配置ID" label-align="right">
+                <el-tag type="primary">{{ viewTask.configId }}</el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="配置名称" label-align="right" :span="2">
+                <span class="config-name">{{ viewTask.configName || '未知配置' }}</span>
+              </el-descriptions-item>
+              <el-descriptions-item label="任务状态" label-align="right">
+                <el-tag :type="getTaskStatusTag(viewTask.status)" size="default">
+                  {{ getTaskStatusLabel(viewTask.status) }}
+                </el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="父任务ID" label-align="right">
+                <span>{{ viewTask.pid || '无' }}</span>
+              </el-descriptions-item>
+              <el-descriptions-item label="创建时间" label-align="right">
+                <span class="time-info">{{ viewTask.createdAt }}</span>
+              </el-descriptions-item>
+              <el-descriptions-item label="更新时间" label-align="right">
+                <span class="time-info">{{ viewTask.updatedAt }}</span>
+              </el-descriptions-item>
+            </el-descriptions>
+          </el-card>
+        </div>
+      </el-dialog>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue';
+import { ref, reactive, onMounted, onUnmounted, computed } from 'vue';
 import type { FormInstance, FormRules } from 'element-plus';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { Upload, DocumentCopy } from '@element-plus/icons-vue';
+import { Upload, DocumentCopy, Setting, Timer } from '@element-plus/icons-vue';
 import { templateConfigApi } from '../api/templateConfig';
+import { templateTaskApi } from '../api/templateTask';
 import type { TemplateConfig } from '../types/templateConfig';
+import type { TemplateTask } from '../types/templateTask';
 import { REQUEST_TYPES, RESULT_TYPES } from '../types/templateConfig';
+import { TASK_STATUS_OPTIONS, TASK_STATUS_MAP } from '../types/templateTask';
 import { parseCommand } from '../utils/commandParser';
 import { CodeEditor } from '../components';
 
-// 响应式数据
+// Tab 管理
+const activeTab = ref('config');
+
+// 模板配置响应式数据
 const loading = ref(false);
 const submitLoading = ref(false);
 const dialogVisible = ref(false);
@@ -640,6 +939,15 @@ const searchFormRef = ref<FormInstance>();
 const templateFormRef = ref<FormInstance>();
 const requestHeadersText = ref('');
 const importCommand = ref('');
+
+// 模板任务响应式数据
+const taskLoading = ref(false);
+const taskSubmitLoading = ref(false);
+const taskDialogVisible = ref(false);
+const taskViewDialogVisible = ref(false);
+const isTaskEditMode = ref(false);
+const taskSearchFormRef = ref<FormInstance>();
+const taskFormRef = ref<FormInstance>();
 
 // 代码编辑器相关
 const codeEditorVisible = ref(false);
@@ -672,6 +980,59 @@ const codeEditorSize = computed(() => {
   return '80%';
 });
 
+// 任务抽屉大小
+const taskDrawerSize = computed(() => {
+  if (typeof window !== 'undefined') {
+    const width = window.innerWidth;
+    if (width < 768) return '95%';      // 手机端
+    if (width < 1200) return '70%';     // 平板端
+    return '50%';                       // 桌面端（任务表单相对简单）
+  }
+  return '60%';
+});
+
+// 窗口高度响应式数据
+const windowHeight = ref(0);
+
+// 配置表格高度计算
+const configTableHeight = computed(() => {
+  if (windowHeight.value > 0) {
+    const headerHeight = 60;  // 页面头部
+    const tabHeight = 60;     // Tab导航高度
+    const searchHeight = 80;  // 搜索表单高度
+    const tableHeaderHeight = 80; // 表格头部操作区高度
+    const paginationHeight = 60; // 分页高度
+    const padding = 40;       // 各种边距
+    
+    const availableHeight = windowHeight.value - headerHeight - tabHeight - searchHeight - tableHeaderHeight - paginationHeight - padding;
+    return Math.max(300, Math.min(availableHeight, 700)); // 最小300px，最大700px
+  }
+  return 450; // 默认高度
+});
+
+// 任务表格高度计算  
+const taskTableHeight = computed(() => {
+  if (windowHeight.value > 0) {
+    const headerHeight = 60;  // 页面头部
+    const tabHeight = 60;     // Tab导航高度
+    const searchHeight = 120; // 任务搜索表单高度（任务搜索字段更多）
+    const tableHeaderHeight = 80; // 表格头部操作区高度
+    const paginationHeight = 60; // 分页高度
+    const padding = 40;       // 各种边距
+    
+    const availableHeight = windowHeight.value - headerHeight - tabHeight - searchHeight - tableHeaderHeight - paginationHeight - padding;
+    return Math.max(300, Math.min(availableHeight, 700)); // 最小300px，最大700px
+  }
+  return 400; // 默认高度
+});
+
+// 更新窗口高度
+const updateWindowHeight = () => {
+  if (typeof window !== 'undefined') {
+    windowHeight.value = window.innerHeight;
+  }
+};
+
 // 搜索表单
 const searchForm = reactive({
   configName: '',
@@ -686,6 +1047,26 @@ const pagination = reactive({
 
 // 表格数据
 const tableData = ref<TemplateConfig[]>([]);
+
+// 任务搜索表单
+const taskSearchForm = reactive({
+  taskId: '',
+  configId: '',
+  status: '',
+});
+
+// 任务分页数据
+const taskPagination = reactive({
+  currentPage: 1,
+  pageSize: 10,
+  total: 0,
+});
+
+// 任务表格数据
+const taskTableData = ref<TemplateTask[]>([]);
+
+// 配置选项列表（用于任务表单）
+const configOptions = ref<TemplateConfig[]>([]);
 
 // 模板表单
 const templateForm = reactive<TemplateConfig>({
@@ -714,6 +1095,19 @@ const viewTemplate = ref<TemplateConfig>({
   pageLen: 0,
   resultType: '',
   useScript: 0
+});
+
+// 任务表单
+const taskForm = reactive<TemplateTask>({
+  configId: '',
+  status: '2', // 默认停止状态
+  pid: undefined,
+});
+
+// 查看任务数据
+const viewTask = ref<TemplateTask>({
+  configId: '',
+  status: '2'
 });
 
 // 表单验证规则
@@ -745,6 +1139,16 @@ const formRules: FormRules = {
   ]
 };
 
+// 任务表单验证规则
+const taskFormRules: FormRules = {
+  configId: [
+    { required: true, message: '请选择关联配置', trigger: 'change' }
+  ],
+  status: [
+    { required: true, message: '请选择任务状态', trigger: 'change' }
+  ]
+};
+
 // 获取请求类型标签样式
 const getRequestTypeTag = (type: string) => {
   const typeMap: Record<string, string> = {
@@ -761,6 +1165,16 @@ const getResultTypeTag = (type: string) => {
     'xml': 'success'
   };
   return typeMap[type] || 'default';
+};
+
+// 获取任务状态标签样式
+const getTaskStatusTag = (status: string) => {
+  return TASK_STATUS_MAP[status as keyof typeof TASK_STATUS_MAP]?.type || 'default';
+};
+
+// 获取任务状态标签文本
+const getTaskStatusLabel = (status: string) => {
+  return TASK_STATUS_MAP[status as keyof typeof TASK_STATUS_MAP]?.label || '未知状态';
 };
 
 // 解析请求头JSON文本
@@ -803,6 +1217,63 @@ const addFieldRule = () => {
 const removeFieldRule = (index: number) => {
   if (templateForm.fieldRules) {
     templateForm.fieldRules.splice(index, 1);
+  }
+};
+
+// Tab 切换处理
+const handleTabChange = (tabName: string) => {
+  activeTab.value = tabName;
+  if (tabName === 'task') {
+    fetchTaskData();
+    fetchConfigOptions(); // 获取配置选项
+  } else if (tabName === 'config') {
+    fetchData();
+  }
+};
+
+// 获取配置选项列表
+const fetchConfigOptions = async () => {
+  try {
+    const { data } = await templateConfigApi.list({
+      page: 1,
+      size: 1000, // 获取所有配置作为选项
+    });
+    
+    if (data?.records) {
+      configOptions.value = data.records;
+    }
+  } catch (error) {
+    console.error('获取配置选项失败:', error);
+  }
+};
+
+// 获取任务数据
+const fetchTaskData = async () => {
+  try {
+    taskLoading.value = true;
+    const { data } = await templateTaskApi.list({
+      page: taskPagination.currentPage,
+      size: taskPagination.pageSize,
+      taskId: taskSearchForm.taskId || undefined,
+      configId: taskSearchForm.configId || undefined,
+      status: taskSearchForm.status || undefined,
+    });
+    
+    if (data?.records) {
+      // 关联配置名称
+      const configMap = new Map(configOptions.value.map(config => [config.configId, config.configName]));
+      taskTableData.value = data.records.map((task: TemplateTask) => ({
+        ...task,
+        configName: configMap.get(task.configId) || '未知配置'
+      }));
+      taskPagination.total = data.total || 0;
+      taskPagination.pageSize = data.size || 10;
+      taskPagination.currentPage = data.current || 1;
+    }
+  } catch (error) {
+    ElMessage.error('获取任务列表失败');
+  } finally {
+    taskLoading.value = false;
   }
 };
 
@@ -1245,6 +1716,169 @@ const handleCodeChange = (content: string) => {
   codeContent.value = typeof content === 'string' ? content : '';
 };
 
+// ===== 任务管理相关方法 =====
+
+// 任务搜索
+const handleTaskSearch = () => {
+  taskPagination.currentPage = 1;
+  fetchTaskData();
+};
+
+// 任务重置
+const handleTaskReset = () => {
+  taskSearchFormRef.value?.resetFields();
+  taskPagination.currentPage = 1;
+  fetchTaskData();
+};
+
+// 任务刷新
+const handleTaskRefresh = () => {
+  fetchTaskData();
+};
+
+// 重置任务表单
+const resetTaskForm = () => {
+  Object.assign(taskForm, {
+    configId: '',
+    status: '2',
+    pid: undefined,
+  });
+};
+
+// 新增任务
+const handleTaskAdd = () => {
+  isTaskEditMode.value = false;
+  resetTaskForm();
+  taskDialogVisible.value = true;
+};
+
+// 编辑任务
+const handleTaskEdit = async (row: TemplateTask) => {
+  try {
+    const { data } = await templateTaskApi.getById(row.taskId!);
+    Object.assign(taskForm, data);
+    isTaskEditMode.value = true;
+    taskDialogVisible.value = true;
+  } catch (error) {
+    ElMessage.error('获取任务详情失败');
+  }
+};
+
+// 查看任务
+const handleTaskView = async (row: TemplateTask) => {
+  try {
+    const { data } = await templateTaskApi.getById(row.taskId!);
+    // 关联配置名称
+    const config = configOptions.value.find(c => c.configId === data.configId);
+    viewTask.value = {
+      ...data,
+      configName: config?.configName || '未知配置'
+    };
+    taskViewDialogVisible.value = true;
+  } catch (error) {
+    ElMessage.error('获取任务详情失败');
+  }
+};
+
+// 删除任务
+const handleTaskDelete = (row: TemplateTask) => {
+  if (row.status === '1') {
+    ElMessage.warning('运行中的任务无法删除，请先停止任务');
+    return;
+  }
+  
+  ElMessageBox.confirm('确认删除该任务吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  }).then(async () => {
+    try {
+      await templateTaskApi.delete(row.taskId!);
+      ElMessage.success('删除成功');
+      fetchTaskData();
+    } catch (error) {
+      ElMessage.error('删除失败');
+    }
+  }).catch(() => {});
+};
+
+// 启动任务
+const handleTaskStart = async (row: TemplateTask) => {
+  try {
+    await templateTaskApi.start(row.taskId!);
+    ElMessage.success('任务启动成功');
+    fetchTaskData();
+  } catch (error) {
+    ElMessage.error('任务启动失败');
+  }
+};
+
+// 停止任务
+const handleTaskStop = async (row: TemplateTask) => {
+  ElMessageBox.confirm('确认停止该任务吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  }).then(async () => {
+    try {
+      await templateTaskApi.stop(row.taskId!);
+      ElMessage.success('任务已停止');
+      fetchTaskData();
+    } catch (error) {
+      ElMessage.error('停止任务失败');
+    }
+  }).catch(() => {});
+};
+
+// 重新启动任务
+const handleTaskRestart = async (row: TemplateTask) => {
+  try {
+    await templateTaskApi.restart(row.taskId!);
+    ElMessage.success('任务重新启动成功');
+    fetchTaskData();
+  } catch (error) {
+    ElMessage.error('重新启动任务失败');
+  }
+};
+
+// 提交任务表单
+const submitTaskForm = async () => {
+  if (!taskFormRef.value) return;
+  
+  await taskFormRef.value.validate(async (valid: boolean) => {
+    if (valid) {
+      try {
+        taskSubmitLoading.value = true;
+        
+        if (isTaskEditMode.value) {
+          await templateTaskApi.update(taskForm);
+          ElMessage.success('更新成功');
+        } else {
+          await templateTaskApi.create(taskForm);
+          ElMessage.success('创建成功');
+        }
+        taskDialogVisible.value = false;
+        fetchTaskData();
+      } catch (error) {
+        ElMessage.error(isTaskEditMode.value ? '更新失败' : '创建失败');
+      } finally {
+        taskSubmitLoading.value = false;
+      }
+    }
+  });
+};
+
+// 任务分页处理
+const handleTaskSizeChange = (val: number) => {
+  taskPagination.pageSize = val;
+  fetchTaskData();
+};
+
+const handleTaskCurrentChange = (val: number) => {
+  taskPagination.currentPage = val;
+  fetchTaskData();
+};
+
 // 保存代码
 const saveCode = async () => {
   if (!currentTemplate.value) {
@@ -1280,6 +1914,22 @@ const saveCode = async () => {
 // 初始化
 onMounted(() => {
   fetchData();
+  fetchConfigOptions(); // 初始化时就加载配置选项
+  
+  // 初始化窗口高度
+  updateWindowHeight();
+  
+  // 监听窗口大小变化
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', updateWindowHeight);
+  }
+});
+
+// 清理监听器
+onUnmounted(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', updateWindowHeight);
+  }
 });
 </script>
 
@@ -1287,9 +1937,80 @@ onMounted(() => {
 .template-management-container {
   padding: 12px;
   background: #f0f2f5;
-  height: 100%;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+.tab-card {
+  margin-bottom: 12px;
+  background: #ffffff;
+  border: 1px solid #dcdfe6;
+  border-radius: 6px;
+}
+
+.tab-card :deep(.el-card__body) {
+  padding: 0;
+}
+
+.template-tabs :deep(.el-tabs__header) {
+  margin: 0;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 6px 6px 0 0;
+}
+
+.template-tabs :deep(.el-tabs__nav-wrap) {
+  padding: 0 20px;
+}
+
+.template-tabs :deep(.el-tabs__nav-scroll) {
+  display: flex;
+}
+
+.template-tabs :deep(.el-tabs__item) {
+  height: 60px;
+  line-height: 60px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #6c757d;
+  border: none;
+  margin-right: 30px;
+  padding: 0 15px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.template-tabs :deep(.el-tabs__item.is-active) {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.template-tabs :deep(.el-tabs__item:hover) {
+  color: #667eea;
+}
+
+.template-tabs :deep(.el-tabs__active-bar) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  height: 3px;
+  border-radius: 2px;
+}
+
+.tab-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tab-label .el-icon {
+  font-size: 16px;
+}
+
+.tab-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .search-card {
@@ -1312,6 +2033,16 @@ onMounted(() => {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.table-card :deep(.el-card__body) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
 }
 
 .table-header {
@@ -1984,5 +2715,126 @@ onMounted(() => {
   height: 100%;
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* 任务抽屉样式 */
+.task-drawer :deep(.el-drawer__body) {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.task-drawer :deep(.el-drawer__header) {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  padding: 20px;
+  margin-bottom: 0;
+}
+
+.task-drawer :deep(.el-drawer__title) {
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.task-drawer :deep(.el-drawer__close-btn) {
+  color: white;
+  font-size: 20px;
+}
+
+.task-drawer :deep(.el-drawer__close-btn):hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 任务查看详情样式 */
+.task-view-dialog :deep(.el-dialog__body) {
+  padding: 20px;
+  background: #f8fafc;
+}
+
+.task-view-container {
+  padding: 0;
+}
+
+/* 任务表格操作按钮样式优化 */
+.el-table .el-button[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 任务状态相关样式 */
+.el-tag.el-tag--warning {
+  background: #fff3cd;
+  border-color: #ffeaa7;
+  color: #856404;
+}
+
+.el-tag.el-tag--success {
+  background: #d4edda;
+  border-color: #c3e6cb;
+  color: #155724;
+}
+
+.el-tag.el-tag--danger {
+  background: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+.el-tag.el-tag--info {
+  background: #d1ecf1;
+  border-color: #bee5eb;
+  color: #0c5460;
+}
+
+/* Tab内容区响应式 */
+@media (max-width: 768px) {
+  .template-management-container {
+    padding: 8px;
+    height: 100vh;
+    max-height: 100vh;
+  }
+  
+  .template-tabs :deep(.el-tabs__item) {
+    height: 50px;
+    line-height: 50px;
+    font-size: 14px;
+    margin-right: 15px;
+    padding: 0 10px;
+  }
+  
+  .template-tabs :deep(.el-tabs__nav-wrap) {
+    padding: 0 15px;
+  }
+  
+  .tab-label {
+    gap: 6px;
+  }
+  
+  .tab-label .el-icon {
+    font-size: 14px;
+  }
+  
+  .task-drawer :deep(.el-drawer__header) {
+    padding: 15px;
+  }
+  
+  .search-card {
+    margin-bottom: 8px;
+  }
+  
+  .tab-card {
+    margin-bottom: 8px;
+  }
+}
+
+/* 确保表格容器不会溢出 */
+.tab-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
 }
 </style>
